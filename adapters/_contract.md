@@ -59,7 +59,7 @@ For every install, the adapter must produce:
 | **Skills** | Rendered skill specs from selected `core/skills/<cat>/<skill>/SKILL.md`. | IDE-specific (e.g., `.cursor/skills/<skill>/SKILL.md`). |
 | **Director rule** | Rendered from `core/director/` templates. Always-on. | IDE-specific. |
 | **Learnings document** | Seeded `_documentation/AI_LEARNINGS.md` (or IDE-equivalent location). | Project-relative. |
-| **Stop hook** | Per `core/director/audit-skill.md` and adapter's hook conventions. May be `gap: true` if IDE has no hooks. | IDE-specific. |
+| **Stop hook** | Per [`_stop-hook.md`](_stop-hook.md) and adapter's hook conventions. May be `gap: true` if IDE has no hooks. | IDE-specific. |
 | **MCP slots** | Non-destructive merge into the IDE's MCP config. Per the adapter's `mcp.md`. | IDE-specific. |
 | **Registry marker** | `.ai-orchestra/install.json` per `core/registry/install.schema.md`. | Project-relative, always at `.ai-orchestra/install.json`. |
 | **Global registry append** | Append/update entry in `~/.ai-orchestra/projects.json`. | User home, always at the same path. |
@@ -204,6 +204,13 @@ Beyond v1, adapters move toward full parity with `cursor/`.
 ## 12. References
 
 - [../RUN.md](../RUN.md) — bootstrap procedure that drives the adapter.
+- [_stop-hook.md](_stop-hook.md) — sibling contract: stop-hook interface adapters wire into IDE stop-events.
 - [../core/discovery/DETECTION.md](../core/discovery/DETECTION.md) — input to the adapter.
 - [../core/discovery/existing-infra.md](../core/discovery/existing-infra.md) — input to the adapter.
+- [../core/director/_overview.md](../core/director/_overview.md) — Director system; rule + learnings the adapter renders into the project.
+- [../core/director/RULE.md](../core/director/RULE.md) — Director rule template.
+- [../core/director/learnings-template.md](../core/director/learnings-template.md) — learnings document seed.
+- [../core/scheduler/CONTRACT.md](../core/scheduler/CONTRACT.md) — scheduler contract; v2 runner.
+- [../core/notifications/CONTRACT.md](../core/notifications/CONTRACT.md) — notifications contract; v2 router.
 - [../core/registry/install.schema.md](../core/registry/install.schema.md) — registry marker schema produced by the adapter.
+- [../core/_lint.md](../core/_lint.md) — schema linter contract used by the audit.

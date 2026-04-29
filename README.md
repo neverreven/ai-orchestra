@@ -35,9 +35,9 @@ See [RUN.md](RUN.md) for the full bootstrap procedure.
 
 | Area | State |
 |------|-------|
-| Core scaffold (this folder) | PR 1 — landing |
-| Role library (FE / BE / QA / Analytics / DevOps / Security / Mobile / AI-ML / Tech-Writer / PM) | PR 2 — pending |
-| Director + Learnings + Audit + Scheduler/Notifications contracts | PR 3 — pending |
+| Core scaffold (this folder) | PR 1 — shipped |
+| Role library (FE / BE / QA / Analytics / DevOps / Security / Mobile / AI-ML / Tech-Writer / PM) | PR 2 — shipped (10 roles, 30 skills, schemas, linter contract) |
+| Director + Learnings + Stop-hook + Scheduler/Notifications contracts | PR 3 — landing |
 | Cursor adapter (full) | PR 4 — pending |
 | Claude Code / Codex / VS Code adapter baselines | PR 5 — pending |
 | Stack content packs (JS/TS, Python web, Salesforce / Commerce Cloud) | PR 6 — pending |
@@ -73,20 +73,18 @@ ai-orchestra/
 ├── VERSION            # SemVer
 ├── CHANGELOG.md       # core evolution log
 ├── core/              # project-agnostic, tool-agnostic content
+│   ├── _lint.md       # schema linter contract (governs roles + skills)
 │   ├── discovery/     # probe + signals + existing-infra detection
-│   ├── roles/         # role definitions (PR 2)
-│   ├── skills/        # universal skill specs (PR 2)
-│   ├── rules/         # rule templates with placeholders (PR 2)
-│   ├── director/      # learnings + audit (PR 3)
-│   ├── scheduler/     # declared interface (PR 3)
-│   ├── notifications/ # declared interface (PR 3)
-│   ├── registry/      # install.json schema
-│   ├── prompts/       # prompt templates (PR 2)
-│   ├── workflows/     # phase workflows (PR 2)
-│   ├── templates/     # output document shells (PR 2)
+│   ├── roles/         # role definitions (PR 2 — 10 roles + schema + overview)
+│   ├── skills/        # universal skill specs (PR 2 — 30 skills + schema)
+│   ├── director/      # Director rule + learnings template (PR 3)
+│   ├── scheduler/     # declared scheduler contract — runner ships in v2 (PR 3)
+│   ├── notifications/ # declared notifications contract — router ships in v2 (PR 3)
+│   ├── registry/      # install.json + projects.json schemas
 │   └── stack-packs/   # stack-specific content (PR 6)
 ├── adapters/          # IDE-specific install logic
 │   ├── _contract.md   # adapter interface specification
+│   ├── _stop-hook.md  # stop-hook contract (PR 3)
 │   ├── cursor/        # full v1 (PR 4)
 │   ├── claude-code/   # baseline v1 (PR 5)
 │   ├── codex/         # baseline v1 (PR 5)
@@ -103,5 +101,11 @@ See repository root.
 - [RUN.md](RUN.md) — the entry point any agent reads to run the orchestra.
 - [core/discovery/DETECTION.md](core/discovery/DETECTION.md) — how the discovery probe works.
 - [core/discovery/existing-infra.md](core/discovery/existing-infra.md) — how the orchestra detects and respects prior agentic setup.
+- [core/roles/_overview.md](core/roles/_overview.md) — registry of the ten v1 roles.
+- [core/director/_overview.md](core/director/_overview.md) — Director system: rule + learnings doc.
+- [core/scheduler/CONTRACT.md](core/scheduler/CONTRACT.md) — scheduler contract.
+- [core/notifications/CONTRACT.md](core/notifications/CONTRACT.md) — notifications contract.
 - [core/registry/install.schema.md](core/registry/install.schema.md) — shape of the per-project install marker.
+- [core/_lint.md](core/_lint.md) — schema linter contract.
 - [adapters/_contract.md](adapters/_contract.md) — the binding between core content and IDE-native installation.
+- [adapters/_stop-hook.md](adapters/_stop-hook.md) — stop-hook contract that adapters wire into IDE stop-events.
