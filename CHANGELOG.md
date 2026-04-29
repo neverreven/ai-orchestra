@@ -20,14 +20,14 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/).
 ### Changed — PR 7
 
 - `README.md` — final v1 status table (all seven PRs shipped); repository layout updated to include `_test-fixtures/` subtree and `MIGRATION.md`; See-also entries for the new files.
-- `eslint.config.js` (host-project file outside the orchestra core) — added `ai-orchestra/_test-fixtures` to the global ignore list. This prevents host-project's lint pipeline from processing fixture source code as if it were host code. Disappears when the orchestra is extracted to its own repo.
+- `eslint.config.js` (host-project file outside the orchestra core) — added `ai-orchestra/_test-fixtures` to the global ignore list. This prevents the host project's lint pipeline from processing fixture source code as if it were host code. Disappears when the orchestra is extracted to its own repo.
 
 ### Notes — PR 7
 
 - The validation harness is **declarative and agent-driven**. There is no runtime test runner in v1 — agents read `VALIDATION.md`, execute the procedure, and produce a structured markdown report. v2 backlog includes optional CI runtime support.
 - Each fixture's `EXPECTED.md` is the **contract** the orchestra must satisfy when run against that fixture. Drift between core and `EXPECTED.md` is caught the next time the harness runs; the audit skill is the recommended owner of detecting that drift.
 - The fixture set is deliberately minimal: 3 fixtures covering the v1 surface (clean install, existing-infra preservation, polyglot detection). v1.x and v2 will grow the set (Go, Rust, mobile, adversarial fixtures, etc.).
-- The post-v1 pilot — dry-running the orchestra against the host host-project project on `experiment/orchestra-pilot-host-project` — uses this harness as its skeleton, but the pilot is itself separate work that runs **after** the aggregator merges to master.
+- The post-v1 pilot — dry-running the orchestra against the host project on a dedicated experiment branch — uses this harness as its skeleton, but the pilot is itself separate work that runs **after** the aggregator merges to master.
 - All cross-links verified: 0 broken across the orchestra docs.
 
 ### v1 close-out

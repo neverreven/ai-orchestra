@@ -137,7 +137,7 @@ The `metadata.orchestra: true` field is the dedup key the adapter uses to recogn
 
 ### `start` hooks
 
-The orchestra does NOT install any `start` hooks in v1. If the project's existing `hooks.json` has start hooks, the adapter preserves them verbatim. (host-project's environment-check start hook is one such case — the orchestra never touches it.)
+The orchestra does NOT install any `start` hooks in v1. If the project's existing `hooks.json` has start hooks (for example, environment-check hooks that verify a dev server is running), the adapter preserves them verbatim.
 
 ### Stable serialisation
 

@@ -88,18 +88,18 @@ The v1 fixture set deliberately does NOT cover:
 - **Adapter-specific fixtures.** Each fixture is run through the **detected** adapter for the IDE the validating agent is using. There is no per-adapter fixture matrix in v1; the same fixture validates against any adapter.
 - **Runtime behaviour.** Fixtures don't compile or execute. The orchestra is markdown-only in v1; runtime work is v2.
 - **Failure injection.** Fixtures with deliberately broken metadata (malformed `package.json`, missing `force-app/`) are not in the v1 set. Adversarial fixtures are v2 backlog.
-- **Real production codebases.** The post-v1 pilot dry-runs the orchestra against the host host-project project on a separate experiment branch — that's the real-world validation.
+- **Real production codebases.** The post-v1 pilot dry-runs the orchestra against a host project on a separate experiment branch — that's the real-world validation.
 
 ---
 
 ## 5. Host-project isolation
 
-When the fixtures live inside a host project (host-project during v1 development; a future standalone orchestra repo after extraction), the host's tooling must NOT process fixture source code as if it were host code.
+When the fixtures live inside a host project (any repository where the orchestra is currently embedded; after a future extraction to a standalone orchestra repo this concern disappears), the host's tooling must NOT process fixture source code as if it were host code.
 
 The orchestra's release notes for the host include:
 
-- Add `ai-orchestra/_test-fixtures/` to the host's lint ignore list (e.g., host-project's [`eslint.config.js`](../../eslint.config.js)).
-- Confirm the host's test runner is scoped to the host's test directories (host-project's `vitest.config.js` is scoped to `src/tests/**`, so fixture files are not auto-discovered).
+- Add `ai-orchestra/_test-fixtures/` to the host's lint ignore list (e.g., the host's `eslint.config.js` for JS/TS, `pyproject.toml` for Python, etc.).
+- Confirm the host's test runner is scoped to the host's own test directories (e.g., a `vitest.config.js` with an `include: 'src/tests/**'` pattern), so fixture files are not auto-discovered.
 - Confirm the host's bundler / build does NOT attempt to compile fixture entry points.
 
 These adjustments are tracked in [`../CHANGELOG.md`](../CHANGELOG.md) under the PR 7 entry. After the orchestra extracts to a standalone repo, the host coupling disappears and the fixtures remain self-contained.

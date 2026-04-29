@@ -32,7 +32,7 @@ The fixture has no `node_modules/`, no lockfile, no real source-of-truth — jus
 - No `package-lock.json` / `pnpm-lock.yaml` — the lockfile-presence signal is intentionally absent so the fixture stays minimal. Detection should still cross threshold without it.
 - No test framework dependency. The `jest` / `vitest` skills exist in the universal core; the install plan should still register them as available, but the test-framework detection field should be empty.
 - No CI workflow.
-- No `.gitignore`. The fixture's hosting in host-project means git ignores are inherited from the parent.
+- No `.gitignore`. The fixture's hosting inside the host project means git ignores are inherited from the parent.
 - No real dependency versions in `package.json`. Versions are placeholder strings (`"^99.0.0"`) so the fixture cannot be confused for a runnable project.
 
 ## Expected outcome
