@@ -3,7 +3,7 @@
 > First-class stack in v1. Detects Python codebases, with framework sub-detection focused on web frameworks.
 
 **Stack id:** `python-web` (when a web framework is detected) or `python` (generic Python without web framework — reduced confidence into stack pack selection)
-**Stack pack:** `core/stack-packs/python-web/` (PR 6)
+**Stack pack:** [`../../stack-packs/python-web/`](../../stack-packs/python-web/_overview.md)
 
 ## Strong signals (weight 3 each)
 
@@ -70,5 +70,6 @@ Scan dependencies for: `pytest`, `unittest` (always available, but check for `te
 
 ## References
 
-- [DETECTION.md](../DETECTION.md) — overall probe procedure.
-- `core/stack-packs/python-web/` — stack-specific content (PR 6).
+- [../DETECTION.md](../DETECTION.md) — overall probe procedure.
+- [../../stack-packs/python-web/_overview.md](../../stack-packs/python-web/_overview.md) — stack-specific content selected by this signal.
+- [../../stack-packs/_overview.md](../../stack-packs/_overview.md) — stack-pack framework overview.

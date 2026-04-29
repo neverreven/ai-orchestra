@@ -3,7 +3,7 @@
 > First-class stack in v1. Detects JavaScript and TypeScript codebases, with framework sub-detection for the dominant runtimes and bundlers.
 
 **Stack id:** `js-ts`
-**Stack pack:** `core/stack-packs/js-ts/` (PR 6)
+**Stack pack:** [`../../stack-packs/js-ts/`](../../stack-packs/js-ts/_overview.md)
 
 ## Strong signals (weight 3 each)
 
@@ -65,5 +65,6 @@ Scan dependencies for: `vitest`, `jest`, `mocha`, `jasmine`, `playwright`, `cypr
 
 ## References
 
-- [DETECTION.md](../DETECTION.md) — overall probe procedure.
-- `core/stack-packs/js-ts/` — stack-specific content (PR 6).
+- [../DETECTION.md](../DETECTION.md) — overall probe procedure.
+- [../../stack-packs/js-ts/_overview.md](../../stack-packs/js-ts/_overview.md) — stack-specific content selected by this signal.
+- [../../stack-packs/_overview.md](../../stack-packs/_overview.md) — stack-pack framework overview.

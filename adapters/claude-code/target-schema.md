@@ -189,7 +189,7 @@ The Claude Code baseline adapter does NOT write any of the following in v1:
 - Per-rule files (Claude Code's design has no `.claude/rules/`).
 - `.claude/projects/`, `.claude/settings.local.json`, or anything inside `~/.claude/` (user-global Claude Code state).
 - Auxiliary files alongside skill commands (single-file `.claude/commands/<id>.md` only).
-- Stack-pack content (deferred to PR 6).
+- Stack-pack content is available from [`../../core/stack-packs/`](../../core/stack-packs/) (PR 6) and lands as additional sections inside the `CLAUDE.md` managed area per [`mappings.md`](mappings.md) §7.
 - Anything inside the project's source tree.
 
 ---

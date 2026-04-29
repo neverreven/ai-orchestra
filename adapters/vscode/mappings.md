@@ -115,7 +115,7 @@ Every action is logged in the install marker per [`../../core/registry/install.s
 
 ## 7. Stack packs
 
-When the project profile detected one or more first-class stacks, the adapter would apply stack-pack content from `core/stack-packs/<stack-id>/` (deferred to PR 6). Stack-pack content lands as additional sections inside the `.github/copilot-instructions.md` managed area for v1.
+When the project profile detects one or more first-class stacks, the adapter applies stack-pack content from [`../../core/stack-packs/<stack-id>/`](../../core/stack-packs/) per the layering rules in [`../../core/stack-packs/_overview.md`](../../core/stack-packs/_overview.md) §3. Stack-pack rule and roles content lands as additional sections inside the `.github/copilot-instructions.md` managed area; pack skills addenda are wired into the per-skill prompt files under `.github/prompts/`. The applied pack is recorded in `stacks[].stackPack` and `stacks[].stackPackVersion`.
 
 In a future v1.x, this adapter may switch to using `.github/instructions/<stack>.instructions.md` (Copilot's per-stack instruction-file convention) with `applyTo` glob patterns — see [`INSTALL.md`](INSTALL.md) §6 for the v1 limitation.
 

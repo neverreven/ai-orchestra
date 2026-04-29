@@ -8,6 +8,24 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Added — PR 6 (Stack Content Packs)
+
+- `core/stack-packs/_overview.md` — framework explaining what stack packs are, how they layer onto the universal core (roles unchanged, skills unchanged, packs add content additively), the three first-class v1 packs, install ordering, pack versioning, and how to add a future pack.
+- `core/stack-packs/_schema.md` — required structure of any stack pack folder: `_overview.md` + `rules/<topic>.md` files + `skills.md` + `roles.md`. Defines section order, length budgets, lint rules with severities, and the cross-validation that `### <skill-id>` and `### <role-id>` headings reference real universal skills/roles.
+- `core/stack-packs/js-ts/` — first-class pack for JavaScript / TypeScript web. Six files: `_overview.md`; `rules/react.md`, `rules/typescript.md`, `rules/vite.md`, `rules/node-server.md`; `skills.md` extending six universal skills; `roles.md` extending five universal roles. Frameworks covered: React, Vue, Svelte, Next, Vite, Node, plain JS/TS.
+- `core/stack-packs/python-web/` — first-class pack for Python web. Six files: `_overview.md`; `rules/python.md` (universal Python discipline); `rules/django.md`, `rules/flask.md`, `rules/fastapi.md`; `skills.md` extending six universal skills; `roles.md` extending four universal roles.
+- `core/stack-packs/salesforce/` — first-class pack for Salesforce / Commerce Cloud B2C. Six files: `_overview.md`; `rules/apex.md` (governor limits, bulk-safe code, SOQL/DML discipline, test classes); `rules/lwc.md` (Lightning Web Components: wire service, events, lifecycle); `rules/sfra.md` (Storefront Reference Architecture: cartridge layering, controllers, models, hooks); `rules/sfdx.md` (project layout, scratch orgs, deployment); `skills.md` extending six universal skills with Apex/LWC/SFRA/sfdx checks; `roles.md` extending five universal roles, including the unique mapping of Salesforce engineering surfaces (Apex → backend, LWC → frontend, sfdx → devops).
+
+### Notes — PR 6
+
+- Pack content is **stack-specific but project-agnostic**. Patterns capture what most React / Django / Apex projects benefit from; opinions about specific company codebases are excluded by design.
+- The `salesforce` pack treats Salesforce engineering on its own terms (governor limits, bulk-safe code, the platform's testing requirements, sfdx project model) rather than forcing generic web idioms onto it. Apex maps to backend; LWC maps to frontend; sfdx maps to devops; SFRA is its own thing under the backend role.
+- Each pack's [`skills.md`](core/stack-packs/js-ts/skills.md) entry uses `### <skill-id>` headings that match a real folder under [`core/skills/`](core/skills/) (verified by the lint rule `pack.skills.heading-references`). Same for [`roles.md`](core/stack-packs/js-ts/roles.md) and `### <role-id>` headings against [`core/roles/`](core/roles/) (rule `pack.roles.heading-references`).
+- Pack versioning is independent of orchestra core version. Each pack's `_overview.md` declares `pack.version` and `compatibleOrchestraVersions`. The install marker records both.
+- Adapter changes are **not required** for PR 6. Adapters consume pack content via the universal layering rules in [`core/stack-packs/_overview.md`](core/stack-packs/_overview.md) §3. The Cursor adapter's `mappings.md` already had a deferred reference to stack packs noted in PR 4; that reference now resolves.
+- The remaining stacks detected by [`core/discovery/signals/`](core/discovery/signals/) (Go, Rust, .NET, generic mobile) do not have first-class packs in v1. The audit reports their detection as `info`-severity drift and the v1.x / v2 backlog tracks pack creation. v1 is honest about this limitation.
+- All cross-links verified: 0 broken across the orchestra docs.
+
 ### Added — PR 5 (Other-IDE Adapter Baselines)
 
 - `adapters/claude-code/` — five spec files (INSTALL, mappings, target-schema, mcp, post-install-checks) defining how the orchestra installs into Claude Code. Renders the Director rule + project context + role list + skill catalog into a managed section of `CLAUDE.md` (mirrored to `AGENTS.md`). Skills are copied to `.claude/commands/<skill-id>.md` (single-file slash commands). Stop-hook is wired into `.claude/settings.json` (`hooks.Stop`) on supported Claude Code versions; older versions get a declared gap with manual fallback. MCP slots register into the project-root `.mcp.json` using the same shape as Cursor.

@@ -139,7 +139,7 @@ Every action is logged in the install marker per [`../../core/registry/install.s
 
 ## 7. Stack packs
 
-When the project profile detected one or more first-class stacks (JS/TS web, Python web, Salesforce — see [`../../core/discovery/signals/`](../../core/discovery/signals/)), the adapter would apply stack-pack content from `core/stack-packs/<stack-id>/` (deferred to PR 6). For Claude Code, stack-pack content lands as additional sections inside the `CLAUDE.md` managed area, since Claude Code lacks per-rule files.
+When the project profile detected one or more first-class stacks (JS/TS web, Python web, Salesforce — see [`../../core/discovery/signals/`](../../core/discovery/signals/)), the adapter applies stack-pack content from [`../../core/stack-packs/<stack-id>/`](../../core/stack-packs/) per the layering rules in [`../../core/stack-packs/_overview.md`](../../core/stack-packs/_overview.md) §3. For Claude Code, since Claude Code lacks per-rule files with glob activation, stack-pack content lands as additional sections inside the `CLAUDE.md` managed area: pack rules and roles addenda inline; pack skills addenda referenced from the skill catalog. The applied pack is recorded in `stacks[].stackPack` and `stacks[].stackPackVersion`.
 
 The marker reserves `stacks[].stackPack` per detected stack so a future orchestra-upgrade run can layer in the actual content without a fresh install.
 

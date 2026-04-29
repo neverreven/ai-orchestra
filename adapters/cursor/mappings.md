@@ -171,9 +171,17 @@ The adapter MUST aggregate the per-artifact actions into a single `history[]` en
 
 ## 7. Stack packs
 
-When the project profile detected one or more first-class stacks (JS/TS web, Python web, Salesforce — see [`../../core/discovery/signals/`](../../core/discovery/signals/)), the adapter applies stack-pack content from `core/stack-packs/<stack-id>/` (deferred to PR 6 — the folder does not yet exist in v1).
+When the project profile detected one or more first-class stacks (JS/TS web, Python web, Salesforce — see [`../../core/discovery/signals/`](../../core/discovery/signals/)), the adapter applies stack-pack content from [`../../core/stack-packs/<stack-id>/`](../../core/stack-packs/) per the layering rules in [`../../core/stack-packs/_overview.md`](../../core/stack-packs/_overview.md) §3.
 
-In v1 (this PR), stack packs do not yet exist as content. The adapter still records the **intended** stack-pack identifier per detected stack in the install marker — under `stacks[].stackPack` per [`../../core/registry/install.schema.md`](../../core/registry/install.schema.md) §1.2 — so a future orchestra-upgrade run can layer in the actual content without a fresh install. When the pack does not yet exist, the value is the planned path (e.g., `"core/stack-packs/js-ts"`); the audit treats a missing pack folder as `info`-severity drift, not a failure.
+The Cursor adapter materialises pack content as follows:
+
+- **Pack rule files** (`core/stack-packs/<stack-id>/rules/<topic>.md`) — each rule file becomes a `.cursor/rules/<stack-id>-<topic>.mdc` always-on rule with `globs:` derived from the rule's `## When this applies` section. Rendering follows [`render-rules.md`](render-rules.md) for `.mdc` files.
+- **Pack `skills.md`** — an addendum file `.cursor/rules/<stack-id>-skills-addenda.mdc` is created (manual-trigger rule) with the pack's per-skill addenda. The agent consults it when invoking the matching universal skill.
+- **Pack `roles.md`** — appended into the `AGENTS.md` managed section under a `### Stack roles addenda` subsection so the role guidance is visible to all agents that read `AGENTS.md`.
+
+The adapter records every applied pack in the install marker under `stacks[].stackPack` per [`../../core/registry/install.schema.md`](../../core/registry/install.schema.md) §1.2 (e.g., `"core/stack-packs/js-ts"`) and `stacks[].stackPackVersion` (the pack's declared version). Re-running the adapter against a project where a pack has been updated triggers re-rendering of the pack's `.mdc` files; the post-install checks include drift detection for stack-pack content.
+
+If a project's profile detects a stack that does not have a first-class pack in v1 (Go, Rust, .NET, generic mobile), the adapter records the detection in the install marker but does not write any pack-derived rule files; the audit reports this as `info`-severity drift, not a failure.
 
 ---
 

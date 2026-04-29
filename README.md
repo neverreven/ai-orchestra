@@ -39,8 +39,8 @@ See [RUN.md](RUN.md) for the full bootstrap procedure.
 | Role library (FE / BE / QA / Analytics / DevOps / Security / Mobile / AI-ML / Tech-Writer / PM) | PR 2 — shipped (10 roles, 30 skills, schemas, linter contract) |
 | Director + Learnings + Stop-hook + Scheduler/Notifications contracts | PR 3 — shipped |
 | Cursor adapter (full) | PR 4 — shipped (6 spec files: install / mappings / target-schema / render-rules / mcp / post-install-checks) |
-| Claude Code / Codex / VS Code adapter baselines | PR 5 — landing (15 spec files; 5 per adapter; declared gaps per `_contract.md` §6) |
-| Stack content packs (JS/TS, Python web, Salesforce / Commerce Cloud) | PR 6 — pending |
+| Claude Code / Codex / VS Code adapter baselines | PR 5 — shipped (15 spec files; 5 per adapter; declared gaps per `_contract.md` §6) |
+| Stack content packs (JS/TS, Python web, Salesforce / Commerce Cloud) | PR 6 — landing (3 packs × 7 files; framework + schema; rules / skills / roles addenda layered onto universal core) |
 | Validation harness + test fixtures | PR 7 — pending |
 
 The current `VERSION` is recorded in the [VERSION](VERSION) file.
@@ -81,7 +81,12 @@ ai-orchestra/
 │   ├── scheduler/     # declared scheduler contract — runner ships in v2 (PR 3)
 │   ├── notifications/ # declared notifications contract — router ships in v2 (PR 3)
 │   ├── registry/      # install.json + projects.json schemas
-│   └── stack-packs/   # stack-specific content (PR 6)
+│   └── stack-packs/   # stack-specific content layered onto universal core (PR 6)
+│       ├── _overview.md     # what packs are, how they layer
+│       ├── _schema.md       # required structure of a pack folder
+│       ├── js-ts/           # React/Vue/Svelte/Next/Vite/Node + TypeScript
+│       ├── python-web/      # Django, Flask, FastAPI + universal Python
+│       └── salesforce/      # Apex, LWC, SFRA (Commerce Cloud), sfdx
 ├── adapters/          # IDE-specific install logic
 │   ├── _contract.md   # adapter interface specification
 │   ├── _stop-hook.md  # stop-hook contract (PR 3)
@@ -113,3 +118,7 @@ See repository root.
 - [adapters/claude-code/INSTALL.md](adapters/claude-code/INSTALL.md) — Claude Code adapter top-level procedure (baseline v1).
 - [adapters/codex/INSTALL.md](adapters/codex/INSTALL.md) — Codex CLI adapter top-level procedure (baseline v1).
 - [adapters/vscode/INSTALL.md](adapters/vscode/INSTALL.md) — VS Code (Copilot) adapter top-level procedure (baseline v1).
+- [core/stack-packs/_overview.md](core/stack-packs/_overview.md) — stack-pack framework: what packs are and how they layer.
+- [core/stack-packs/js-ts/_overview.md](core/stack-packs/js-ts/_overview.md) — JS/TS web pack (React, Vue, Svelte, Next, Vite, Node, TypeScript).
+- [core/stack-packs/python-web/_overview.md](core/stack-packs/python-web/_overview.md) — Python web pack (Django, Flask, FastAPI).
+- [core/stack-packs/salesforce/_overview.md](core/stack-packs/salesforce/_overview.md) — Salesforce / Commerce Cloud pack (Apex, LWC, SFRA, sfdx).
