@@ -40,8 +40,8 @@ See [RUN.md](RUN.md) for the full bootstrap procedure.
 | Director + Learnings + Stop-hook + Scheduler/Notifications contracts | PR 3 — shipped |
 | Cursor adapter (full) | PR 4 — shipped (6 spec files: install / mappings / target-schema / render-rules / mcp / post-install-checks) |
 | Claude Code / Codex / VS Code adapter baselines | PR 5 — shipped (15 spec files; 5 per adapter; declared gaps per `_contract.md` §6) |
-| Stack content packs (JS/TS, Python web, Salesforce / Commerce Cloud) | PR 6 — landing (3 packs × 7 files; framework + schema; rules / skills / roles addenda layered onto universal core) |
-| Validation harness + test fixtures | PR 7 — pending |
+| Stack content packs (JS/TS, Python web, Salesforce / Commerce Cloud) | PR 6 — shipped (3 packs × 7 files; framework + schema; rules / skills / roles addenda layered onto universal core) |
+| Validation harness + test fixtures | PR 7 — landing (3 fixtures, agent-driven harness, MIGRATION.md, v1 close-out) |
 
 The current `VERSION` is recorded in the [VERSION](VERSION) file.
 
@@ -70,10 +70,11 @@ Other stacks are still detected by generic signals; deep stack-specific guidance
 ai-orchestra/
 ├── README.md          # this file
 ├── RUN.md             # canonical entry point ("run the orchestra")
+├── MIGRATION.md       # version-upgrade guidance (PR 7)
 ├── VERSION            # SemVer
 ├── CHANGELOG.md       # core evolution log
 ├── core/              # project-agnostic, tool-agnostic content
-│   ├── _lint.md       # schema linter contract (governs roles + skills)
+│   ├── _lint.md       # schema linter contract (governs roles + skills + packs)
 │   ├── discovery/     # probe + signals + existing-infra detection
 │   ├── roles/         # role definitions (PR 2 — 10 roles + schema + overview)
 │   ├── skills/        # universal skill specs (PR 2 — 30 skills + schema)
@@ -94,7 +95,12 @@ ai-orchestra/
 │   ├── claude-code/   # baseline v1 (PR 5 — same 5 files; gap on older Claude Code hooks)
 │   ├── codex/         # baseline v1 (PR 5 — same 5 files; references skills from core, no copy)
 │   └── vscode/        # baseline v1 (PR 5 — same 5 files; .github/prompts/ + .vscode/mcp.json)
-└── _test-fixtures/    # sample projects for validation (PR 7)
+└── _test-fixtures/    # sample projects for agent-driven validation (PR 7)
+    ├── _overview.md           # fixture purpose + v1 fixture set
+    ├── VALIDATION.md          # agent procedure for running the harness
+    ├── empty-js/              # fresh React+Vite, no existing infra
+    ├── ongoing-python-web/    # FastAPI with pre-existing AGENTS.md + Cursor rule
+    └── salesforce-cartridge/  # sfdx + SFRA polyglot Salesforce project
 ```
 
 ## License
@@ -122,3 +128,6 @@ See repository root.
 - [core/stack-packs/js-ts/_overview.md](core/stack-packs/js-ts/_overview.md) — JS/TS web pack (React, Vue, Svelte, Next, Vite, Node, TypeScript).
 - [core/stack-packs/python-web/_overview.md](core/stack-packs/python-web/_overview.md) — Python web pack (Django, Flask, FastAPI).
 - [core/stack-packs/salesforce/_overview.md](core/stack-packs/salesforce/_overview.md) — Salesforce / Commerce Cloud pack (Apex, LWC, SFRA, sfdx).
+- [_test-fixtures/_overview.md](_test-fixtures/_overview.md) — test fixtures and what they verify.
+- [_test-fixtures/VALIDATION.md](_test-fixtures/VALIDATION.md) — agent-driven validation procedure.
+- [MIGRATION.md](MIGRATION.md) — version-upgrade guidance and compatibility policy.

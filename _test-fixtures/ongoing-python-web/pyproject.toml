@@ -1,0 +1,22 @@
+[project]
+name = "fixture-ongoing-python-web"
+version = "0.0.0"
+description = "ai-orchestra test fixture — FastAPI service with pre-existing AGENTS.md and Cursor rule. NOT a runnable project; placeholder dependency versions."
+requires-python = ">=3.11,<3.13"
+
+dependencies = [
+    "fastapi>=99.0.0",
+    "pydantic>=99.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=99.0.0",
+    "pytest-asyncio>=99.0.0",
+]
+
+[tool.ruff]
+line-length = 100
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

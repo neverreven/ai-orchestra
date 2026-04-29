@@ -1,0 +1,136 @@
+# MIGRATION.md — Upgrading the orchestra
+
+> Guidance for moving an installed orchestra from one version to another. v1 sets the policy; v1.x and v2 will populate the version-specific sections as they ship.
+
+The orchestra core follows [Semantic Versioning](https://semver.org/). Per-project installs record their orchestra version in `.ai-orchestra/install.json` (`orchestra.version` field per [`core/registry/install.schema.md`](core/registry/install.schema.md)).
+
+---
+
+## 1. The migration model
+
+The orchestra has no built-in migration runner in v1. Migration is **agent-driven** and uses the audit skill ([`core/skills/audit/ai-infra-audit/SKILL.md`](core/skills/audit/ai-infra-audit/SKILL.md)) as the primary mechanism.
+
+The flow:
+
+1. **Update the orchestra core** in the project (replace `ai-orchestra/` with the new version, or pull updates if the core is vendored from upstream).
+2. **Re-run the orchestra** (per [`RUN.md`](RUN.md)). The first three phases stay the same. In Phase 3 (existing-infra inventory), the agent finds an existing `.ai-orchestra/install.json` and detects a version mismatch with the new core's `VERSION` file.
+3. The orchestra switches to **upgrade-and-audit mode** (per [`RUN.md`](RUN.md) §10 — "The target project already has an `.ai-orchestra/install.json`").
+4. The audit skill produces a focused diff describing only the drift between the installed orchestration and the new core.
+5. The user reviews the diff and applies it (or selectively skips entries).
+
+This model keeps migrations:
+
+- **Idempotent** — re-running the same upgrade path produces the same result.
+- **Reviewable** — every change goes through a dry-run plan first.
+- **Reversible** — old files are preserved when conflict-handling rules require it; the install marker's `history[]` records every run.
+- **Honest about gaps** — when a feature in the new version cannot be applied (e.g., adapter limitation), the upgrade plan surfaces it explicitly.
+
+---
+
+## 2. Compatibility policy
+
+The orchestra core's SemVer is binding:
+
+- **Patch (1.0.x → 1.0.y):** No structural changes; clarifications, typo fixes, lint-rule severity tweaks, expanded skill prose. Upgrades are safe and almost always produce a small audit diff (or none).
+- **Minor (1.x → 1.y):** New roles, new skills, new stack packs, new adapter capabilities, new optional fields in the install marker. **Backward-compatible.** Upgrades surface new install items with `action: create`; existing install items remain `skip`.
+- **Major (1 → 2):** Breaking changes — schema field renames, removed roles/skills, contract reshaping, mandatory new fields. **Requires explicit user opt-in.** The upgrade plan flags every breaking change individually with `severity: critical` and asks for confirmation per change before applying.
+
+Stack packs version independently of the orchestra core (per [`core/stack-packs/_overview.md`](core/stack-packs/_overview.md) §5). A pack's `compatibleOrchestraVersions` field declares which core versions it works against. The audit refuses to apply a pack whose declared compatibility excludes the running core version.
+
+---
+
+## 3. Backward-compatibility guarantees of the install marker
+
+The install marker schema in [`core/registry/install.schema.md`](core/registry/install.schema.md) follows additive evolution:
+
+- **Adding optional fields:** safe, minor-version. Old markers without the new field are read with the field unset; the audit skill migrates them in place on the next run (subject to the user's confirmation if the change is non-trivial).
+- **Adding required fields:** counts as a major-version change. The migration plan must populate the new field for every existing marker — either by deriving it from existing data (preferred) or by asking the user.
+- **Renaming fields:** counts as a major-version change. The audit skill must do an in-place rename on every existing marker.
+- **Removing fields:** counts as a major-version change. The migration plan archives the removed value into the marker's `history[].summary` so it is retrievable.
+
+The 1.0.x markers are guaranteed to be readable by every 1.x orchestra release.
+
+---
+
+## 4. Per-version migration notes
+
+The sections below are populated as new versions ship. v1.0.0-alpha is the baseline; no migration is needed to reach it.
+
+### From `1.0.0-alpha` to a future `1.0.0` release
+
+Expected to be a no-op for installed projects: the alpha is feature-complete for v1; the bump to `1.0.0` happens after the post-v1 pilot (per [`README.md`](README.md) §Status) and reflects validation-harness sign-off. Re-run the orchestra; the audit diff should be empty (or limited to clarification-only changes).
+
+### From `1.0.x` to `1.1.x` (placeholder)
+
+To be populated when v1.1 ships. Expected categories of changes:
+
+- New stack packs (Go web, Rust services, .NET, mobile native).
+- New roles or skills (additive only).
+- Adapter parity improvements (e.g., Codex stop-hook polyfill if the runtime adds support).
+- New optional install-marker fields.
+
+### From `1.x` to `2.0` (placeholder)
+
+To be populated when v2 ships. Expected categories of changes:
+
+- Multi-project orchestration runtime (single agent acting across multiple installed projects).
+- Scheduler runner (currently contracts only).
+- Notifications router (currently contracts only).
+- Distribution mechanism (`npx ai-orchestra init`, `curl | bash`).
+- Possible major-version-warranted reshaping of the install-marker schema.
+
+The 1 → 2 migration plan will be detailed in this file when v2's design firms up. Current expectation: a guided, multi-step audit run with explicit user confirmation on every breaking change.
+
+---
+
+## 5. Migrating from a non-orchestra setup to the orchestra
+
+For projects that already have agentic infrastructure not produced by the orchestra (handcrafted `AGENTS.md`, custom `.cursor/rules/*.mdc`, project-specific skills), the orchestra's first-time install is itself a migration.
+
+The procedure is exactly [`RUN.md`](RUN.md), with two emphases:
+
+- **Phase 3 (existing-infra inventory)** is where everything you've built shows up.
+- **Phase 5 (install plan)** treats every existing artifact with the appropriate conflict action: `skip` for project-owned files, `extend-section` for files where the orchestra adds to a managed area, `suffix-rename` if a name collision is unavoidable.
+
+The [`_test-fixtures/ongoing-python-web/`](_test-fixtures/ongoing-python-web/) fixture is the canonical example of this scenario (existing `AGENTS.md` + existing project rule). Read its [`EXPECTED.md`](_test-fixtures/ongoing-python-web/EXPECTED.md) to see the orchestra's behaviour against partial pre-existing infrastructure.
+
+If your existing setup is large or unusual, run the dry-run first, review the plan carefully, and use the `revise` reply (per [`RUN.md`](RUN.md) §6) to ask for adjustments before applying.
+
+---
+
+## 6. Migrating between IDEs
+
+If a project changes IDE (e.g., Cursor → Claude Code), the orchestra supports running the relevant adapter against the same project. The previous adapter's installed files (`.cursor/`, etc.) remain in place — the orchestra does not remove them. This is intentional: a team may use multiple IDEs simultaneously.
+
+The new IDE's adapter:
+
+- Inventories existing infra including the previous adapter's files.
+- Renders its own installed orchestration into the new IDE's locations.
+- Records both adapters in the install marker's `adapters[]` (or equivalent — per the marker schema).
+
+To **fully remove** the previous adapter's files, that's a manual operation outside the orchestra. The orchestra does not delete files in v1.
+
+---
+
+## 7. Rollback
+
+The orchestra has no `rollback` command in v1. Rollback is:
+
+- **Trivial for files we created:** delete `.cursor/`, `.claude/commands/<orchestra-skills>`, etc. The marker can be deleted to remove the registry entry.
+- **Less trivial for managed sections in pre-existing files:** find the `<!-- ai-orchestra: managed-section start -->` and `<!-- ai-orchestra: managed-section end -->` markers in the file and delete the content between them, including the markers themselves.
+- **Trivial for the install marker:** delete `.ai-orchestra/install.json`. Optionally delete the corresponding entry from `~/.ai-orchestra/projects.json`.
+
+If you want clean uninstall tooling, that's v2 backlog. The current state is "deletable, with care."
+
+---
+
+## 8. References
+
+- [`README.md`](README.md) — orchestra overview.
+- [`VERSION`](VERSION) — current core version.
+- [`CHANGELOG.md`](CHANGELOG.md) — orchestra evolution log; consult before any upgrade.
+- [`RUN.md`](RUN.md) — bootstrap procedure (also drives upgrades via §10).
+- [`core/registry/install.schema.md`](core/registry/install.schema.md) — install marker schema (compatibility policy enforced here).
+- [`core/skills/audit/ai-infra-audit/SKILL.md`](core/skills/audit/ai-infra-audit/SKILL.md) — audit skill (the primary upgrade-time mechanism).
+- [`core/stack-packs/_overview.md`](core/stack-packs/_overview.md) — stack-pack versioning (independent of core).
+- [`_test-fixtures/ongoing-python-web/`](_test-fixtures/ongoing-python-web/) — fixture demonstrating partial-existing-infra migration.

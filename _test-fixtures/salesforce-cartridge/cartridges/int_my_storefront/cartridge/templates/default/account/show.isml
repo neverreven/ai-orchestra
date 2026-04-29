@@ -1,0 +1,6 @@
+<iscontent type="text/html" charset="UTF-8" />
+<!-- ai-orchestra fixture: minimal SFRA ISML template. -->
+<isdecorate template="common/layout/page">
+    <h1>Account ${pdict.accountId}</h1>
+    <p>ai-orchestra test fixture template. Not rendered.</p>
+</isdecorate>
