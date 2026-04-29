@@ -85,7 +85,7 @@ Body: rendered per [`render-rules.md`](render-rules.md) §4.
 
 Cursor's rules and skills are distinct concepts. **Roles do not become rules**; their content lives in the consolidated `orchestra-context.mdc` (always-on summary) and in `AGENTS.md` (full reference).
 
-The orchestra installs at most these two rule files in v1. Stack packs (PR 6) may add stack-specific rules (e.g., `code-standards.mdc`); they get their own files with their own frontmatter and are NOT bundled into the orchestra-context rule.
+The orchestra installs at most these two rule files in v1 baseline (universal core only). Stack packs (shipped in PR 6) add stack-specific rules per [`mappings.md`](mappings.md) §7 (e.g., `js-ts-react.mdc`, `python-web-django.mdc`, `salesforce-apex.mdc`); each gets its own file with its own frontmatter and is NOT bundled into the orchestra-context rule.
 
 ---
 
@@ -269,7 +269,7 @@ The Cursor adapter does NOT write any of the following in v1:
 
 - Per-role rules (roles live in the orchestra-context summary + `AGENTS.md`).
 - Per-skill rules (skills are skills, not rules).
-- Stack-pack content (deferred to PR 6; the marker reserves a slot).
+- Stack-pack content is available from [`../../core/stack-packs/`](../../core/stack-packs/) (PR 6); the marker records applied packs in `stacks[].stackPack` and `stacks[].stackPackVersion`.
 - Anything inside the project's source tree.
 - Anything in `~/.cursor/` (user-global Cursor settings; never touched).
 - Workspace settings (`.vscode/settings.json` etc., even though Cursor reads some of them).

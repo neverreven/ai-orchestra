@@ -3,7 +3,7 @@
 > First-class stack in v1. Detects Salesforce platform projects across SFDX (general Salesforce), SFRA (Commerce Cloud B2C Storefront Reference Architecture), and PWA Kit (Commerce Cloud headless).
 
 **Stack id:** `salesforce`
-**Stack pack:** `core/stack-packs/salesforce/` (PR 6)
+**Stack pack:** [`../../stack-packs/salesforce/`](../../stack-packs/salesforce/_overview.md)
 **Sub-flavours:** `salesforce-sfdx`, `salesforce-sfra`, `salesforce-pwa-kit` (recorded in `profile.frameworks`)
 
 ## Strong signals (weight 3 each)
@@ -66,5 +66,6 @@ A project may be **multiple sub-flavours simultaneously** (e.g., SFRA storefront
 
 ## References
 
-- [DETECTION.md](../DETECTION.md) — overall probe procedure.
-- `core/stack-packs/salesforce/` — stack-specific content (PR 6).
+- [../DETECTION.md](../DETECTION.md) — overall probe procedure.
+- [../../stack-packs/salesforce/_overview.md](../../stack-packs/salesforce/_overview.md) — stack-specific content selected by this signal.
+- [../../stack-packs/_overview.md](../../stack-packs/_overview.md) — stack-pack framework overview.

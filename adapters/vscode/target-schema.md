@@ -197,7 +197,7 @@ The VS Code baseline adapter does NOT write any of the following in v1:
 - `.vscode/settings.json`, `.vscode/tasks.json`, `.vscode/launch.json`.
 - Anything in `~/.vscode/` (user-global VS Code state).
 - Auxiliary files alongside skill prompts (single-file prompts only).
-- Stack-pack content (deferred to PR 6).
+- Stack-pack content is available from [`../../core/stack-packs/`](../../core/stack-packs/) (PR 6) and lands as additional sections inside the `.github/copilot-instructions.md` managed area per [`mappings.md`](mappings.md) §7.
 - Anything inside the project's source tree.
 
 ---

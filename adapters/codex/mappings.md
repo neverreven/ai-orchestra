@@ -114,7 +114,7 @@ Every action is logged in the install marker per [`../../core/registry/install.s
 
 ## 7. Stack packs
 
-When the project profile detected one or more first-class stacks, the Codex adapter would apply stack-pack content from `core/stack-packs/<stack-id>/` (deferred to PR 6). Stack-pack content lands as additional sections inside the AGENTS.md managed area, since Codex lacks per-rule files.
+When the project profile detects one or more first-class stacks, the Codex adapter applies stack-pack content from [`../../core/stack-packs/<stack-id>/`](../../core/stack-packs/) per the layering rules in [`../../core/stack-packs/_overview.md`](../../core/stack-packs/_overview.md) §3. Since Codex lacks per-rule files, stack-pack rule content lands as additional sections inside the `AGENTS.md` managed area, with skill addenda referenced via links in the skill catalog (Codex's reference-not-copy strategy applies to pack skills as well as universal skills). The applied pack is recorded in `stacks[].stackPack` and `stacks[].stackPackVersion`.
 
 ---
 

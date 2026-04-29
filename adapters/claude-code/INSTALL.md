@@ -136,7 +136,7 @@ Per [`../_contract.md`](../_contract.md) §6, every gap is declared explicitly. 
 |-----------------|-----|--------|----------------------|
 | Stop-hook (per [`../_stop-hook.md`](../_stop-hook.md)) | Partial: not supported on older Claude Code versions. | The hooks system landed in Claude Code 0.10+. Older versions have no equivalent. | The Director rule's body in `CLAUDE.md` includes a manual review prompt the user can trigger by saying "review this session for learnings" at session end. The `/ai-infra-audit` slash command also runs the same review on demand. |
 | Per-rule files (Cursor's `.cursor/rules/*.mdc`) | No equivalent — Claude Code has only `CLAUDE.md`. | Claude Code's design consolidates project context in a single file. | All always-on rules (Director + orchestra-context) are merged into the `CLAUDE.md` managed section. |
-| Always-on rules with `globs` (file-scoped activation) | Not supported. | Claude Code reads `CLAUDE.md` for every session unconditionally. | Stack-pack content (PR 6) becomes additional sections in the managed area; cannot be conditionally loaded. |
+| Always-on rules with `globs` (file-scoped activation) | Not supported. | Claude Code reads `CLAUDE.md` for every session unconditionally. | Stack-pack content (shipped in PR 6, see [`../../core/stack-packs/`](../../core/stack-packs/)) becomes additional sections in the managed area; cannot be conditionally loaded. |
 
 These gaps are recorded in the install plan's `gaps[]` array and surfaced in the post-install report. They are NOT silent.
 
