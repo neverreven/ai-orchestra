@@ -37,8 +37,8 @@ See [RUN.md](RUN.md) for the full bootstrap procedure.
 |------|-------|
 | Core scaffold (this folder) | PR 1 — shipped |
 | Role library (FE / BE / QA / Analytics / DevOps / Security / Mobile / AI-ML / Tech-Writer / PM) | PR 2 — shipped (10 roles, 30 skills, schemas, linter contract) |
-| Director + Learnings + Stop-hook + Scheduler/Notifications contracts | PR 3 — landing |
-| Cursor adapter (full) | PR 4 — pending |
+| Director + Learnings + Stop-hook + Scheduler/Notifications contracts | PR 3 — shipped |
+| Cursor adapter (full) | PR 4 — landing (6 spec files: install / mappings / target-schema / render-rules / mcp / post-install-checks) |
 | Claude Code / Codex / VS Code adapter baselines | PR 5 — pending |
 | Stack content packs (JS/TS, Python web, Salesforce / Commerce Cloud) | PR 6 — pending |
 | Validation harness + test fixtures | PR 7 — pending |
@@ -109,3 +109,4 @@ See repository root.
 - [core/_lint.md](core/_lint.md) — schema linter contract.
 - [adapters/_contract.md](adapters/_contract.md) — the binding between core content and IDE-native installation.
 - [adapters/_stop-hook.md](adapters/_stop-hook.md) — stop-hook contract that adapters wire into IDE stop-events.
+- [adapters/cursor/INSTALL.md](adapters/cursor/INSTALL.md) — Cursor adapter top-level procedure (full v1).

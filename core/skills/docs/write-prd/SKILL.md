@@ -36,7 +36,7 @@
 
 ## Output
 
-A short markdown PRD using the included template ([template.md](template.md), if present in the skill's folder; otherwise the agent generates one). Length target: 1–2 pages. The PRD lives in the project's documentation folder according to existing conventions; the skill will not invent a folder.
+A short markdown PRD using the skill folder's `template.md` if present (the orchestra ships without it in v1; stack packs may add one in PR 6); otherwise the agent generates one from scratch. Length target: 1–2 pages. The PRD lives in the project's documentation folder according to existing conventions; the skill will not invent a folder.
 
 ## References
 

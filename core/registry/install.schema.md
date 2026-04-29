@@ -65,7 +65,12 @@ The `.ai-orchestra/` directory at the target project root is reserved for orches
   ],
 
   "hooks": {
-    "stop": { "registered": true, "path": ".cursor/hooks.json" }
+    "stop": {
+      "registered": true,
+      "path": ".cursor/hooks.json",
+      "contractVersion": "1.0",
+      "lastRun": null
+    }
   },
 
   "mcpSlots": [
@@ -129,7 +134,7 @@ The `.ai-orchestra/` directory at the target project root is reserved for orches
 | `roles[]` | Yes | Role identifiers installed for this project. |
 | `skills[]` | Yes | Skill identifiers installed, with category and source path. |
 | `rules[]` | Yes | Rules installed, with target path and source template. |
-| `hooks` | Yes | Map of event name → registration metadata. Empty object if no hooks installed. |
+| `hooks` | Yes | Map of event name → registration metadata. Empty object if no hooks installed. Each entry has `registered: bool`, `path: string`, `contractVersion: string` (per [`../../adapters/_stop-hook.md`](../../adapters/_stop-hook.md) — `"1.0"` in v1), and optional `lastRun: ISO-8601 | null` (updated after each hook fire). |
 | `mcpSlots[]` | Yes | MCP slots the orchestra registered. Empty array if none. |
 | `learnings` | Yes | Learnings document location and whether the orchestra seeded it. |
 | `agentsDoc` | Yes | Project-context document location and the section name owned by the orchestra. |
