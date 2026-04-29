@@ -73,6 +73,7 @@ ai-orchestra/
 ├── MIGRATION.md       # version-upgrade guidance (PR 7)
 ├── VERSION            # SemVer
 ├── CHANGELOG.md       # core evolution log
+├── _v1.x-backlog.md   # planned v1.x findings (F1–F8) with proposals
 ├── core/              # project-agnostic, tool-agnostic content
 │   ├── _lint.md       # schema linter contract (governs roles + skills + packs)
 │   ├── discovery/     # probe + signals + existing-infra detection
@@ -131,3 +132,4 @@ See repository root.
 - [_test-fixtures/_overview.md](_test-fixtures/_overview.md) — test fixtures and what they verify.
 - [_test-fixtures/VALIDATION.md](_test-fixtures/VALIDATION.md) — agent-driven validation procedure.
 - [MIGRATION.md](MIGRATION.md) — version-upgrade guidance and compatibility policy.
+- [_v1.x-backlog.md](_v1.x-backlog.md) — eight planned v1.x findings with priority, proposals, and touched files.
