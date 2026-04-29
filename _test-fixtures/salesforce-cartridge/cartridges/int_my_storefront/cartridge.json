@@ -1,0 +1,6 @@
+{
+  "name": "int_my_storefront",
+  "version": "0.0.0",
+  "description": "ai-orchestra fixture: minimal SFRA cartridge stub. Not deployable.",
+  "main": "cartridge/controllers/Account.js"
+}

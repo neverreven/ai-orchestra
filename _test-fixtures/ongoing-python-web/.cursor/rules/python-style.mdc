@@ -1,0 +1,20 @@
+---
+description: Project-specific Python style rule that pre-exists in the fixture. The ai-orchestra must NOT touch this file.
+globs: ["**/*.py"]
+alwaysApply: true
+---
+
+# Python style — project-specific
+
+> **Pre-existing project rule.** The ai-orchestra has no ownership of this file and must record it in the existing-infra inventory but never overwrite, append to, or rename it.
+
+## Conventions
+
+- Use the app factory pattern (`create_app()`); never `app = FastAPI()` at module top level.
+- Pydantic models live in `app/models.py` (or domain-specific files under `app/`).
+- Public functions and methods carry type hints. Private helpers may omit them when the type is obvious from a one-line implementation.
+- Imports ordered by `ruff` configuration; do not hand-edit import order.
+
+## Validation expectation
+
+This file's mere presence verifies that the ai-orchestra's existing-infra inventory correctly identifies a project-owned `.cursor/rules/*.mdc` file (per [`../../../../core/discovery/existing-infra.md`](../../../../core/discovery/existing-infra.md)) and the install plan emits `action: skip` for this exact path. Any plan that touches this file is a critical bug.

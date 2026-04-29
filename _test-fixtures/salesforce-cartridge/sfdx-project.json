@@ -1,0 +1,13 @@
+{
+  "packageDirectories": [
+    {
+      "path": "force-app",
+      "default": true
+    }
+  ],
+  "name": "fixture-salesforce-cartridge",
+  "namespace": "",
+  "sfdcLoginUrl": "https://login.salesforce.com",
+  "sourceApiVersion": "59.0",
+  "_comment": "ai-orchestra test fixture — minimal sfdx project that coexists with an SFRA cartridge. Not deployable."
+}

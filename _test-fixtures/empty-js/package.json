@@ -1,0 +1,23 @@
+{
+  "name": "fixture-empty-js",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "ai-orchestra test fixture — fresh React + Vite + TypeScript project with no existing agentic infra. NOT a runnable project; placeholder dependency versions.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^99.0.0",
+    "react-dom": "^99.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^99.0.0",
+    "@types/react-dom": "^99.0.0",
+    "@vitejs/plugin-react": "^99.0.0",
+    "typescript": "^99.0.0",
+    "vite": "^99.0.0"
+  }
+}

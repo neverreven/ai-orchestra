@@ -244,6 +244,7 @@ Tell the user: "I cannot find `ai-orchestra/` in the project root. Make sure the
 - [README.md](README.md) — orchestra overview.
 - [VERSION](VERSION) — current orchestra core version.
 - [CHANGELOG.md](CHANGELOG.md) — orchestra evolution log.
+- [MIGRATION.md](MIGRATION.md) — version-upgrade guidance and compatibility policy.
 - [core/discovery/DETECTION.md](core/discovery/DETECTION.md) — discovery probe procedure.
 - [core/discovery/signals/](core/discovery/signals/) — per-stack detector definitions.
 - [core/discovery/existing-infra.md](core/discovery/existing-infra.md) — existing-infra inventory procedure.
@@ -253,7 +254,10 @@ Tell the user: "I cannot find `ai-orchestra/` in the project root. Make sure the
 - [core/scheduler/CONTRACT.md](core/scheduler/CONTRACT.md) — scheduler contract (v2 runner).
 - [core/notifications/CONTRACT.md](core/notifications/CONTRACT.md) — notifications contract (v2 router).
 - [core/registry/install.schema.md](core/registry/install.schema.md) — install marker schema.
+- [core/stack-packs/_overview.md](core/stack-packs/_overview.md) — stack-pack framework and layering rules.
 - [core/_lint.md](core/_lint.md) — schema linter contract.
 - [adapters/_contract.md](adapters/_contract.md) — adapter interface specification.
 - [adapters/_stop-hook.md](adapters/_stop-hook.md) — stop-hook contract.
 - [core/skills/audit/ai-infra-audit/SKILL.md](core/skills/audit/ai-infra-audit/SKILL.md) — audit skill that validates the installed orchestra.
+- [_test-fixtures/_overview.md](_test-fixtures/_overview.md) — test fixtures (agent validators run here, not against real projects).
+- [_test-fixtures/VALIDATION.md](_test-fixtures/VALIDATION.md) — agent-driven validation procedure.

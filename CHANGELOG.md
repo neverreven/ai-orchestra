@@ -8,6 +8,32 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Added — PR 7 (Validation Harness + Documentation Polish)
+
+- `_test-fixtures/_overview.md` — what fixtures are, the v1 fixture set (3 fixtures), folder shape, what fixtures verify (detection, install plan, existing-infra respect, idempotency, honesty), what's out of scope for v1, host-project isolation requirements, and how to add a new fixture.
+- `_test-fixtures/VALIDATION.md` — agent-driven validation procedure. Six phases (enumerate fixtures → per-fixture dry-run with detection / plan / idempotency / honesty checks → aggregate report → output). Defines the structured report format, pass/fail/notes scheme, and explicit non-mutability constraints.
+- `_test-fixtures/empty-js/` — fresh React + TypeScript + Vite project with zero existing agentic infrastructure. 8 files: README, EXPECTED, package.json, tsconfig.json, vite.config.ts, index.html, src/main.tsx, src/App.tsx. Tests detection of `js-ts` stack with React + Vite frameworks; full install path with no conflicts.
+- `_test-fixtures/ongoing-python-web/` — FastAPI service with pre-existing `AGENTS.md` and `.cursor/rules/python-style.mdc`. 9 files: README, EXPECTED, pyproject.toml, app/__init__.py, app/main.py, app/models.py, tests/test_main.py, AGENTS.md, .cursor/rules/python-style.mdc. Tests `python-web` stack detection with FastAPI; existing-infra preservation; managed-section `extend-section` action on `AGENTS.md`; `skip` action on the project-owned rule; idempotent re-run.
+- `_test-fixtures/salesforce-cartridge/` — sfdx + SFRA polyglot Salesforce project. 12 files: README, EXPECTED, sfdx-project.json, package.xml, AccountController.cls + meta, accountList LWC bundle (3 files), int_my_storefront cartridge (cartridge.json + Account.js controller + show.isml). Tests multi-sub-flavour detection (`salesforce-sfdx` + `salesforce-sfra`), all four salesforce-pack rule files rendering, and the negative case where `.js` files inside cartridges do NOT trigger a false-positive `js-ts` detection.
+- `MIGRATION.md` — orchestra version-upgrade guidance. Documents the agent-driven migration model (re-run + audit-skill drift detection), SemVer compatibility policy (patch / minor / major behaviour), install-marker backward-compatibility guarantees, per-version migration notes (with placeholders for future versions), migration from non-orchestra setups, IDE switching, and rollback procedure.
+
+### Changed — PR 7
+
+- `README.md` — final v1 status table (all seven PRs shipped); repository layout updated to include `_test-fixtures/` subtree and `MIGRATION.md`; See-also entries for the new files.
+- `eslint.config.js` (host-project file outside the orchestra core) — added `ai-orchestra/_test-fixtures` to the global ignore list. This prevents host-project's lint pipeline from processing fixture source code as if it were host code. Disappears when the orchestra is extracted to its own repo.
+
+### Notes — PR 7
+
+- The validation harness is **declarative and agent-driven**. There is no runtime test runner in v1 — agents read `VALIDATION.md`, execute the procedure, and produce a structured markdown report. v2 backlog includes optional CI runtime support.
+- Each fixture's `EXPECTED.md` is the **contract** the orchestra must satisfy when run against that fixture. Drift between core and `EXPECTED.md` is caught the next time the harness runs; the audit skill is the recommended owner of detecting that drift.
+- The fixture set is deliberately minimal: 3 fixtures covering the v1 surface (clean install, existing-infra preservation, polyglot detection). v1.x and v2 will grow the set (Go, Rust, mobile, adversarial fixtures, etc.).
+- The post-v1 pilot — dry-running the orchestra against the host host-project project on `experiment/orchestra-pilot-host-project` — uses this harness as its skeleton, but the pilot is itself separate work that runs **after** the aggregator merges to master.
+- All cross-links verified: 0 broken across the orchestra docs.
+
+### v1 close-out
+
+This PR completes v1 of the orchestra (all seven planned PRs shipped). The version remains `1.0.0-alpha` until the post-v1 pilot validates against a real codebase; the version will move to `1.0.0` once the pilot signs off, per the policy in [`MIGRATION.md`](MIGRATION.md) §4. v1 backlog (multi-project orchestration runtime, scheduler runner, notifications router, distribution mechanism, additional stack packs, deeper non-Cursor adapter coverage) is tracked in the project plan; none of it ships in v1.
+
 ### Added — PR 6 (Stack Content Packs)
 
 - `core/stack-packs/_overview.md` — framework explaining what stack packs are, how they layer onto the universal core (roles unchanged, skills unchanged, packs add content additively), the three first-class v1 packs, install ordering, pack versioning, and how to add a future pack.
