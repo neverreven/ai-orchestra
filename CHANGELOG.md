@@ -8,6 +8,10 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Added — v1.x backlog tracking
+
+- `_v1.x-backlog.md` — project-agnostic record of the eight findings (F1–F8) captured during the post-v1 pilot. Each finding has a priority (high / medium / low), a neutral observation, a concrete proposal for v1.x, the rationale ("why"), and a list of orchestra files the proposal would touch. F8 is explicitly deferred to v2; the rest are scoped to v1.x in the recommended ship order F4 → F2 → F5 → F1 → F7 → F3 → F6. The file owns its own "Shipped" section so closed findings move there with a back-link to the changelog entry that closed them. v1 is unaffected; this is purely planning content for the next release.
+
 ### Added — PR 7 (Validation Harness + Documentation Polish)
 
 - `_test-fixtures/_overview.md` — what fixtures are, the v1 fixture set (3 fixtures), folder shape, what fixtures verify (detection, install plan, existing-infra respect, idempotency, honesty), what's out of scope for v1, host-project isolation requirements, and how to add a new fixture.
