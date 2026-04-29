@@ -34,8 +34,8 @@ The `.ai-orchestra/` directory at the target project root is reserved for orches
   },
 
   "project": {
-    "name": "host-project",
-    "root": "C:/_host-project/_project/host-project"
+    "name": "example-project",
+    "root": "/absolute/path/to/example-project"
   },
 
   "stacks": [
@@ -180,8 +180,8 @@ The directory `~/.ai-orchestra/` is created on first install if it does not exis
   "schemaVersion": 1,
   "projects": [
     {
-      "path": "C:/_host-project/_project/host-project",
-      "name": "host-project",
+      "path": "/absolute/path/to/example-project",
+      "name": "example-project",
       "ide": "cursor",
       "lastSeenVersion": "1.0.0-alpha",
       "lastSeenAt": "2026-04-29T08:00:00.000Z"

@@ -24,7 +24,7 @@ Append a single object to the project profile under `profile.existingInfra`:
     "copilotInstructions": { "present": false },
     "cursor": {
       "rules": [
-        { "path": ".cursor/rules/host-project-context.mdc", "alwaysApply": true, "title": "host-project-context" }
+        { "path": ".cursor/rules/project-context.mdc", "alwaysApply": true, "title": "project-context" }
       ],
       "skills": [
         { "path": ".cursor/skills/cleanup/SKILL.md", "name": "cleanup" }
@@ -54,8 +54,8 @@ Append a single object to the project profile under `profile.existingInfra`:
       "present": false
     },
     "miscDocs": [
-      "_documentation/PROJECT_DOC_host-project.md",
-      "_documentation/PLAN_GoLive_Launch.md"
+      "_documentation/PROJECT_DOC.md",
+      "_documentation/PLAN_Launch.md"
     ]
   }
 }
