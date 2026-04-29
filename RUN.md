@@ -107,10 +107,11 @@ Using:
 - The project profile from Phase 2,
 - The existing-infra inventory from Phase 3,
 - The adapter's mappings from Phase 4,
-- The role library and skill specs in `core/roles/` and `core/skills/`,
+- The role library and skill specs in [core/roles/](core/roles/) and [core/skills/](core/skills/),
 - Stack-specific content from `core/stack-packs/<detected-stack>/` (where available),
-- Director/learnings/audit templates from `core/director/`,
-- Scheduler/notifications contracts from `core/scheduler/` and `core/notifications/`,
+- Director/learnings templates from [core/director/](core/director/_overview.md),
+- Scheduler/notifications contracts from [core/scheduler/CONTRACT.md](core/scheduler/CONTRACT.md) and [core/notifications/CONTRACT.md](core/notifications/CONTRACT.md),
+- Stop-hook contract from [adapters/_stop-hook.md](adapters/_stop-hook.md),
 
 …produce a **dry-run diff**. The diff must contain, for every file the orchestra would touch in the target project:
 
@@ -246,5 +247,13 @@ Tell the user: "I cannot find `ai-orchestra/` in the project root. Make sure the
 - [core/discovery/DETECTION.md](core/discovery/DETECTION.md) — discovery probe procedure.
 - [core/discovery/signals/](core/discovery/signals/) — per-stack detector definitions.
 - [core/discovery/existing-infra.md](core/discovery/existing-infra.md) — existing-infra inventory procedure.
+- [core/director/_overview.md](core/director/_overview.md) — Director system overview (rule + learnings).
+- [core/director/RULE.md](core/director/RULE.md) — Director rule template.
+- [core/director/learnings-template.md](core/director/learnings-template.md) — learnings document seed.
+- [core/scheduler/CONTRACT.md](core/scheduler/CONTRACT.md) — scheduler contract (v2 runner).
+- [core/notifications/CONTRACT.md](core/notifications/CONTRACT.md) — notifications contract (v2 router).
 - [core/registry/install.schema.md](core/registry/install.schema.md) — install marker schema.
+- [core/_lint.md](core/_lint.md) — schema linter contract.
 - [adapters/_contract.md](adapters/_contract.md) — adapter interface specification.
+- [adapters/_stop-hook.md](adapters/_stop-hook.md) — stop-hook contract.
+- [core/skills/audit/ai-infra-audit/SKILL.md](core/skills/audit/ai-infra-audit/SKILL.md) — audit skill that validates the installed orchestra.
