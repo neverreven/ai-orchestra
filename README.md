@@ -38,8 +38,8 @@ See [RUN.md](RUN.md) for the full bootstrap procedure.
 | Core scaffold (this folder) | PR 1 — shipped |
 | Role library (FE / BE / QA / Analytics / DevOps / Security / Mobile / AI-ML / Tech-Writer / PM) | PR 2 — shipped (10 roles, 30 skills, schemas, linter contract) |
 | Director + Learnings + Stop-hook + Scheduler/Notifications contracts | PR 3 — shipped |
-| Cursor adapter (full) | PR 4 — landing (6 spec files: install / mappings / target-schema / render-rules / mcp / post-install-checks) |
-| Claude Code / Codex / VS Code adapter baselines | PR 5 — pending |
+| Cursor adapter (full) | PR 4 — shipped (6 spec files: install / mappings / target-schema / render-rules / mcp / post-install-checks) |
+| Claude Code / Codex / VS Code adapter baselines | PR 5 — landing (15 spec files; 5 per adapter; declared gaps per `_contract.md` §6) |
 | Stack content packs (JS/TS, Python web, Salesforce / Commerce Cloud) | PR 6 — pending |
 | Validation harness + test fixtures | PR 7 — pending |
 
@@ -85,10 +85,10 @@ ai-orchestra/
 ├── adapters/          # IDE-specific install logic
 │   ├── _contract.md   # adapter interface specification
 │   ├── _stop-hook.md  # stop-hook contract (PR 3)
-│   ├── cursor/        # full v1 (PR 4)
-│   ├── claude-code/   # baseline v1 (PR 5)
-│   ├── codex/         # baseline v1 (PR 5)
-│   └── vscode/        # baseline v1 (PR 5)
+│   ├── cursor/        # full v1 (PR 4 — INSTALL/mappings/target-schema/render-rules/mcp/post-install-checks)
+│   ├── claude-code/   # baseline v1 (PR 5 — same 5 files; gap on older Claude Code hooks)
+│   ├── codex/         # baseline v1 (PR 5 — same 5 files; references skills from core, no copy)
+│   └── vscode/        # baseline v1 (PR 5 — same 5 files; .github/prompts/ + .vscode/mcp.json)
 └── _test-fixtures/    # sample projects for validation (PR 7)
 ```
 
@@ -110,3 +110,6 @@ See repository root.
 - [adapters/_contract.md](adapters/_contract.md) — the binding between core content and IDE-native installation.
 - [adapters/_stop-hook.md](adapters/_stop-hook.md) — stop-hook contract that adapters wire into IDE stop-events.
 - [adapters/cursor/INSTALL.md](adapters/cursor/INSTALL.md) — Cursor adapter top-level procedure (full v1).
+- [adapters/claude-code/INSTALL.md](adapters/claude-code/INSTALL.md) — Claude Code adapter top-level procedure (baseline v1).
+- [adapters/codex/INSTALL.md](adapters/codex/INSTALL.md) — Codex CLI adapter top-level procedure (baseline v1).
+- [adapters/vscode/INSTALL.md](adapters/vscode/INSTALL.md) — VS Code (Copilot) adapter top-level procedure (baseline v1).
