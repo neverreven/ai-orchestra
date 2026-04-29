@@ -8,6 +8,26 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Added — PR 4 (Cursor Adapter — Full)
+
+- `adapters/cursor/INSTALL.md` — top-level Cursor-specific install procedure. Walks the agent through every RUN.md phase from a Cursor perspective (detection signals, existing-infra extensions, plan building, application order, post-install verification, activation). Declares the adapter as **full** v1 with zero gaps against `_contract.md`.
+- `adapters/cursor/mappings.md` — the master mapping table: every orchestra core artifact (Director rule, learnings doc, project context, skills, stop hook, MCP slots, install marker, global registry) → target path → action → conflict policy. Defines the `<!-- ai-orchestra: managed-section start/end -->` marker convention for `AGENTS.md`, the `.cursor/hooks.json` merge logic (preserves existing entries, dedups via `metadata.orchestra: true`), and stable serialisation rules that guarantee idempotent re-runs.
+- `adapters/cursor/target-schema.md` — the "after" state. Filesystem layout diagram, frontmatter schema for `.mdc` rule files, skill-folder structure, hook-entry shape, MCP-entry shape, marker field guarantees, and global-registry entry shape. Lists what the adapter explicitly does NOT touch (source code, `~/.cursor/`, etc.).
+- `adapters/cursor/render-rules.md` — exact rendering rules for `.mdc` rule files, `SKILL.md` skill files, and the stop-hook prompt. Placeholder substitution table for the Director rule, conditional rendering for missing optional placeholders, body-template for the `orchestra-context.mdc` always-on rule, deterministic-rendering rules, and the full stop-hook prompt body with substitutions.
+- `adapters/cursor/mcp.md` — MCP slot mapping for `.cursor/mcp.json`. Slot id convention (`orchestra-<role>-<purpose>`), v1 default slot list per role, placeholder-entry shape (inert `echo` command + metadata), merge rules, permission policy, and treatment of user-managed servers.
+- `adapters/cursor/post-install-checks.md` — Phase 8 health checks. ~35 deterministic, file-only checks across filesystem presence, JSON validity, frontmatter structure, skill folders, hook entries, MCP slots, and marker consistency. Each check has id / what / how / pass / fail / severity (`critical` / `warning` / `info`).
+
+### Changed — PR 4
+
+- `core/registry/install.schema.md` — extended `hooks.<event>` entries with `contractVersion` (per [`adapters/_stop-hook.md`](adapters/_stop-hook.md), `"1.0"` in v1) and `lastRun` (ISO 8601 timestamp updated by future hook firings, `null` until first fire). The Cursor adapter (and all other adapters) write these fields. Backward-compatible: pre-existing markers without these fields are migrated by the audit skill on next run.
+
+### Notes — PR 4
+
+- The Cursor adapter is the orchestra's **reference implementation**. PR 5 (other-IDE adapters baseline) follows the patterns established here; PR 7 (validation harness) dry-runs the orchestra against fixture projects via this adapter.
+- The adapter has zero declared gaps against `_contract.md` and `_stop-hook.md` in v1. Two v2-deferred enhancements are explicitly noted in the docs: per-artifact `contentHash` storage in the marker (currently relies on byte-identity comparison against re-rendered templates) and stack-pack content layering (the marker reserves `stacks[].stackPack`, but pack contents arrive in PR 6).
+- Idempotency is guaranteed by deterministic rendering (sorted iteration over roles / skills / slots, no system time in rendered content, byte-stable JSON serialisation). The post-install checks include an `idempotency.zero-diff` check that flags non-`skip` actions on re-runs as a critical adapter bug.
+- All cross-links verified: 0 broken, 0 mismatched display/target across `ai-orchestra/`.
+
 ### Added — PR 3 (Director + Contracts)
 
 - `core/director/_overview.md` — explains the Director system (always-on rule + living learnings doc), lifecycle (install / session-start / during-session / session-end), document-health rules, per-IDE notes, and how the Director relates to other orchestra components.
