@@ -12,7 +12,7 @@ This file is the authoritative reference for Phase 5 (build dry-run) and Phase 7
 |---|---------------|-------------|--------|-----------------|
 | 1 | [Director rule](../../core/director/RULE.md) + [project context](../../core/director/_overview.md) (consolidated) + skill catalog | `AGENTS.md` (project root) — orchestra-managed section | `create` or `extend-section` | See §3. |
 | 2 | [Director learnings template](../../core/director/learnings-template.md) | `_documentation/AI_LEARNINGS.md` (or detected equivalent) | `create` | If target exists, `merge-missing-sections` (do not touch existing sections). |
-| 3 | Each installed skill (from [core/skills/](../../core/skills/)) | (No file written.) Referenced by id + trigger phrases inside the AGENTS.md skill catalog. | `register-only` | Trigger phrases recorded in marker `skills[].triggers`. |
+| 3 | Each installed skill (from [core/skills/](../../core/skills/)) | (No file written by default.) Referenced by id + trigger phrases inside the AGENTS.md skill catalog; source path points into the orchestra core. When the user nominates a shared skill folder (see §8), files ARE written under that folder and the catalog references point there instead. | `register-only` (default) or `create` per skill (when `skillPlacementStrategy.type` is `shared`/`hybrid`) | Trigger phrases recorded in marker `skills[].triggers`. |
 | 4 | Stop-hook | (No file written — declared gap, see [`INSTALL.md`](INSTALL.md) §6.) | `skip-with-gap` | Manual fallback documented in `AGENTS.md`. |
 | 5 | MCP slots | `.codex/mcp.json` (entries under `mcpServers`) | `merge-json` | See [`mcp.md`](mcp.md). |
 | 6 | Install marker | `.ai-orchestra/install.json` | `create` (always overwrite) | Always overwrite; orchestra-owned. |
@@ -118,7 +118,55 @@ When the project profile detects one or more first-class stacks, the Codex adapt
 
 ---
 
-## 8. Idempotency contract
+## 8. Skill placement strategy
+
+The Codex adapter's row 3 (skills) defaults to `register-only` — the AGENTS.md skill catalog references skills by id + trigger phrases, and the `source` path resolves into the orchestra core (`ai-orchestra/core/skills/<category>/<skill-id>/SKILL.md`). No skill files are written into the project by default. When the discovery probe in [`../../core/discovery/existing-infra.md`](../../core/discovery/existing-infra.md) §3.7 detects one or more candidate **shared skill folders**, the install plan exposes a placement decision the user resolves in Phase 6 of [`../../RUN.md`](../../RUN.md). The chosen strategy is recorded in the install marker as `skillPlacementStrategy` per [`../../core/registry/install.schema.md`](../../core/registry/install.schema.md) §1.2.
+
+### Strategies
+
+| `type` | What the adapter does | When this applies |
+|--------|------------------------|-------------------|
+| `ide-specific` | Default `register-only`. AGENTS.md catalog references skills via paths into the orchestra core. No skill files written into the project. `decidedBy: "default"`. | No candidate shared folder detected, OR the user explicitly declined to use one. |
+| `shared` | Each skill is `create`d at `<sharedPath>/<skill-id>/SKILL.md`. AGENTS.md catalog `source` paths point to the shared folder rather than the orchestra core. Orchestra core remains the canonical template — re-runs reconcile shared-folder copies against the core. `decidedBy: "user"`. | User explicitly nominates a candidate during Phase 6. |
+| `hybrid` | **Treated as `shared` for Codex** (declared gap). Codex has no IDE-specific skill folder analogous to `.cursor/skills/` or `.claude/commands/`, so there is no IDE-folder copy to mirror. The marker records `type: "hybrid"` if the user picked it, and the `degradedTo` field is set to `"shared"` for clarity. The adapter writes the user a one-line note in the post-install report explaining the degradation. `decidedBy: "user"`. | User picked hybrid; Codex transparently degrades. |
+
+### Why the default `register-only` is preserved
+
+The Codex adapter's reference-not-copy strategy is intentional: it eliminates content drift between the project and the orchestra core. Switching to `shared`/`hybrid` reintroduces drift potential (the user might edit `<sharedPath>/<skill-id>/SKILL.md` directly), so the audit on subsequent runs compares the shared copies against the orchestra core source and surfaces differences as `propose` actions, not auto-fixes. The user retains control.
+
+### Conflict policy under shared
+
+When `type` is `shared` (or `hybrid` degraded to shared):
+
+- If `<sharedPath>` already contains a folder named `<skill-id>`, the adapter applies `suffix-rename` and writes `<skill-id>.orchestra/SKILL.md`. The AGENTS.md catalog points to the suffix-renamed path.
+- If `<sharedPath>` does not exist, the adapter creates it. The post-install report notes "created shared skill home: `<sharedPath>`".
+
+### Idempotency under shared
+
+Re-running with `type: "shared"`:
+
+- The adapter compares each `<sharedPath>/<skill-id>/SKILL.md` to the orchestra core source. Identical → `skip`. Drift → `propose` (never auto-overwrite — drift may be deliberate user customisation).
+- The AGENTS.md catalog entries for the affected skills are not regenerated unless the catalog format itself changed.
+
+### Recording the decision
+
+The adapter writes the chosen strategy to `.ai-orchestra/install.json`:
+
+```json
+"skillPlacementStrategy": {
+  "type": "shared",
+  "sharedPath": ".agents",
+  "decidedAt": "<ISO 8601>",
+  "decidedBy": "user",
+  "degradedTo": null
+}
+```
+
+When `type: "hybrid"` was requested but degraded, set `"degradedTo": "shared"`.
+
+---
+
+## 9. Idempotency contract
 
 - Re-running on a project where `.ai-orchestra/install.json` exists with the current core version produces only `skip` actions (or `propose` for user-edited content).
 - The marker's `history[]` array is **not** appended on idempotent re-runs that produce zero changes.
@@ -126,7 +174,7 @@ When the project profile detects one or more first-class stacks, the Codex adapt
 
 ---
 
-## 9. References
+## 10. References
 
 - [`INSTALL.md`](INSTALL.md) — top-level procedure that drives this file.
 - [`target-schema.md`](target-schema.md) — exact file shapes referenced from this table.
@@ -135,4 +183,5 @@ When the project profile detects one or more first-class stacks, the Codex adapt
 - [`../_contract.md`](../_contract.md) §6 — gap declaration framework that §5 above implements.
 - [`../cursor/mappings.md`](../cursor/mappings.md) — full-adapter reference; Codex diverges on skill installation strategy.
 - [`../claude-code/mappings.md`](../claude-code/mappings.md) — sibling baseline that copies skills.
-- [`../../core/registry/install.schema.md`](../../core/registry/install.schema.md) — schema of the marker entries this file produces.
+- [`../../core/discovery/existing-infra.md`](../../core/discovery/existing-infra.md) — §3.7 defines candidate shared-folder detection that drives §8.
+- [`../../core/registry/install.schema.md`](../../core/registry/install.schema.md) — schema of the marker entries this file produces (including `skillPlacementStrategy`).
