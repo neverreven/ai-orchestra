@@ -43,6 +43,15 @@ For **cross-references**:
 - Every role file referenced from a skill's `## References` resolves.
 - No file links to a path outside `ai-orchestra/`.
 
+For **URL hygiene** (applies to every markdown file under `ai-orchestra/`, not just roles and skills):
+
+- No URL uses a host containing `ai-orchestra` or any other fictional / aspirational orchestra-owned domain pattern. The orchestra is name-collision-prone (the name is generic enough that real third-party products with the same name exist), so URLs that look like they belong to an orchestra-owned domain are treated as content leakage.
+- Allowed external URLs are: real authoritative sources (e.g., `semver.org`, `keepachangelog.com`, `modelcontextprotocol.io`, `vitejs.dev`, `react.dev`, `python.org`, `developer.salesforce.com`), and RFC 2606 reserved domains (`example.com`, `example.org`, `example.net`, any `*.invalid`, any `*.test`, any `*.example`).
+- Verification command: `grep -nrE "https?://[^/]*ai-orchestra" ai-orchestra/` must return zero hits **outside** `_test-fixtures/` and `core/_lint.md`.
+- The `_test-fixtures/` subtree is exempt: its files are deliberately realistic-looking (e.g., Salesforce metadata XMLs use real `http://soap.sforce.com/...` schema URIs because real Salesforce metadata does too).
+- This file (`core/_lint.md`) is self-exempt for the patterns it documents: the rule's own description must reference the prohibited pattern shape (`ai-orchestra.dev`, `ai-orchestra.io`, etc.) so a reader understands what the rule catches. The rule does not apply to its own description text. No other file in `core/`, `adapters/`, or the top-level documentation may reference such URLs.
+- Otherwise the lint scope for this rule is `ai-orchestra/core/`, `ai-orchestra/adapters/`, and the top-level documentation files (`README.md`, `RUN.md`, `CHANGELOG.md`, `MIGRATION.md`, `_v1.x-backlog.md`).
+
 ---
 
 ## 3. Severity and outcomes
@@ -108,6 +117,8 @@ Each rule has a stable id. New rules are added in subsequent PRs; existing rules
 | `skill.when-not-empty` | warning | `## When NOT to use` has no bullets. |
 | `skill.length-over-budget` | warning | File exceeds 100 lines. |
 | `cross.external-link` | critical | A link points outside `ai-orchestra/`. |
+| `url.fictional-orchestra-host` | critical | A URL uses a host containing `ai-orchestra` (e.g., `ai-orchestra.dev`, `ai-orchestra.io`). These look real but are not orchestra-owned and risk colliding with unrelated third-party products. |
+| `url.unreserved-example-domain` | warning | An example URL uses a non-reserved domain where an RFC 2606 reserved domain (`example.com`, `example.invalid`, `*.test`) would be safer. |
 
 The audit skill's runner consumes this registry verbatim in PR 3.
 

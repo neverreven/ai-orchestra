@@ -53,6 +53,18 @@ Append a single object to the project profile under `profile.existingInfra`:
     "orchestraInstall": {
       "present": false
     },
+    "shared": {
+      "candidates": [
+        {
+          "path": ".agents",
+          "skillCount": 4,
+          "namedConvention": true,
+          "skillShapedMd": true,
+          "evidence": ["named-convention", "contains-md-files-with-skill-headings"]
+        }
+      ],
+      "userNominated": null
+    },
     "miscDocs": [
       "_documentation/PROJECT_DOC.md",
       "_documentation/PLAN_Launch.md"
@@ -136,7 +148,40 @@ The orchestra's "AI_LEARNINGS" pattern lives at `_documentation/AI_LEARNINGS.md`
 
 Record the first match. Read only the YAML / metadata header (if any) for `lastUpdated`.
 
-### 3.7 Previous orchestra install
+### 3.7 Tool-agnostic / portable agentic patterns (shared skill home)
+
+Many projects already maintain a tool-agnostic folder at the repository root that stores AI skills, instructions, or prompts in a way that any IDE agent can consume — independent of `.cursor/`, `.claude/`, `.codex/`, or `.vscode/`. The convention is unstable across teams: common names include `.agents/`, `.ai/`, `prompts/`, `.prompts/`, `agents/`, `ai/`, `docs/agents/`, `docs/ai/`, but a project may use any name. **The orchestra must detect this pattern generically rather than hardcoding folder names**, so an installation respects the user's existing convention instead of duplicating skills under the IDE-specific path.
+
+Probe procedure:
+
+1. Scan top-level directory entries (one level deep) plus a single layer of nesting under `docs/`. Skip:
+   - IDE folders: `.cursor/`, `.claude/`, `.codex/`, `.vscode/`.
+   - Build / dependency junk: `node_modules/`, `dist/`, `build/`, `target/`, `out/`, `.next/`, `.nuxt/`, `coverage/`, `vendor/`, `.git/`, `.idea/`.
+   - Orchestra and fixture folders: `ai-orchestra/`, `_test-fixtures/`, `.ai-orchestra/`.
+2. For each remaining folder, evaluate two **evidence signals**:
+   - **Named convention** — folder name (case-insensitive) matches one of: `agents`, `.agents`, `ai`, `.ai`, `prompts`, `.prompts`, or appears under `docs/` with one of those names.
+   - **Skill-shaped markdown** — folder contains at least one `.md` or `.txt` file whose body includes any of these heading patterns: `## When to use`, `## Trigger`, `## Triggers`, `## Procedure`, `## Process`, `## Use when`. Read only enough of the file to match (first ~50 lines).
+3. A folder is a **candidate** when at least one signal fires. Record both signals so the installer can rank candidates (named-convention + skill-shaped is high confidence; skill-shaped alone is medium; named-convention alone with empty contents is low).
+4. Cap the candidate list at 5. If more candidates exist, keep the 5 with the strongest evidence and surface the count in the install plan so the user knows the list was truncated.
+
+Append findings to `existingInfra.shared`:
+
+```json
+{
+  "shared": {
+    "candidates": [
+      { "path": ".agents", "skillCount": 4, "namedConvention": true, "skillShapedMd": true, "evidence": ["named-convention", "contains-md-files-with-skill-headings"] }
+    ],
+    "userNominated": null
+  }
+}
+```
+
+`userNominated` stays `null` during Phase 3. The installer presents the list to the user during Phase 6 of [`../../RUN.md`](../../RUN.md) and records their choice (one of the candidate paths, or `null` for "do not use") into the install marker as `skillPlacementStrategy` (defined in [`../registry/install.schema.md`](../registry/install.schema.md)).
+
+Performance budget: probing remains under the 2-second budget by reading at most the first 50 lines of each candidate `.md` and stopping after the first heading match.
+
+### 3.8 Previous orchestra install
 
 The presence of `.ai-orchestra/install.json` indicates a previous orchestra install. Read it and validate against [../registry/install.schema.md](../registry/install.schema.md). Record:
 

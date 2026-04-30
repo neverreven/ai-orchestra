@@ -18,7 +18,6 @@ The `.ai-orchestra/` directory at the target project root is reserved for orches
 
 ```json
 {
-  "$schema": "https://ai-orchestra.dev/schemas/install/v1.json",
   "schemaVersion": 1,
 
   "orchestra": {
@@ -58,6 +57,13 @@ The `.ai-orchestra/` directory at the target project root is reserved for orches
     { "id": "cleanup",       "category": "audit",    "source": "core/skills/audit/cleanup" },
     { "id": "code-review",   "category": "code",     "source": "core/skills/code/code-review" }
   ],
+
+  "skillPlacementStrategy": {
+    "type": "ide-specific",
+    "sharedPath": null,
+    "decidedAt": "2026-04-29T08:00:00.000Z",
+    "decidedBy": "default"
+  },
 
   "rules": [
     { "id": "project-context", "path": ".cursor/rules/project-context.mdc",   "source": "core/rules/project-context.template.md" },
@@ -119,8 +125,7 @@ The `.ai-orchestra/` directory at the target project root is reserved for orches
 
 | Field | Required | Description |
 |-------|----------|-------------|
-| `$schema` | Yes | URL of the JSON schema for this version. v1 is informational; the schema doc lives in this file. |
-| `schemaVersion` | Yes | Integer. Increments only on breaking schema changes. v1 = `1`. |
+| `schemaVersion` | Yes | Integer. Increments only on breaking schema changes. v1 = `1`. The schema itself is described in this document; the marker is identified by `schemaVersion` only. No `$schema` URL is used — the orchestra deliberately avoids fictional or aspirational identifiers that could be mistaken for third-party resources. |
 | `orchestra.version` | Yes | The `VERSION` of the orchestra core that produced the install. |
 | `orchestra.installedAt` | Yes | ISO 8601 timestamp of the original install. Never updated. |
 | `orchestra.lastAuditedAt` | Yes | ISO 8601 timestamp of the last audit. `null` until first audit. Updated on every audit run. |
@@ -133,6 +138,7 @@ The `.ai-orchestra/` directory at the target project root is reserved for orches
 | `stacks[].stackPack` | Conditional | Path to the stack pack (relative to orchestra core). `null` for stacks with no pack in the current version. |
 | `roles[]` | Yes | Role identifiers installed for this project. |
 | `skills[]` | Yes | Skill identifiers installed, with category and source path. |
+| `skillPlacementStrategy` | Yes | Records where portable skills are installed and the basis for the decision. `type` is one of `ide-specific` (default — skills only under the IDE folder, e.g., `.cursor/skills/`), `shared` (skills under a tool-agnostic folder the user nominated, e.g., `.agents/`), or `hybrid` (skills under both, with the IDE-folder copy as a stub pointing to the shared file). `sharedPath` is the user-nominated folder when `type` is `shared` or `hybrid`; `null` otherwise. `decidedAt` is the ISO 8601 timestamp of the decision. `decidedBy` is `user` (chosen explicitly during Phase 6) or `default` (no candidate detected, so `ide-specific` was applied automatically). |
 | `rules[]` | Yes | Rules installed, with target path and source template. |
 | `hooks` | Yes | Map of event name → registration metadata. Empty object if no hooks installed. Each entry has `registered: bool`, `path: string`, `contractVersion: string` (per [`../../adapters/_stop-hook.md`](../../adapters/_stop-hook.md) — `"1.0"` in v1), and optional `lastRun: ISO-8601 | null` (updated after each hook fire). |
 | `mcpSlots[]` | Yes | MCP slots the orchestra registered. Empty array if none. |

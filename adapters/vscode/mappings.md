@@ -13,7 +13,7 @@ This file is the authoritative reference for Phase 5 (build dry-run) and Phase 7
 | 1 | [Director rule](../../core/director/RULE.md) + [project context](../../core/director/_overview.md) (consolidated) | `.github/copilot-instructions.md` — orchestra-managed section | `create` or `extend-section` | See §3. |
 | 2 | [Director learnings template](../../core/director/learnings-template.md) | `_documentation/AI_LEARNINGS.md` (or detected equivalent) | `create` | If target exists, `merge-missing-sections` (do not touch existing sections). |
 | 3 | Project context mirror | `AGENTS.md` (project root) — same managed-section content | `create` or `extend-section` | See §3. |
-| 4 | Each installed skill (from [core/skills/](../../core/skills/)) | `.github/prompts/<skill-id>.prompt.md` | `create` per skill | `suffix-rename` per file if a file of the same name exists with non-orchestra content. |
+| 4 | Each installed skill (from [core/skills/](../../core/skills/)) | `.github/prompts/<skill-id>.prompt.md` (or shared/hybrid path — see §8) | `create` per skill | `suffix-rename` per file if a file of the same name exists with non-orchestra content. |
 | 5 | Stop-hook | (No file written — declared gap, see [`INSTALL.md`](INSTALL.md) §6.) | `skip-with-gap` | Manual fallback documented in `copilot-instructions.md`. |
 | 6 | MCP slots | `.vscode/mcp.json` (entries under `servers`) | `merge-json` | See [`mcp.md`](mcp.md). |
 | 7 | Install marker | `.ai-orchestra/install.json` | `create` (always overwrite) | Always overwrite; orchestra-owned. |
@@ -121,7 +121,65 @@ In a future v1.x, this adapter may switch to using `.github/instructions/<stack>
 
 ---
 
-## 8. Idempotency contract
+## 8. Skill placement strategy
+
+The adapter's row 4 (skills) defaults to writing skill files at `.github/prompts/<skill-id>.prompt.md`. When the discovery probe in [`../../core/discovery/existing-infra.md`](../../core/discovery/existing-infra.md) §3.7 detects one or more candidate **shared skill folders**, the install plan exposes a placement decision the user resolves in Phase 6 of [`../../RUN.md`](../../RUN.md). The chosen strategy is recorded in the install marker as `skillPlacementStrategy` per [`../../core/registry/install.schema.md`](../../core/registry/install.schema.md) §1.2.
+
+### Strategies
+
+| `type` | Where portable skills land | Where IDE-specific behaviour lands | When this applies |
+|--------|----------------------------|-------------------------------------|-------------------|
+| `ide-specific` | `.github/prompts/<skill-id>.prompt.md` | `.github/copilot-instructions.md`, `.vscode/mcp.json`, `AGENTS.md` managed section | Default. Applied automatically when no candidate shared folder is detected. `decidedBy: "default"`. |
+| `shared` | `<sharedPath>/<skill-id>/SKILL.md` (full skill spec) | `.github/copilot-instructions.md`, `.vscode/mcp.json`, `AGENTS.md` (unchanged) | User explicitly nominates a candidate during Phase 6. `decidedBy: "user"`. |
+| `hybrid` | `<sharedPath>/<skill-id>/SKILL.md` (canonical) **and** `.github/prompts/<skill-id>.prompt.md` (Copilot prompt-file stub pointing to the canonical file) | `.github/copilot-instructions.md`, `.vscode/mcp.json`, `AGENTS.md` (unchanged) | User wants Copilot prompt-file discoverability AND a tool-agnostic skill home. `decidedBy: "user"`. |
+
+### Stub format (hybrid only)
+
+When `type` is `hybrid`, the file written under `.github/prompts/<skill-id>.prompt.md` is a Copilot prompt-file stub that defers to the canonical skill spec:
+
+```markdown
+# <Skill Display Name>
+
+This prompt is a stub. The full skill specification is canonically defined at `<sharedPath>/<skill-id>/SKILL.md`. Read that file and follow its instructions exactly.
+
+See: [<sharedPath>/<skill-id>/SKILL.md](<relative-path-to-canonical>)
+```
+
+The stub is regenerated on every install / audit run. The canonical file is never touched by the adapter beyond the initial write.
+
+### Conflict policy under shared / hybrid
+
+When `type` is `shared` or `hybrid`:
+
+- If the user-nominated `<sharedPath>` already contains a folder named `<skill-id>`, the adapter applies its standard `suffix-rename` policy and writes `<skill-id>.orchestra/SKILL.md`. The hybrid stub follows suit.
+- If `<sharedPath>` does not exist at install time, the adapter creates it. The post-install report notes "created shared skill home: `<sharedPath>`".
+
+### Idempotency under shared / hybrid
+
+Re-running the orchestra with `skillPlacementStrategy.type` already recorded:
+
+- `ide-specific` (default) → unchanged behaviour from §1 row 4.
+- `shared` → the adapter compares the canonical file to the source skill template and produces `skip` actions when identical.
+- `hybrid` → both canonical and stub are checked; the stub regenerates only when the canonical path or skill display name changed.
+
+### Recording the decision
+
+The adapter writes the chosen strategy to `.ai-orchestra/install.json`:
+
+```json
+"skillPlacementStrategy": {
+  "type": "shared",
+  "sharedPath": ".agents",
+  "decidedAt": "<ISO 8601>",
+  "decidedBy": "user"
+}
+```
+
+Subsequent audits read this field to know where to look for canonical skill files.
+
+---
+
+## 9. Idempotency contract
 
 - Re-running on a project where `.ai-orchestra/install.json` exists with the current core version produces only `skip` actions (or `propose` for user-edited content).
 - The marker's `history[]` array is **not** appended on idempotent re-runs that produce zero changes.
@@ -129,7 +187,7 @@ In a future v1.x, this adapter may switch to using `.github/instructions/<stack>
 
 ---
 
-## 9. References
+## 10. References
 
 - [`INSTALL.md`](INSTALL.md) — top-level procedure that drives this file.
 - [`target-schema.md`](target-schema.md) — exact file shapes referenced from this table.
@@ -139,4 +197,5 @@ In a future v1.x, this adapter may switch to using `.github/instructions/<stack>
 - [`../cursor/mappings.md`](../cursor/mappings.md) — full-adapter reference.
 - [`../claude-code/mappings.md`](../claude-code/mappings.md) — sibling baseline.
 - [`../codex/mappings.md`](../codex/mappings.md) — sibling baseline.
-- [`../../core/registry/install.schema.md`](../../core/registry/install.schema.md) — schema of the marker entries this file produces.
+- [`../../core/discovery/existing-infra.md`](../../core/discovery/existing-infra.md) — §3.7 defines candidate shared-folder detection that drives §8.
+- [`../../core/registry/install.schema.md`](../../core/registry/install.schema.md) — schema of the marker entries this file produces (including `skillPlacementStrategy`).

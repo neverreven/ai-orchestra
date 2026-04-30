@@ -41,9 +41,10 @@ See [RUN.md](RUN.md) for the full bootstrap procedure.
 | Cursor adapter (full) | PR 4 — shipped (6 spec files: install / mappings / target-schema / render-rules / mcp / post-install-checks) |
 | Claude Code / Codex / VS Code adapter baselines | PR 5 — shipped (15 spec files; 5 per adapter; declared gaps per `_contract.md` §6) |
 | Stack content packs (JS/TS, Python web, Salesforce / Commerce Cloud) | PR 6 — shipped (3 packs × 7 files; framework + schema; rules / skills / roles addenda layered onto universal core) |
-| Validation harness + test fixtures | PR 7 — landing (3 fixtures, agent-driven harness, MIGRATION.md, v1 close-out) |
+| Validation harness + test fixtures | PR 7 — shipped (3 fixtures, agent-driven harness, MIGRATION.md, v1 close-out) |
+| Installer hardening — placeholder URL removal, generic shared-folder detection, pre-install transparency | v1.0.1-alpha — shipped |
 
-The current `VERSION` is recorded in the [VERSION](VERSION) file.
+The current `VERSION` is recorded in the [VERSION](VERSION) file (currently `1.0.1-alpha`).
 
 ## Supported IDEs (v1)
 
@@ -75,8 +76,9 @@ ai-orchestra/
 ├── CHANGELOG.md       # core evolution log
 ├── _v1.x-backlog.md   # planned v1.x findings (F1–F8) with proposals
 ├── core/              # project-agnostic, tool-agnostic content
-│   ├── _lint.md       # schema linter contract (governs roles + skills + packs)
-│   ├── discovery/     # probe + signals + existing-infra detection
+│   ├── _lint.md       # schema linter contract (governs roles + skills + packs + URL hygiene)
+│   ├── install-plan-template.md  # canonical Part A (NEW/PRESERVED/RATIONALE) + Part B (diff) install-plan format
+│   ├── discovery/     # probe + signals + existing-infra detection (incl. tool-agnostic shared folders)
 │   ├── roles/         # role definitions (PR 2 — 10 roles + schema + overview)
 │   ├── skills/        # universal skill specs (PR 2 — 30 skills + schema)
 │   ├── director/      # Director rule + learnings template (PR 3)
@@ -112,7 +114,8 @@ See repository root.
 
 - [RUN.md](RUN.md) — the entry point any agent reads to run the orchestra.
 - [core/discovery/DETECTION.md](core/discovery/DETECTION.md) — how the discovery probe works.
-- [core/discovery/existing-infra.md](core/discovery/existing-infra.md) — how the orchestra detects and respects prior agentic setup.
+- [core/discovery/existing-infra.md](core/discovery/existing-infra.md) — how the orchestra detects and respects prior agentic setup, including tool-agnostic shared folders (`.agents/`, `.ai/`, `prompts/`, `docs/agents/`, etc.) introduced in v1.0.1.
+- [core/install-plan-template.md](core/install-plan-template.md) — canonical user-facing summary + diff format used in Phases 5 and 6 of an install (introduced in v1.0.1).
 - [core/roles/_overview.md](core/roles/_overview.md) — registry of the ten v1 roles.
 - [core/director/_overview.md](core/director/_overview.md) — Director system: rule + learnings doc.
 - [core/scheduler/CONTRACT.md](core/scheduler/CONTRACT.md) — scheduler contract.

@@ -8,6 +8,47 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [1.0.1-alpha] — Installer hardening
+
+This patch release closes three concerns surfaced during the first real-world install of the orchestra by an external user. None of the changes are breaking; the v1.0 install marker schema is forward-compatible (the new `skillPlacementStrategy` field defaults to `ide-specific` for installs that predate v1.0.1, matching pre-existing behaviour).
+
+### Removed — placeholder URL collision
+
+- `core/registry/install.schema.md` — dropped the `$schema` field from the example install marker. The field previously held an aspirational URL on a domain pattern matching the orchestra's own name; that pattern was meant as a placeholder identifier per JSON Schema convention but happened to point to a third-party domain owned by an unrelated commercial product also called "AI Orchestra". The collision created a false impression that the orchestra depended on or was derived from that product. The field is removed; `schemaVersion` continues to identify the schema version, and the schema document itself is the canonical reference. The field-reference table is updated with a one-line note explaining the deliberate absence.
+- `core/_lint.md` — added URL-hygiene rules. Section 2.4 prohibits any URL whose host contains `ai-orchestra` (or other fictional / aspirational orchestra-owned domain patterns) anywhere under `ai-orchestra/core/`, `ai-orchestra/adapters/`, or the top-level documentation files. The rule registry adds two new ids: `url.fictional-orchestra-host` (critical) and `url.unreserved-example-domain` (warning). The verification command `grep -nrE "https?://[^/]*ai-orchestra" ai-orchestra/` is now part of the section's contract — passing zero hits is the success criterion.
+
+### Added — generic shared-folder detection
+
+Real projects often maintain a tool-agnostic folder at the repository root for AI skills (commonly `.agents/`, `.ai/`, `prompts/`, `docs/agents/`, but the convention is unstable across teams). Pre-v1.0.1, the orchestra ignored such folders and installed all skills under the IDE-specific path, producing duplicates. v1.0.1 detects the pattern generically and respects it.
+
+- `core/discovery/existing-infra.md` — new section 3.7 (Tool-agnostic / portable agentic patterns). Defines a heuristic probe: scan top-level directories (excluding IDE folders, build/dependency junk, and the orchestra itself) for folders matching either a named convention (`agents`, `ai`, `prompts`, `.agents`, etc.) or containing `.md` files with skill-shaped headings (`## When to use`, `## Trigger`, `## Procedure`, etc.). Cap the candidate list at 5. Append findings to `existingInfra.shared.candidates[]` with evidence signals so the installer can rank candidates. The probe stays under the 2-second budget by reading only the first ~50 lines of each candidate `.md`.
+- `core/registry/install.schema.md` — added the `skillPlacementStrategy` field to the install marker. Type is one of `ide-specific` (default; backward-compatible with v1.0.0 installs that have no candidate folder), `shared` (skills under a user-nominated tool-agnostic folder), or `hybrid` (skills under both, with the IDE-folder copy as a stub pointing to the canonical file). Records `sharedPath`, `decidedAt`, and `decidedBy` (`user` for explicit Phase 6 choice, `default` for absence of a candidate).
+- `adapters/cursor/mappings.md` — new §8 (Skill placement strategy). Documents the three strategies, the stub format for hybrid (`.cursor/skills/<skill-id>/SKILL.md` becomes a one-line pointer to the canonical `<sharedPath>/<skill-id>/SKILL.md`), conflict policy when the shared folder already contains a same-named skill, and idempotency under each strategy. Master mapping table row 5 cross-references §8. Idempotency contract renumbered to §9; References to §10.
+- `adapters/claude-code/mappings.md` — new §8 with the same shape, mapping the IDE-folder stub to `.claude/commands/<skill-id>.md` as a slash-command pointer file. Renumbering parallels Cursor.
+- `adapters/codex/mappings.md` — new §8 with the same shape, but acknowledges that Codex has no IDE-specific skill folder analogous to `.cursor/skills/`. Hybrid degrades to shared transparently; the marker records `degradedTo: "shared"` for clarity. Default behaviour (`register-only` against the orchestra core) is unchanged when no candidate is detected. Renumbering parallels.
+- `adapters/vscode/mappings.md` — new §8 with the same shape, mapping the IDE-folder stub to `.github/prompts/<skill-id>.prompt.md` as a Copilot prompt-file pointer. Renumbering parallels.
+
+### Added — pre-install transparency
+
+The orchestra now opens every install with an explicit orientation message, separates the install plan into a human-readable summary and a structured diff, and resolves open questions in Phase 6 consultatively before asking the apply / skip / abort question.
+
+- `RUN.md` — new Phase 0.5 (Orient the user). Before any probing, the agent sends the user a short message describing the five steps about to happen: detect IDE → probe project → inventory existing infra → build plan → present NEW / PRESERVED / RATIONALE. The message replaces the implicit "trust me" of a silent install with explicit consent.
+- `RUN.md` — Phase 3 inventory list extended to include shared agentic patterns alongside the existing rules / skills / hooks / learnings / MCP entries.
+- `RUN.md` — Phase 5 restructured into a two-part plan format. Part A (user-facing summary) has three sections — NEW (additions, grouped by kind), PRESERVED (untouched paths with sizes and a one-line description each), RATIONALE (non-default choices including the skill placement strategy). Part B (the diff table) keeps its existing structured form with `path / action / source / rationale / conflict` columns plus side-channels for MCP slots, install marker content, global registry, and open questions.
+- `RUN.md` — Phase 6 restructured to lead with Part A, resolve open questions interactively (below-threshold detections, skill placement strategy, stop-hook overlap), then ask the final apply / skip / abort question. The user finishes Phase 6 having read the summary in plain language before being asked to consent.
+- `core/install-plan-template.md` — new file. The canonical Part A + Part B template, with rendered examples for greenfield and existing-infra-rich projects, the four scripted Phase 6 question forms (below-threshold detection, skill placement, stop-hook overlap, final apply), and renderer notes (Part A under ~40 lines, Part B has no length budget).
+
+### Bookkeeping
+
+- `VERSION` bumped to `1.0.1-alpha`.
+- `README.md` updated to reference v1.0.1-alpha and the new `core/install-plan-template.md`.
+
+### Backward compatibility
+
+- Existing v1.0.0-alpha install markers without `skillPlacementStrategy` are read as `{ type: "ide-specific", sharedPath: null, decidedBy: "default" }` — matching pre-existing behaviour. The audit skill writes the field on the next audit run, no user action required.
+- The `$schema` field removal is a forward-compatible content change; readers that ignored the field continue to work, and readers that required it would have been broken at v1.0.0 already (the field pointed to a 404).
+- All renumbered adapter sections (§8 → §9, §9 → §10) had no external references in v1.0.0; existing cross-references to §3 / §4 / §5 / §6 / §7 are unchanged.
+
 ### Added — v1.x backlog tracking
 
 - `_v1.x-backlog.md` — project-agnostic record of the eight findings (F1–F8) captured during the post-v1 pilot. Each finding has a priority (high / medium / low), a neutral observation, a concrete proposal for v1.x, the rationale ("why"), and a list of orchestra files the proposal would touch. F8 is explicitly deferred to v2; the rest are scoped to v1.x in the recommended ship order F4 → F2 → F5 → F1 → F7 → F3 → F6. The file owns its own "Shipped" section so closed findings move there with a back-link to the changelog entry that closed them. v1 is unaffected; this is purely planning content for the next release.
