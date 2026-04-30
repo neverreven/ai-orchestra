@@ -21,13 +21,46 @@ It is a **set of markdown specifications** that any sufficiently capable IDE age
 
 ## How to use
 
-Drop the `ai-orchestra/` folder into a project's root, then ask your agent in any supported IDE:
+Drop the `ai-orchestra/` folder into a project's root, then ask your agent in any supported IDE one of:
 
-> "Go to the ai-orchestra folder in the root and run the orchestra."
+> "Go to the ai-orchestra folder and run the orchestra."
+> "run ai-orchestra"
+> "run the ai-orchestra folder"
+> "set up ai-orchestra in this project"
+> "what is this ai-orchestra folder?"
+> "investigate ai-orchestra"
 
-The agent will read [RUN.md](RUN.md) and follow the instructions there, autonomously.
+Any natural variant works. The agent will read [RUN.md](RUN.md) and follow it from Phase 0.5 onward, autonomously. **Phase 0.5 always begins with a structured orientation** — the user is told what the orchestra is, what's about to happen, and what the install options are, before any probe runs. Nothing is written without explicit consent.
 
-By default, the first run produces a **dry-run diff** — a list of files the orchestra would create, append, or leave alone. Nothing is written until you confirm.
+### What the orchestra does (5 steps)
+
+After the orientation, the orchestra performs these steps. The first 4 are read-only; only step 5 ever writes a file, and only after you say `apply`.
+
+1. **Detect the IDE** it is running in (Cursor, Claude Code, Codex, VS Code).
+2. **Probe the project** for stacks, frameworks, and build setup.
+3. **Inventory existing AI infrastructure** — rules, skills, hooks, learnings docs, shared agentic folders, per-role ownership signals, and the overall quality of what is already there.
+4. **Build a dry-run install plan** with a recommended install scope based on what was found, presented as a plain-language summary plus a structured diff.
+5. **Apply the plan** — only after you reply `apply`. Files are created, marker pairs extended, hooks merged, and the install marker is written.
+
+### Install scope options
+
+You pick one of four scopes during the orientation in Phase 6 (the orchestra recommends one based on what it inventoried; you can always override):
+
+| Mode | What it installs | Best for |
+|------|------------------|----------|
+| **Full kit** | Every role (10 in v1: frontend, backend, QA, analytics, DevOps, security, mobile, AI/ML, tech-writer, PM) with their full skill set. | Greenfield projects, or teams that want the complete orchestra baseline. |
+| **Selected roles** | A subset of roles you pick from a checkbox list. Universals (QA, security, tech-writer) stay in by default. | Projects where one or more roles are owned externally (e.g., the BE team already has its own AI flow). |
+| **Primary + collaborators** | One primary role you pick, plus its declared collaborators (read from the role file's `## Collaboration` section) as opt-in add-ons. | Focused installs — "FE-party with QA support", "AI/ML role with tech-writer". |
+| **Core only** | Director rule, learnings doc, audit skill, install marker. No role library. | Teams that want the orchestra's session protocol without committing to the role concept. |
+
+If the inventory finds external ownership of a role (e.g., `backend/AGENTS.md` with hand-written guidance), the orchestra recommends `selected-roles` excluding that role. If the existing AI structure shows quality issues, the orchestra surfaces them with `improve` / `replace` / `preserve` options for each finding — never auto-applied.
+
+### Safety promise
+
+- **Dry-run first.** Every install plan is shown to you in plain language plus a structured diff before any file is touched.
+- **Never overwrite hand-written content.** When a target file exists without orchestra marker pairs, the orchestra writes alongside (`<basename>.orchestra.<ext>`) rather than replacing.
+- **No telemetry, no network calls** outside what the discovery probe explicitly needs (typically nothing).
+- **Conservative deletions.** If a scope change removes a role, the orchestra never auto-deletes the file — it surfaces a `propose` row asking what to do with it.
 
 See [RUN.md](RUN.md) for the full bootstrap procedure.
 
@@ -43,8 +76,9 @@ See [RUN.md](RUN.md) for the full bootstrap procedure.
 | Stack content packs (JS/TS, Python web, Salesforce / Commerce Cloud) | PR 6 — shipped (3 packs × 7 files; framework + schema; rules / skills / roles addenda layered onto universal core) |
 | Validation harness + test fixtures | PR 7 — shipped (3 fixtures, agent-driven harness, MIGRATION.md, v1 close-out) |
 | Installer hardening — placeholder URL removal, generic shared-folder detection, pre-install transparency | v1.0.1-alpha — shipped |
+| Role scope and quality-aware install — four scope modes, inventory-driven recommendation, per-issue improve / replace / preserve flow | v1.1.0-alpha — shipped |
 
-The current `VERSION` is recorded in the [VERSION](VERSION) file (currently `1.0.1-alpha`).
+The current `VERSION` is recorded in the [VERSION](VERSION) file (currently `1.1.0-alpha`).
 
 ## Supported IDEs (v1)
 
@@ -77,7 +111,8 @@ ai-orchestra/
 ├── _v1.x-backlog.md   # planned v1.x findings (F1–F8) with proposals
 ├── core/              # project-agnostic, tool-agnostic content
 │   ├── _lint.md       # schema linter contract (governs roles + skills + packs + URL hygiene)
-│   ├── install-plan-template.md  # canonical Part A (NEW/PRESERVED/RATIONALE) + Part B (diff) install-plan format
+│   ├── install-scope.md          # four install scope modes + resolver + recommendation engine (v1.1.0)
+│   ├── install-plan-template.md  # canonical Part A (NEW/PRESERVED/[ASSESSMENT]/RATIONALE) + Part B (diff) install-plan format
 │   ├── discovery/     # probe + signals + existing-infra detection (incl. tool-agnostic shared folders)
 │   ├── roles/         # role definitions (PR 2 — 10 roles + schema + overview)
 │   ├── skills/        # universal skill specs (PR 2 — 30 skills + schema)
@@ -114,8 +149,9 @@ See repository root.
 
 - [RUN.md](RUN.md) — the entry point any agent reads to run the orchestra.
 - [core/discovery/DETECTION.md](core/discovery/DETECTION.md) — how the discovery probe works.
-- [core/discovery/existing-infra.md](core/discovery/existing-infra.md) — how the orchestra detects and respects prior agentic setup, including tool-agnostic shared folders (`.agents/`, `.ai/`, `prompts/`, `docs/agents/`, etc.) introduced in v1.0.1.
-- [core/install-plan-template.md](core/install-plan-template.md) — canonical user-facing summary + diff format used in Phases 5 and 6 of an install (introduced in v1.0.1).
+- [core/discovery/existing-infra.md](core/discovery/existing-infra.md) — how the orchestra detects and respects prior agentic setup, including tool-agnostic shared folders (`.agents/`, `.ai/`, `prompts/`, `docs/agents/`, etc.) introduced in v1.0.1, plus per-role ownership detection (§3.9) and existing-AI-structure quality assessment (§3.10) introduced in v1.1.0.
+- [core/install-scope.md](core/install-scope.md) — the four install scope modes, the resolver, and the inventory-driven recommendation engine (introduced in v1.1.0).
+- [core/install-plan-template.md](core/install-plan-template.md) — canonical user-facing summary + diff format used in Phases 5 and 6 of an install (introduced in v1.0.1; extended in v1.1.0 with the AI INFRASTRUCTURE ASSESSMENT subsection, the `improve` action, the `targetIssue` column, and three new Phase 6 question forms).
 - [core/roles/_overview.md](core/roles/_overview.md) — registry of the ten v1 roles.
 - [core/director/_overview.md](core/director/_overview.md) — Director system: rule + learnings doc.
 - [core/scheduler/CONTRACT.md](core/scheduler/CONTRACT.md) — scheduler contract.

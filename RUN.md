@@ -1,10 +1,26 @@
 # RUN.md — How to Run the Orchestra
 
-> **You are an AI agent.** A user asked you to "run the orchestra" or some natural variant of that. This file tells you what to do, step by step. Follow it from top to bottom, exactly. When this file's instructions and your built-in IDE conventions conflict, prefer this file.
+> **You are an AI agent.** A user asked you to do something with the `ai-orchestra/` folder. This file tells you what to do, step by step. Follow it from top to bottom, exactly. When this file's instructions and your built-in IDE conventions conflict, prefer this file.
 
 This file is **identical regardless of IDE**. It works the same in Cursor, Claude Code, Codex, VS Code with Copilot, and any other agentic IDE that can read markdown and execute file operations.
 
 The orchestra is **declarative**. Every action you will take is described in markdown specs in this folder. There is no runtime code in v1. You are the executor.
+
+## Recognising the invocation
+
+The user may invoke the orchestra with any natural variant of these phrases:
+
+- "run the orchestra"
+- "run ai-orchestra"
+- "run the ai-orchestra folder"
+- "set up ai-orchestra"
+- "install ai-orchestra"
+- "configure agents in this project"
+- "what is this ai-orchestra folder?"
+- "investigate ai-orchestra"
+- "audit ai-orchestra" / "check the orchestra"
+
+Treat any of the above (or a close paraphrase) as an instruction to follow this file. Vague invocations like *"run ai-orchestra"* or *"what is this folder?"* signal the user may not yet know what the orchestra is — Phase 0.5 handles that case explicitly with a structured **what / steps / options** orientation before any probe runs.
 
 ---
 
@@ -26,23 +42,58 @@ If you cannot satisfy any of these, stop and ask the user.
 
 ## 0.5. Phase 0.5 — Orient the user
 
-**Before** you start probing, tell the user (in plain language, in chat) what is about to happen and why. The orchestra is consultative, not transactional — the user must feel in control of the install before any file is read.
+**Before** you start probing, orient the user. The orchestra is consultative, not transactional — the user must feel in control before any file is read.
 
-Send a short message in this shape (paraphrase as needed; do not parrot it verbatim):
+Phase 0.5 has two passes. Send both, in order, in a single message (or two if your IDE prefers shorter messages). Then wait for the user to reply.
 
-> "I'm about to run the orchestra. Before I touch any file, I will:
+### Pass A — What this is (always sent on the first invocation)
+
+Send a structured "what / steps / options" overview. The user may have just dropped the folder into the project root and asked "run ai-orchestra" without yet knowing what the orchestra is — this pass closes that gap.
+
+Use this shape (paraphrase as needed; do not parrot it verbatim):
+
+> "You've asked me to look at the `ai-orchestra/` folder. Here is what it is and how I can help.
+>
+> **What it is.** ai-orchestra is a project-agnostic agentic toolkit. It is a set of markdown specifications I read and act on to set up tailored AI infrastructure for this project — rules, skills, hooks, a learnings document — that fits the project's stack and the roles you want covered. v1 ships zero runtime code; everything is markdown the agent (me) executes.
+>
+> **What I can do for you.** Three modes of engagement:
+> - `Investigate only` — I probe the project, inventory existing AI infrastructure, classify its quality, and report findings without proposing or writing anything. Use this when you just want to know the current state.
+> - `Investigate + propose an install plan` (default) — I produce a dry-run plan showing what I would add, what I would preserve, and any quality concerns I found. Nothing is written until you approve.
+> - `Audit` — when the project already has `.ai-orchestra/install.json`, I switch to drift detection instead of a fresh install.
+>
+> **Install scope options** (only relevant if you proceed past investigation). I will recommend one of these based on what I find; you can always override:
+> - **Full kit** — every role (frontend, backend, QA, analytics, DevOps, security, mobile, AI/ML, tech-writer, PM) and the full skill set. Default for greenfield projects.
+> - **Selected roles** — a subset you pick. Useful when one or more roles are owned externally.
+> - **Primary + collaborators** — one primary role plus its declared partners as opt-in add-ons. Useful for focused installs (e.g., FE + QA).
+> - **Core only** — Director rule, learnings doc, audit skill, install marker. No role library. Useful when you want session protocol without the role concept.
+>
+> **Safety promise.** Dry-run first; I never overwrite hand-written content; I never delete user files automatically; no telemetry, no network calls."
+
+### Pass B — Procedural overview (always sent on the first invocation)
+
+Once Pass A is sent, immediately send the 5-step procedural breakdown so the user knows the order of operations.
+
+> "If you go past investigation, I will perform these 5 steps. The first 4 are read-only; only step 5 ever writes a file, and only after you reply `apply`.
 >
 > 1. Detect which IDE I'm running in.
 > 2. Probe the project to identify stacks, frameworks, and build setup.
-> 3. Inventory existing AI infrastructure — rules, skills, hooks, learnings docs, and any shared agentic folder you may already use (`.agents/`, `.ai/`, `prompts/`, etc.).
-> 4. Build a proposed install plan.
-> 5. Show you, in plain language, what is **NEW** (what the orchestra will add), what is **PRESERVED** (what stays untouched), and the **RATIONALE** for the choices I made — including where to place portable skills if you have a shared folder convention.
+> 3. Inventory existing AI infrastructure — rules, skills, hooks, learnings docs, any shared agentic folder you may already use (`.agents/`, `.ai/`, `prompts/`, etc.), per-role ownership (e.g., a `backend/AGENTS.md` your team already maintains), and the overall quality of what's there.
+> 4. Build a proposed install plan with a recommended install scope based on what I found.
+> 5. Show you, in plain language, what is **NEW** (what the orchestra will add), what is **PRESERVED** (what stays untouched), an **AI INFRASTRUCTURE ASSESSMENT** if I detected weaknesses or external ownership in your existing setup, and the **RATIONALE** for the non-default choices — then wait for your `apply` / `revise` / `abort` reply.
 >
-> I will not write a single file until you approve. If anything in the plan looks wrong, you can ask me to revise, skip specific items, or abort entirely."
+> Reply with one of: `proceed` (or `go ahead`, `do it`, etc. — any go-signal works) to start the probe; `investigate only` to stop after step 3 with a findings report; `audit` if you know the project is already installed; or `abort` to stop here without doing anything."
 
-This message replaces the implicit "trust me" of a silent install with explicit consent. After sending, proceed to Phase 1. The probe is allowed to run silently from here on; the user has been told the shape of the work.
+### After both passes are sent
 
-If the user has already invoked the orchestra with a specific instruction (e.g., "run the orchestra and skip the AGENTS.md update"), incorporate it as input to Phase 5 but still send the orientation message — the user benefits from seeing what the orchestra is going to do regardless.
+Wait for the user's reply. Map their answer to one of these branches:
+
+- **`proceed`-equivalent reply** → continue to Phase 1.
+- **`investigate only`** → continue to Phase 1, but at the end of Phase 3 stop and produce a findings-only report (project profile + existing-infra inventory + quality assessment) instead of building an install plan. Tell the user "investigation complete; reply `proceed` if you want me to build an install plan based on these findings, or `abort` to stop."
+- **`audit`** → continue to Phase 3; if `.ai-orchestra/install.json` is found, switch to upgrade-and-audit mode per Phase 3 of this file. If no marker is found, tell the user "no prior install detected; would you like me to run a fresh install instead?" and wait.
+- **`abort`** → stop. Do nothing further.
+- **An ambiguous reply** (e.g., the user picks an install scope upfront like "do core-only") → record the user's preference as input to Phase 6, then continue to Phase 1.
+
+If the user already invoked the orchestra with a specific instruction (e.g., "run the orchestra in core-only mode and skip the AGENTS.md update"), incorporate it as input to Phase 6 but still send Pass A and Pass B — the user benefits from seeing the structured overview regardless, especially if the project has teammates who didn't see the original invocation.
 
 ---
 
@@ -98,8 +149,10 @@ Capture an inventory:
 - Existing MCP configs (`.cursor/mcp.json`, `.claude/mcp_settings.json`, IDE-specific equivalents).
 - **Existing tool-agnostic / portable agentic folders** (`.agents/`, `.ai/`, `prompts/`, `docs/agents/`, or any folder a heuristic identifies as a shared skill home — see [core/discovery/existing-infra.md](core/discovery/existing-infra.md) §3.7). The user may have a cross-IDE convention the orchestra must respect rather than duplicate.
 - Existing `.ai-orchestra/install.json` (indicates a previous install).
+- **Per-role ownership signals** — see [core/discovery/existing-infra.md](core/discovery/existing-infra.md) §3.9. The probe scans for evidence that one or more orchestra roles are already owned externally (e.g., a `backend/AGENTS.md` containing 4 KB of hand-written backend guidance, or a `.cursor/rules/frontend-style.mdc` whose description matches the frontend role). External ownership is a strong signal to the recommendation engine that the install should be narrower than `full-kit`.
+- **Quality signals on the existing AI structure** — see [core/discovery/existing-infra.md](core/discovery/existing-infra.md) §3.10. The probe runs the schema linter ([core/_lint.md](core/_lint.md)) over detected rule and skill files, plus freshness, coherence, and coverage checks. The output classifies the existing structure as `solid` / `partial` / `weak` / `corrupted` and lists per-issue proposed actions (`improve` / `replace` / `preserve`).
 
-This inventory is the single most important input to the install plan. **Anything that exists must be preserved or extended, never overwritten.**
+This inventory is the single most important input to the install plan. **Anything that exists must be preserved or extended, never overwritten.** The §3.9 and §3.10 findings additionally feed Phase 5's recommendation engine ([core/install-scope.md](core/install-scope.md) §4) and the AI INFRASTRUCTURE ASSESSMENT subsection of Part A.
 
 If `.ai-orchestra/install.json` is found and its `version` matches `ai-orchestra/VERSION`, the project is already installed at the current orchestra version. In that case, switch to **upgrade-and-audit mode**: only propose changes that close drift between the current install and the codebase (the audit skill's job, defined in PR 3).
 
@@ -140,11 +193,12 @@ Using:
 
 ### Part A — User-facing summary (Phase 6 leads with this)
 
-Three sections in plain language, written for the human reviewing the install:
+Three or four sections in plain language, written for the human reviewing the install (the fourth is conditional). Full structure and examples in [core/install-plan-template.md](core/install-plan-template.md) §2:
 
 - **NEW.** What the orchestra will add to the project that does not exist today. Group by kind (rules, skills, hooks, MCP slots, learnings doc, install marker). Example: "I will add 6 rules under `.cursor/rules/`, 12 skills under `.cursor/skills/`, 1 stop-hook entry to `.cursor/hooks.json`, and create `_documentation/AI_LEARNINGS.md` (currently absent)."
 - **PRESERVED.** What already exists in the project that the orchestra will not touch, with explicit paths. Example: "Your existing `AGENTS.md` (12 KB, no orchestra section yet) — I will append a managed section at end-of-file but leave your hand-written content intact. Your `.cursor/rules/host-project-context.mdc` (always-on) — untouched. Your `.agents/` folder with 4 skills — untouched."
-- **RATIONALE.** The non-default choices the orchestra made and why. Always include, when applicable: (a) the **skill placement strategy** (`ide-specific` / `shared` / `hybrid`) and the candidate folder it was based on; (b) any conflict-handling action invoked (suffix-rename, extend-section); (c) any below-threshold stack detection treated as an open question.
+- **AI INFRASTRUCTURE ASSESSMENT (conditional).** Rendered only when the inventory reported `existingInfra.quality.overall != "solid"` or any role has `ownership: "external"`. Three subsections: Strengths, Findings (each with severity + proposed `improve` / `replace` / `preserve` action), and Suggestions (improvements the orchestra recommends but will not apply without explicit consent). Findings are resolved interactively in Phase 6 §4.6.
+- **RATIONALE.** The non-default choices the orchestra made and why. Always include, when applicable: (a) the **install scope mode** chosen (one of `full-kit`, `selected-roles`, `primary-plus-collaborators`, `core-only`) and the recommendation engine's rationale per [core/install-scope.md](core/install-scope.md) §4; (b) the **skill placement strategy** (`ide-specific` / `shared` / `hybrid`) and the candidate folder it was based on; (c) any conflict-handling action invoked (suffix-rename, extend-section, improve); (d) any below-threshold stack detection treated as an open question.
 
 ### Part B — Diff table (the existing structured format)
 
@@ -153,17 +207,18 @@ For every file the orchestra would touch:
 | Field | Description |
 |-------|-------------|
 | `path` | Absolute or repo-relative path of the target file. |
-| `action` | One of: `create`, `append`, `extend-section`, `suffix-rename` (when conflict), `merge-json`, `register-only`, `skip` (when already present and identical), `propose` (critical decision deferred to user). |
+| `action` | One of: `create`, `append`, `extend-section`, `improve` (rewrite a managed-section block to address a §3.10 quality issue), `suffix-rename` (when conflict, or when proposing a `replace` for a §3.10 quality issue), `merge-json`, `merge-missing-sections`, `register-only`, `skip` (when already present and identical), `propose` (critical decision deferred to user). Full semantics in [core/install-plan-template.md](core/install-plan-template.md) §3.1. |
 | `source` | Which orchestra core file produced this change (for traceability). |
 | `rationale` | One sentence explaining why this file is in the plan. |
 | `conflict` | If a conflict was detected, the resolution applied (per the adapter's rules). |
+| `targetIssue` | The `issue.id` from [core/discovery/existing-infra.md](core/discovery/existing-infra.md) §3.10 when this row originated from a quality finding; empty otherwise. |
 
 Plus, separately (still in Part B):
 
 - **MCP slot registrations** — non-destructive merges into the IDE's MCP config. List slot ids, the role that requested each slot, and what the user must do (if anything) to attach a real server.
-- **Registry write** — content of the `.ai-orchestra/install.json` that will be written, including the `skillPlacementStrategy` field per [core/registry/install.schema.md](core/registry/install.schema.md) §1.2.
+- **Registry write** — content of the `.ai-orchestra/install.json` that will be written, including the `installScope` and `skillPlacementStrategy` fields per [core/registry/install.schema.md](core/registry/install.schema.md) §1.2.
 - **Optional global registry append** — line that will be added to `~/.ai-orchestra/projects.json`.
-- **Open questions** — any below-threshold detections from Phase 2, any ambiguity in Phase 3, and (when a candidate shared agentic folder was found) the placement-strategy question to resolve in Phase 6.
+- **Open questions** — any below-threshold detections from Phase 2, any ambiguity in Phase 3, the install-scope question (always present unless the user has already specified the mode out-of-band), the external-ownership confirmation when any role has `ownership: "external"`, the quality-issues question when AI INFRASTRUCTURE ASSESSMENT was rendered, and (when a candidate shared agentic folder was found) the placement-strategy question — all resolved in Phase 6.
 
 Save the plan as a markdown document in chat (or as a temporary file in the target project under `.ai-orchestra/last-plan.md` if your IDE supports persistent artifacts).
 
@@ -173,13 +228,16 @@ Save the plan as a markdown document in chat (or as a temporary file in the targ
 
 Lead with **Part A** (the user-facing summary) so the user reads the human-readable narrative first. Part B (the diff table) is a secondary artifact the user can drill into if they want — many users will not need it.
 
-After presenting Part A, resolve any open questions interactively before asking the apply / skip / abort question. Open questions that may appear:
+After presenting Part A, resolve any open questions interactively before asking the apply / skip / abort question. The full scripted question forms live in [core/install-plan-template.md](core/install-plan-template.md) §4. Ask only the questions whose precondition holds, in this order:
 
-- **Below-threshold stack detection** — *"I detected `<stack>` with confidence 0.55, below the 0.6 threshold. Should I (a) install the stack pack anyway, (b) skip it, or (c) something else?"*
-- **Skill placement strategy** (when a candidate shared agentic folder was inventoried in Phase 3) — *"I detected the following candidate shared agentic folder(s) at the project root: `[list]`. I can: (a) treat `[chosen path]` as your shared skill home and install portable skills there; (b) install portable skills under both your shared folder and the IDE's native location (hybrid); (c) install only under the IDE's native location and leave your shared folder untouched. Which do you prefer?"* Record the answer in the install marker as `skillPlacementStrategy` per [core/registry/install.schema.md](core/registry/install.schema.md) §1.2.
-- **Stop-hook overlap** (when a project-owned stop hook targets the same learnings doc the orchestra would update) — *"I detected an existing stop-hook at `<path>` that updates `<learnings-path>`. The orchestra also installs a stop-hook for the same file. To avoid running twice, I can: (a) skip the orchestra hook (your hook keeps working), (b) replace your hook with the orchestra hook, (c) tag your existing hook as orchestra-managed and adopt it. Which do you prefer?"*
+1. **Install scope mode** — always asked. The recommendation engine ([core/install-scope.md](core/install-scope.md) §4) supplies the default; the user accepts the recommendation, or picks one of `full-kit`, `selected-roles` (with a checkbox-style role selection), `primary-plus-collaborators` (one primary + opt-in collaborators), or `core-only`. Record the answer in `marker.installScope` per [core/registry/install.schema.md](core/registry/install.schema.md) §1.2. Full form in [core/install-plan-template.md](core/install-plan-template.md) §4.4.
+2. **External-ownership confirmation** — only when any role has `ownership: "external"` per [core/discovery/existing-infra.md](core/discovery/existing-infra.md) §3.9. For each externally-owned role, ask whether to exclude it (default) or include it anyway. Adjusts `installScope.selectedRoles[]` accordingly. Full form in [core/install-plan-template.md](core/install-plan-template.md) §4.5.
+3. **Quality issues** — only when AI INFRASTRUCTURE ASSESSMENT was rendered in Part A (i.e., §3.10 produced one or more issues). Group by severity; let the user accept all proposed actions, accept-with-skips, preserve everything as-is, or walk through each issue individually. Each issue resolves to `improve` / `replace` / `preserve` and updates the corresponding Part B row. The orchestra never auto-applies a fix to a hand-written file — without managed markers `improve` degrades to `propose`. Full form in [core/install-plan-template.md](core/install-plan-template.md) §4.6.
+4. **Skill placement strategy** — only when a candidate shared agentic folder was inventoried in §3.7. The user picks `ide-specific`, `shared` (single user-nominated path), or `hybrid` (both, with stub). Record in `marker.skillPlacementStrategy`. Full form in [core/install-plan-template.md](core/install-plan-template.md) §4.2.
+5. **Stop-hook overlap** — only when an existing project-owned stop hook targets the same learnings doc the orchestra would update. User picks skip orchestra hook / replace user hook / adopt user hook as orchestra-managed. Full form in [core/install-plan-template.md](core/install-plan-template.md) §4.3.
+6. **Below-threshold stack detection** — only when Phase 2 produced one or more detections with confidence below 0.6. User picks install anyway / skip / something else per detection. Full form in [core/install-plan-template.md](core/install-plan-template.md) §4.1.
 
-Once open questions are resolved, ask the final question:
+Once all applicable open questions are resolved, ask the final question:
 
 > "Does this plan match how you want the orchestra installed? Reply with one of: `apply`, `apply but skip [paths]`, `revise [reason]`, or `abort`."
 
@@ -289,8 +347,9 @@ Tell the user: "I cannot find `ai-orchestra/` in the project root. Make sure the
 - [MIGRATION.md](MIGRATION.md) — version-upgrade guidance and compatibility policy.
 - [core/discovery/DETECTION.md](core/discovery/DETECTION.md) — discovery probe procedure.
 - [core/discovery/signals/](core/discovery/signals/) — per-stack detector definitions.
-- [core/discovery/existing-infra.md](core/discovery/existing-infra.md) — existing-infra inventory procedure (including shared agentic folder detection).
-- [core/install-plan-template.md](core/install-plan-template.md) — canonical Part A + Part B install-plan format used in Phases 5 and 6.
+- [core/discovery/existing-infra.md](core/discovery/existing-infra.md) — existing-infra inventory procedure (including shared agentic folder detection in §3.7, per-role ownership in §3.9, and quality assessment in §3.10).
+- [core/install-scope.md](core/install-scope.md) — install-scope modes, resolver, and the recommendation engine consumed by Phase 5 and Phase 6 question 1.
+- [core/install-plan-template.md](core/install-plan-template.md) — canonical Part A + Part B install-plan format used in Phases 5 and 6, including the AI INFRASTRUCTURE ASSESSMENT subsection and the scripted Phase 6 question forms.
 - [core/director/_overview.md](core/director/_overview.md) — Director system overview (rule + learnings).
 - [core/director/RULE.md](core/director/RULE.md) — Director rule template.
 - [core/director/learnings-template.md](core/director/learnings-template.md) — learnings document seed.

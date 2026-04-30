@@ -21,8 +21,8 @@ The adapter MUST resolve every path relative to the project root before writing,
 | 1 | [Director rule](../../core/director/RULE.md) | `.cursor/rules/ai-director.mdc` | `create` (or `skip` on idempotent re-run) | `suffix-rename` if target exists with non-orchestra content. |
 | 2 | [Director learnings template](../../core/director/learnings-template.md) | `_documentation/AI_LEARNINGS.md` (or detected equivalent — see §4) | `create` | If target exists, `merge-missing-sections` (do not touch existing sections). |
 | 3 | Project context (consolidated) | `AGENTS.md` (project root) | `create` or `extend-section` | See §3. |
-| 4 | Per-role and per-skill always-on context rule | `.cursor/rules/orchestra-context.mdc` | `create` | `suffix-rename` if target exists. |
-| 5 | Each installed skill (from [core/skills/](../../core/skills/)) | `.cursor/skills/<skill-id>/SKILL.md` (or shared/hybrid path — see §8) | `create` per skill | `suffix-rename` per-folder if a folder of the same name exists. |
+| 4 | Per-role and per-skill always-on context rule | `.cursor/rules/orchestra-context.mdc` | `create` | `suffix-rename` if target exists. Skipped entirely when `installScope.mode` is `core-only` — see §9. |
+| 5 | Each installed skill (from [core/skills/](../../core/skills/)) | `.cursor/skills/<skill-id>/SKILL.md` (or shared/hybrid path — see §8) | `create` per skill | `suffix-rename` per-folder if a folder of the same name exists. Filtered by `installScope.selectedSkills` — see §9. |
 | 6 | Stop-hook | `.cursor/hooks.json` (entry under `hooks.stop`) | `merge-json` | See §5. |
 | 7 | MCP slots | `.cursor/mcp.json` (entries under `mcpServers`) | `merge-json` | See [`mcp.md`](mcp.md). |
 | 8 | Install marker | `.ai-orchestra/install.json` | `create` (always overwrite — this file is owned by the orchestra) | Always overwrite; the orchestra never assumes user edits in this file. |
@@ -248,7 +248,56 @@ Subsequent audits read this field to know where to look for canonical skill file
 
 ---
 
-## 9. Idempotency contract
+## 9. Install scope handling
+
+The Cursor adapter renders only the artifacts implied by `installScope.mode` plus the resolver's `selectedRoles` and `selectedSkills` per [`../../core/install-scope.md`](../../core/install-scope.md) §2 / §3. The mode does not change *how* an artifact is written — it changes *which* artifacts the adapter writes.
+
+### 9.1 Per-mode rendering matrix
+
+| Artifact | `full-kit` | `selected-roles` | `primary-plus-collaborators` | `core-only` |
+|----------|------------|------------------|------------------------------|-------------|
+| Director rule (`.cursor/rules/ai-director.mdc`) | rendered | rendered | rendered | rendered |
+| Learnings doc | rendered | rendered | rendered | rendered |
+| Install marker (`.ai-orchestra/install.json`) | rendered | rendered | rendered | rendered |
+| Universal audit skills (`cleanup`, `pre-release`, `ai-infra-audit`) | rendered | rendered | rendered | rendered |
+| `orchestra-context.mdc` (row 4) | rendered (lists every role) | rendered (lists `selectedRoles` only) | rendered (lists `primaryRole` + collaborators + universals) | **skipped** |
+| Per-skill files (row 5) | every skill from every role | union of skills for `selectedRoles` ∪ universals | union of skills for the resolved set ∪ universals | universals only |
+| `AGENTS.md` managed section role list (§3) | every role | `selectedRoles` only | resolved set only | "no role library installed (core-only mode)" |
+| Stack-pack rules (§7) | rendered (unaffected by scope) | rendered (unaffected by scope) | rendered (unaffected by scope) | rendered (unaffected by scope) |
+
+Stack packs are deliberately unaffected — they are determined by the project's detected stacks, not by the role scope. A `core-only` install on a `js-ts` project still installs the JS/TS rule pack so the agent has stack guidance even without a role library.
+
+### 9.2 The `improve` action
+
+When Phase 6 §4.6 resolves a quality issue with `proposedAction: "improve"`, the adapter performs an in-place block rewrite of the target file. Preconditions:
+
+- The target file MUST contain a managed marker pair (the same `<!-- ai-orchestra: managed-section start -->` / `... end -->` convention from §3), OR be one of the orchestra-wholly-owned files (`_documentation/AI_LEARNINGS.md` sections that match the template, `.ai-orchestra/install.json`, the orchestra's own `.cursor/rules/ai-director.mdc` or `orchestra-context.mdc`).
+- If neither precondition holds, the action degrades to `propose` and the user is asked one more time before any write.
+
+When `improve` fires, the row's `targetIssue` column references the originating `issue.id` from [`../../core/discovery/existing-infra.md`](../../core/discovery/existing-infra.md) §3.10 so the post-install report and the audit can reconstruct why the rewrite happened.
+
+### 9.3 The `replace` proposal (rendered as `suffix-rename`)
+
+When Phase 6 §4.6 resolves a quality issue with `proposedAction: "replace"`, the adapter writes the orchestra's version under `<basename>.orchestra.<ext>` next to the original, leaves the original untouched, and records the row with `action: suffix-rename` and `targetIssue: <issue.id>`. The post-install report explicitly tells the user "your `<basename>.<ext>` is recommended for replacement; once you've reviewed both files, delete whichever one you don't want — the orchestra will not delete files for you."
+
+The next audit run after a `replace` proposal checks whether the original is still present. If both files exist after a configurable grace period (one full audit cycle by default), the audit reports it as a `warning` `replace.unresolved` so the user is reminded to act.
+
+### 9.4 Recording the scope decision
+
+The adapter writes `installScope` to the install marker exactly once per install or upgrade per the schema in [`../../core/registry/install.schema.md`](../../core/registry/install.schema.md) §1.2. Subsequent audits read this field to know which roles and skills the adapter is responsible for. If the user manually deletes a role-derived rule or skill file, the audit surfaces the drift as a `propose` action — re-installing a deliberately-deleted artifact is a decision the user must confirm.
+
+### 9.5 Idempotency under scope changes
+
+Re-running the orchestra with a different `installScope.mode` than what is recorded in the marker is treated as an upgrade, not an idempotent re-run. The adapter computes the diff between the previous resolved set and the new resolved set:
+
+- Roles or skills newly added by the scope change → rendered as `create` (or `skip` if a previous install left the file in place).
+- Roles or skills no longer in scope → the adapter does NOT delete files automatically. It surfaces them as `propose` rows ("`<file>` is no longer in scope under `<new-mode>`. Delete? Keep? Mark obsolete?") and the user resolves each one.
+
+This conservative deletion policy preserves the orchestra's "never silently destroys user work" promise even across scope transitions.
+
+---
+
+## 10. Idempotency contract
 
 Concretely, the Cursor adapter guarantees:
 
@@ -258,7 +307,7 @@ Concretely, the Cursor adapter guarantees:
 
 ---
 
-## 10. References
+## 11. References
 
 - [`INSTALL.md`](INSTALL.md) — top-level procedure that drives this file.
 - [`target-schema.md`](target-schema.md) — exact file shapes referenced from this table.
@@ -266,5 +315,7 @@ Concretely, the Cursor adapter guarantees:
 - [`mcp.md`](mcp.md) — MCP-specific merge logic.
 - [`post-install-checks.md`](post-install-checks.md) — checks that validate the actions in this table actually produced what was intended.
 - [`../_contract.md`](../_contract.md) — adapter contract; section 5 (conflict-handling framework) is the abstract version of §6 here.
-- [`../../core/discovery/existing-infra.md`](../../core/discovery/existing-infra.md) — §3.7 defines candidate shared-folder detection that drives §8.
-- [`../../core/registry/install.schema.md`](../../core/registry/install.schema.md) — schema of the marker entries this file produces (including `skillPlacementStrategy`).
+- [`../../core/install-scope.md`](../../core/install-scope.md) — install-scope modes, resolver, and the recommendation engine that drive §9.
+- [`../../core/discovery/existing-infra.md`](../../core/discovery/existing-infra.md) — §3.7 defines candidate shared-folder detection that drives §8; §3.9 / §3.10 produce the inventory inputs that drive §9 quality handling.
+- [`../../core/install-plan-template.md`](../../core/install-plan-template.md) — Part B's `targetIssue` column conventions used by §9.2 / §9.3.
+- [`../../core/registry/install.schema.md`](../../core/registry/install.schema.md) — schema of the marker entries this file produces (including `installScope` and `skillPlacementStrategy`).

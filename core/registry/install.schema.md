@@ -58,6 +58,19 @@ The `.ai-orchestra/` directory at the target project root is reserved for orches
     { "id": "code-review",   "category": "code",     "source": "core/skills/code/code-review" }
   ],
 
+  "installScope": {
+    "mode": "selected-roles",
+    "primaryRole": null,
+    "selectedRoles": ["frontend-engineer", "qa-engineer", "security-engineer", "tech-writer"],
+    "optedOutUniversals": [],
+    "decidedAt": "2026-04-29T08:00:00.000Z",
+    "decidedBy": "user-accepted-recommendation",
+    "recommendation": {
+      "mode": "selected-roles",
+      "rationale": "Detected external ownership of backend-engineer (backend/AGENTS.md, 4.2 KB hand-written)."
+    }
+  },
+
   "skillPlacementStrategy": {
     "type": "ide-specific",
     "sharedPath": null,
@@ -136,8 +149,9 @@ The `.ai-orchestra/` directory at the target project root is reserved for orches
 | `project.root` | Yes | Absolute path to the project root at install time. May go stale if the project moves; the audit can reconcile. |
 | `stacks[]` | Yes | Detected stacks with confidence and framework lists. |
 | `stacks[].stackPack` | Conditional | Path to the stack pack (relative to orchestra core). `null` for stacks with no pack in the current version. |
-| `roles[]` | Yes | Role identifiers installed for this project. |
-| `skills[]` | Yes | Skill identifiers installed, with category and source path. |
+| `roles[]` | Yes | Role identifiers installed for this project. Computed by the resolver in [`../install-scope.md`](../install-scope.md) §2 from `installScope.mode` plus the user's selection. Always sorted; always de-duplicated. |
+| `skills[]` | Yes | Skill identifiers installed, with category and source path. Computed by the resolver in [`../install-scope.md`](../install-scope.md) §3 from `roles[]` plus the universal skill set. |
+| `installScope` | Yes | Records how the install was scoped and the recommendation engine's input to that decision. `mode` is one of `full-kit`, `selected-roles`, `primary-plus-collaborators`, `core-only` per [`../install-scope.md`](../install-scope.md) §1. `primaryRole` is the chosen primary role id when `mode` is `primary-plus-collaborators`; `null` otherwise. `selectedRoles` mirrors `roles[]` (kept here for self-containment when an audit reads only this field). `optedOutUniversals[]` lists universal role ids the user explicitly opted out of (typically empty). `decidedAt` is the ISO 8601 timestamp of the decision. `decidedBy` is `default` (no human input — applied automatically), `user` (user picked an option without a recommendation), `user-accepted-recommendation`, or `user-override` (user picked a mode different from the recommendation). `recommendation` records the engine's proposed mode and a one-sentence rationale (always present even when `decidedBy` is `default`). Markers without `installScope` (older v1.0.x installs) are treated as `mode: "full-kit"`, `decidedBy: "default"`. |
 | `skillPlacementStrategy` | Yes | Records where portable skills are installed and the basis for the decision. `type` is one of `ide-specific` (default — skills only under the IDE folder, e.g., `.cursor/skills/`), `shared` (skills under a tool-agnostic folder the user nominated, e.g., `.agents/`), or `hybrid` (skills under both, with the IDE-folder copy as a stub pointing to the shared file). `sharedPath` is the user-nominated folder when `type` is `shared` or `hybrid`; `null` otherwise. `decidedAt` is the ISO 8601 timestamp of the decision. `decidedBy` is `user` (chosen explicitly during Phase 6) or `default` (no candidate detected, so `ide-specific` was applied automatically). |
 | `rules[]` | Yes | Rules installed, with target path and source template. |
 | `hooks` | Yes | Map of event name → registration metadata. Empty object if no hooks installed. Each entry has `registered: bool`, `path: string`, `contractVersion: string` (per [`../../adapters/_stop-hook.md`](../../adapters/_stop-hook.md) — `"1.0"` in v1), and optional `lastRun: ISO-8601 | null` (updated after each hook fire). |
@@ -166,6 +180,7 @@ The audit skill (PR 3) validates the file on every run. Validation rules:
 - All `skills[].source` paths exist relative to the orchestra core (auto-fixable: warn and propose update).
 - Timestamps are valid ISO 8601.
 - `mcpSlots[].configPath` files exist and parse.
+- `installScope` validation per [`../install-scope.md`](../install-scope.md) §5 (mode is one of the four ids; `selectedRoles[]` matches the resolver for the chosen mode; `primaryRole` set iff mode is `primary-plus-collaborators`; etc.). Markers with no `installScope` field are accepted and the audit proposes a one-time migration that records the inferred `mode: "full-kit"` decision.
 
 If validation fails, the audit reports the failure and proposes fixes; it does not silently rewrite the marker.
 
@@ -225,5 +240,6 @@ The audit skill should refuse to run against an unknown future schema version (e
 ## 4. References
 
 - [../../RUN.md](../../RUN.md) — Phase 7 writes the marker; Phase 3 reads any prior marker.
-- [../discovery/existing-infra.md](../discovery/existing-infra.md) — inventory consumes the marker for upgrade-and-audit mode.
+- [../install-scope.md](../install-scope.md) — defines `installScope.mode`, the resolver, and the recommendation engine.
+- [../discovery/existing-infra.md](../discovery/existing-infra.md) — §3.9 / §3.10 produce the inventory inputs the recommendation engine consumes; the marker also drives upgrade-and-audit mode.
 - [../../adapters/_contract.md](../../adapters/_contract.md) — adapters must produce a marker conforming to this schema.

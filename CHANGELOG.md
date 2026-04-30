@@ -8,6 +8,73 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [1.1.0-alpha] — Role scope and quality-aware install
+
+This minor release adds four install-scope modes, an inventory-driven recommendation engine that proposes a default mode based on what the orchestra finds in the target project, and a quality assessment of the existing AI structure that surfaces weak or corrupted artifacts to the user with `improve` / `replace` / `preserve` options. None of the changes are breaking. v1.0.x install markers without `installScope` continue to validate and are treated as `mode: "full-kit"`, `decidedBy: "default"`.
+
+### Added — install scope modes
+
+The orchestra now supports four mutually exclusive install scope modes, defined authoritatively in a new contract document and consumed uniformly by all four adapters:
+
+- `core/install-scope.md` — new file. Defines the four modes (`full-kit`, `selected-roles`, `primary-plus-collaborators`, `core-only`), the resolver that turns a chosen mode into a deterministic `selectedRoleIds[]` and `selectedSkillIds[]`, the `## Collaboration` parser that drives `primary-plus-collaborators`, the universal-roles rule (`Always auto-installed` roles per `core/roles/_overview.md` §2 stay in scope unless explicitly opted out), the universal-skills set (`cleanup`, `pre-release`, `ai-infra-audit` always installed regardless of mode), the recommendation-engine decision table that maps `existingInfra.roles[]` and `existingInfra.quality.overall` to a recommended mode, and the validation rules the audit applies on every run.
+- `core/registry/install.schema.md` — added `installScope` field to the install marker (next to `skillPlacementStrategy`). Records `mode`, `primaryRole` (only when `mode` is `primary-plus-collaborators`), `selectedRoles[]`, `optedOutUniversals[]`, `decidedAt`, `decidedBy` (`default` / `user` / `user-accepted-recommendation` / `user-override`), and the `recommendation` engine's proposed mode + rationale. The `roles[]` and `skills[]` fields are now described as outputs of the `install-scope.md` resolver. No `schemaVersion` bump — the field is additive and has a documented default for older markers.
+
+### Added — per-role ownership and quality assessment
+
+The existing-infra inventory now produces per-role ownership signals and a quality classification of the existing AI structure, both used by the recommendation engine and surfaced in the install plan:
+
+- `core/discovery/existing-infra.md` §3.9 — new section. Detects when one or more orchestra roles are already owned externally (e.g., a `backend/AGENTS.md` your team maintains) using three generic signals (role-shaped subfolder context files, rule files whose name or `description` matches a role alias, hand-written role-shaped sections in main rule files exceeding 300 chars). Includes a per-role alias map (`frontend`, `fe`, `ui`, `client` → `frontend-engineer`, etc.) so detection works without hardcoded project names. Emits `existingInfra.roles[]` with per-role `ownership` (`external` / `partial` / `none`) and evidence.
+- `core/discovery/existing-infra.md` §3.10 — new section. Runs the schema linter from `core/_lint.md` against detected rules and skills, plus three additional checks: freshness (git log if available, file mtime fallback), coherence (orphan cross-links, duplicate rule titles), and coverage (presence of a Director-equivalent always-on rule and a learnings doc). Emits `existingInfra.quality` with `overall` (`solid` / `partial` / `weak` / `corrupted` / `none`), strengths, issues (each with severity + `proposedAction` of `improve` / `replace` / `preserve`), and suggestions. Each issue carries an `id` like `lint.no-frontmatter` or `coverage.missing-director` that downstream rows in the install plan can reference.
+
+### Added — quality-aware install plan
+
+The install plan now surfaces quality findings and proposed actions to the user as a first-class part of the consultative install flow:
+
+- `core/install-plan-template.md` Part A §2.3 — new conditional subsection "AI INFRASTRUCTURE ASSESSMENT". Rendered only when the inventory reports `quality.overall != "solid"` or any role has `ownership: "external"`. Three plain-language subsections (Strengths, Findings with severity + proposed action, Suggestions) restate `core/discovery/existing-infra.md` §3.10 findings for human review. Existing §2.3 RATIONALE renumbered to §2.4 and gains an Install scope mode bullet that explains the chosen scope and the recommendation that drove the default.
+- `core/install-plan-template.md` Part B §3.1 — new `improve` action (rewrite a managed-section block in place to address a quality issue) and new `targetIssue` column (links Part B rows to the originating `core/discovery/existing-infra.md` §3.10 issue id). The `replace` semantic from §3.10 is rendered as `suffix-rename` with `targetIssue` populated, reusing existing machinery.
+- `core/install-plan-template.md` §4 — new Phase 6 question forms in the prescribed order (scope first, then ownership confirmation, then quality issues, then placement, then stop-hook overlap, then below-threshold detections, then final apply): §4.4 Install scope mode (always asked, with the engine's recommendation), §4.5 External-ownership confirmation (per externally-owned role, default exclude), §4.6 Quality issues (group by severity, four resolution options including "walk through each individually"). Existing §4.4 final apply prompt renumbered to §4.7. The intro paragraph explicitly states the agent must skip questions whose precondition does not hold — no placeholder questions.
+
+### Added — Phase 6 consultative flow in RUN.md
+
+`RUN.md` is the canonical agent-facing procedure; the install-plan template is the canonical question-form spec. v1.1.0 keeps that separation while threading the new questions in:
+
+- `RUN.md` Phase 0.5 — orientation message extended. Bullet 3 mentions per-role ownership and quality detection. Bullet 4 mentions the recommended install scope. Bullet 5 mentions the AI INFRASTRUCTURE ASSESSMENT subsection and per-finding proposed actions.
+- `RUN.md` Phase 3 — inventory list extended with §3.9 and §3.10 entries plus a paragraph explaining how the findings feed the recommendation engine and the assessment subsection.
+- `RUN.md` Phase 5 — Part A description extended to four sections (third is conditional). Part B description extended with the `improve` action and `targetIssue` column. RATIONALE bullets gain an Install scope mode item.
+- `RUN.md` Phase 6 — open-question list reordered into the canonical six categories (scope → ownership → quality → placement → stop-hook overlap → below-threshold) plus the final apply prompt. Each item references the scripted form in `core/install-plan-template.md` §4 rather than duplicating it.
+- `RUN.md` References — added `core/install-scope.md` and updated existing-infra cross-link to mention §3.7 / §3.9 / §3.10.
+
+### Added — adapter scope handling
+
+All four IDE adapters honour `installScope.mode` consistently:
+
+- `adapters/cursor/mappings.md` — new §9 (Install scope handling). Per-mode rendering matrix covering Director rule, learnings doc, install marker, universal audit skills, `orchestra-context.mdc` (skipped for `core-only`), per-skill files (filtered by `selectedSkills`), AGENTS.md role list, and stack packs (unaffected by scope). `improve` action semantics with managed-marker preconditions; `replace` proposal rendered as `suffix-rename` with `targetIssue` linkage; conservative deletion policy on scope-down transitions (no auto-delete; `propose` rows for out-of-scope artifacts). Existing §9 Idempotency renumbered to §10; §10 References to §11.
+- `adapters/claude-code/mappings.md` — new §9 with the same shape. Per-mode matrix covers the `CLAUDE.md` managed section, the `AGENTS.md` mirror, learnings doc, per-skill slash-commands under `.claude/commands/` (filtered by `selectedSkills`), the stop-hook entry, install marker, and stack packs.
+- `adapters/codex/mappings.md` — new §9 with the same shape, accommodating Codex's `register-only` skill placement. The mode primarily affects the AGENTS.md managed-section content (role list and skill catalog) plus skill files under `<sharedPath>` when `skillPlacementStrategy.type` is `shared` or `hybrid`-degraded-to-`shared`. Stop-hook gap behaviour is unchanged across modes. The `improve` action commonly applies to the AGENTS.md skill catalog (e.g., regenerating from the resolved skill set after a quality issue).
+- `adapters/vscode/mappings.md` — new §9 with the same shape, mirroring Cursor for prompt files under `.github/prompts/`. Per-mode matrix covers `.github/copilot-instructions.md` managed section, the `AGENTS.md` mirror, prompt files (filtered by `selectedSkills`), stop-hook gap, MCP slots, install marker, and stack packs.
+
+All four adapters renumber Idempotency contract → §10 and References → §11. Each adapter's References section adds links to `core/install-scope.md`, the §3.9 / §3.10 inventory inputs, and the `targetIssue` column conventions.
+
+### Added — first-encounter discoverability
+
+A developer dropping `ai-orchestra/` into a project's root for the first time should be able to invoke the orchestra with any natural variant of the trigger phrase and receive a structured "what / how / options" overview before any probe runs. v1.1.0 closes the previous discoverability gap with two coordinated additions:
+
+- `RUN.md` top — new "Recognising the invocation" section. Explicitly lists the vague trigger phrases the agent should treat as orchestra invocations (`run ai-orchestra`, `run the ai-orchestra folder`, `set up ai-orchestra`, `what is this ai-orchestra folder?`, `audit ai-orchestra`, etc.) and notes that vague invocations route to Phase 0.5's expanded orientation. Existing wording at the very top of the file generalised to "do something with the `ai-orchestra/` folder" so it covers investigate / audit / install equally.
+- `RUN.md` Phase 0.5 — restructured into two passes plus a branching reply handler. Pass A is a structured "what this is" message covering what the orchestra is, the three modes of engagement (`investigate only`, `investigate + propose plan`, `audit`), the four install scope options at a glance, and the safety promise (dry-run, no overwrites, no auto-deletes). Pass B is the procedural 5-step overview (existing content, kept). After both, the agent waits for the user's reply and routes to one of five branches: proceed-equivalent → Phase 1; `investigate only` → Phase 1 + stop after Phase 3 with a findings-only report; `audit` → Phase 3 with prior-install detection; `abort` → stop; ambiguous (user picks a scope upfront) → record preference and continue.
+- `README.md` — "How to use" expanded with the canonical list of trigger-phrase variants, a "What the orchestra does (5 steps)" subsection, an install scope options table mapping each mode to its target use case, and a safety-promise subsection. Whichever file an agent reads first (README.md or RUN.md), the user gets a consistent structured overview.
+
+### Bookkeeping
+
+- `VERSION` bumped to `1.1.0-alpha`.
+- `README.md` updated to reference v1.1.0-alpha and the new `core/install-scope.md`, plus the expanded "How to use" structure described above.
+
+### Backward compatibility
+
+- Install markers from v1.0.0 / v1.0.1 without `installScope` are accepted by the audit and read as `{ mode: "full-kit", decidedBy: "default" }`. The audit proposes a one-time migration that records the inferred field on the next run; no roles or skills are added or removed by the migration.
+- The new `improve` action and `targetIssue` column on Part B rows are additive; rows from v1.0.x plans (which never used them) round-trip unchanged.
+- All renumbered adapter sections (§9 → §10, §10 → §11) had no external references in v1.0.x; existing cross-references to §3 / §4 / §5 / §6 / §7 / §8 are unchanged.
+- The `roles[]` and `skills[]` fields on the install marker continue to be the operational source of truth for "what was installed". `installScope.selectedRoles` mirrors `roles[]` and is recorded for audit self-containment; the two are kept consistent by the resolver.
+
 ## [1.0.1-alpha] — Installer hardening
 
 This patch release closes three concerns surfaced during the first real-world install of the orchestra by an external user. None of the changes are breaking; the v1.0 install marker schema is forward-compatible (the new `skillPlacementStrategy` field defaults to `ide-specific` for installs that predate v1.0.1, matching pre-existing behaviour).

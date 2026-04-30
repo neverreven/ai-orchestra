@@ -13,7 +13,7 @@ This file is the authoritative reference for Phase 5 (build dry-run) and Phase 7
 | 1 | [Director rule](../../core/director/RULE.md) + [project context](../../core/director/_overview.md) (consolidated) | `.github/copilot-instructions.md` — orchestra-managed section | `create` or `extend-section` | See §3. |
 | 2 | [Director learnings template](../../core/director/learnings-template.md) | `_documentation/AI_LEARNINGS.md` (or detected equivalent) | `create` | If target exists, `merge-missing-sections` (do not touch existing sections). |
 | 3 | Project context mirror | `AGENTS.md` (project root) — same managed-section content | `create` or `extend-section` | See §3. |
-| 4 | Each installed skill (from [core/skills/](../../core/skills/)) | `.github/prompts/<skill-id>.prompt.md` (or shared/hybrid path — see §8) | `create` per skill | `suffix-rename` per file if a file of the same name exists with non-orchestra content. |
+| 4 | Each installed skill (from [core/skills/](../../core/skills/)) | `.github/prompts/<skill-id>.prompt.md` (or shared/hybrid path — see §8) | `create` per skill | `suffix-rename` per file if a file of the same name exists with non-orchestra content. Filtered by `installScope.selectedSkills` — see §9. |
 | 5 | Stop-hook | (No file written — declared gap, see [`INSTALL.md`](INSTALL.md) §6.) | `skip-with-gap` | Manual fallback documented in `copilot-instructions.md`. |
 | 6 | MCP slots | `.vscode/mcp.json` (entries under `servers`) | `merge-json` | See [`mcp.md`](mcp.md). |
 | 7 | Install marker | `.ai-orchestra/install.json` | `create` (always overwrite) | Always overwrite; orchestra-owned. |
@@ -179,7 +179,56 @@ Subsequent audits read this field to know where to look for canonical skill file
 
 ---
 
-## 9. Idempotency contract
+## 9. Install scope handling
+
+The VS Code adapter renders only the artifacts implied by `installScope.mode` plus the resolver's `selectedRoles` and `selectedSkills` per [`../../core/install-scope.md`](../../core/install-scope.md) §2 / §3. The mode does not change *how* an artifact is written — it changes *which* artifacts the adapter writes.
+
+### 9.1 Per-mode rendering matrix
+
+| Artifact | `full-kit` | `selected-roles` | `primary-plus-collaborators` | `core-only` |
+|----------|------------|------------------|------------------------------|-------------|
+| `.github/copilot-instructions.md` managed section (row 1) | rendered (lists every role) | rendered (lists `selectedRoles` only) | rendered (lists `primaryRole` + collaborators + universals) | rendered (notes "no role library installed (core-only mode)") |
+| `AGENTS.md` mirror (row 3) | rendered (matches row 1) | rendered (matches row 1) | rendered (matches row 1) | rendered (matches row 1) |
+| Learnings doc (row 2) | rendered | rendered | rendered | rendered |
+| Per-skill prompt files under `.github/prompts/` (row 4) | every skill from every role | union of skills for `selectedRoles` ∪ universals | union of skills for the resolved set ∪ universals | universals only (`cleanup`, `pre-release`, `ai-infra-audit`) |
+| Stop-hook (row 5) | declared gap (rendered the same way regardless of scope) | gap | gap | gap |
+| `.vscode/mcp.json` MCP slots (row 6) | rendered | filtered by which `selectedRoles` request slots | filtered by which `selectedRoles` request slots | none (no role-derived slots) |
+| Install marker (row 7) | rendered | rendered | rendered | rendered |
+| Stack-pack additions to `.github/copilot-instructions.md` and `.github/prompts/` (§7) | rendered (unaffected by scope) | rendered (unaffected by scope) | rendered (unaffected by scope) | rendered (unaffected by scope) |
+
+Stack packs are deliberately unaffected — they are determined by the project's detected stacks, not by the role scope. A `core-only` install on a `js-ts` project still receives the JS/TS pack content inside `copilot-instructions.md` and the relevant prompt-file addenda.
+
+### 9.2 The `improve` action
+
+When Phase 6 §4.6 resolves a quality issue with `proposedAction: "improve"`, the adapter performs an in-place block rewrite of the target file. Preconditions:
+
+- The target file MUST contain a managed marker pair (the same `<!-- ai-orchestra: managed-section start -->` / `... end -->` convention from §3), OR be one of the orchestra-wholly-owned files (the learnings doc sections that match the template, `.ai-orchestra/install.json`, the orchestra's own `.github/prompts/<skill-id>.prompt.md` files).
+- If neither precondition holds, the action degrades to `propose` and the user is asked one more time before any write.
+
+When `improve` fires, the row's `targetIssue` column references the originating `issue.id` from [`../../core/discovery/existing-infra.md`](../../core/discovery/existing-infra.md) §3.10.
+
+### 9.3 The `replace` proposal (rendered as `suffix-rename`)
+
+When Phase 6 §4.6 resolves a quality issue with `proposedAction: "replace"`, the adapter writes the orchestra's version under `<basename>.orchestra.<ext>` next to the original, leaves the original untouched, and records the row with `action: suffix-rename` and `targetIssue: <issue.id>`. The post-install report explicitly tells the user "your `<basename>.<ext>` is recommended for replacement; once you've reviewed both files, delete whichever one you don't want — the orchestra will not delete files for you."
+
+The next audit run after a `replace` proposal checks whether the original is still present and reports `replace.unresolved` after one full audit cycle.
+
+### 9.4 Recording the scope decision
+
+The adapter writes `installScope` to the install marker exactly once per install or upgrade per the schema in [`../../core/registry/install.schema.md`](../../core/registry/install.schema.md) §1.2.
+
+### 9.5 Idempotency under scope changes
+
+Re-running with a different `installScope.mode` than what is recorded in the marker is treated as an upgrade. The adapter computes the diff between the previous resolved set and the new resolved set:
+
+- Skills newly added by the scope change → rendered as `create` (or `skip` if a previous install left the file in place).
+- Skills no longer in scope → the adapter does NOT delete the corresponding `.github/prompts/<skill-id>.prompt.md` file automatically. It surfaces them as `propose` rows ("`<file>` is no longer in scope under `<new-mode>`. Delete? Keep? Mark obsolete?") and the user resolves each one.
+
+This conservative deletion policy preserves the orchestra's "never silently destroys user work" promise even across scope transitions.
+
+---
+
+## 10. Idempotency contract
 
 - Re-running on a project where `.ai-orchestra/install.json` exists with the current core version produces only `skip` actions (or `propose` for user-edited content).
 - The marker's `history[]` array is **not** appended on idempotent re-runs that produce zero changes.
@@ -187,7 +236,7 @@ Subsequent audits read this field to know where to look for canonical skill file
 
 ---
 
-## 10. References
+## 11. References
 
 - [`INSTALL.md`](INSTALL.md) — top-level procedure that drives this file.
 - [`target-schema.md`](target-schema.md) — exact file shapes referenced from this table.
@@ -197,5 +246,7 @@ Subsequent audits read this field to know where to look for canonical skill file
 - [`../cursor/mappings.md`](../cursor/mappings.md) — full-adapter reference.
 - [`../claude-code/mappings.md`](../claude-code/mappings.md) — sibling baseline.
 - [`../codex/mappings.md`](../codex/mappings.md) — sibling baseline.
-- [`../../core/discovery/existing-infra.md`](../../core/discovery/existing-infra.md) — §3.7 defines candidate shared-folder detection that drives §8.
-- [`../../core/registry/install.schema.md`](../../core/registry/install.schema.md) — schema of the marker entries this file produces (including `skillPlacementStrategy`).
+- [`../../core/install-scope.md`](../../core/install-scope.md) — install-scope modes, resolver, and the recommendation engine that drive §9.
+- [`../../core/discovery/existing-infra.md`](../../core/discovery/existing-infra.md) — §3.7 defines candidate shared-folder detection that drives §8; §3.9 / §3.10 produce the inventory inputs that drive §9 quality handling.
+- [`../../core/install-plan-template.md`](../../core/install-plan-template.md) — Part B's `targetIssue` column conventions used by §9.2 / §9.3.
+- [`../../core/registry/install.schema.md`](../../core/registry/install.schema.md) — schema of the marker entries this file produces (including `installScope` and `skillPlacementStrategy`).
