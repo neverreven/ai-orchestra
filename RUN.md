@@ -1,10 +1,26 @@
 # RUN.md — How to Run the Orchestra
 
-> **You are an AI agent.** A user asked you to "run the orchestra" or some natural variant of that. This file tells you what to do, step by step. Follow it from top to bottom, exactly. When this file's instructions and your built-in IDE conventions conflict, prefer this file.
+> **You are an AI agent.** A user asked you to do something with the `ai-orchestra/` folder. This file tells you what to do, step by step. Follow it from top to bottom, exactly. When this file's instructions and your built-in IDE conventions conflict, prefer this file.
 
 This file is **identical regardless of IDE**. It works the same in Cursor, Claude Code, Codex, VS Code with Copilot, and any other agentic IDE that can read markdown and execute file operations.
 
 The orchestra is **declarative**. Every action you will take is described in markdown specs in this folder. There is no runtime code in v1. You are the executor.
+
+## Recognising the invocation
+
+The user may invoke the orchestra with any natural variant of these phrases:
+
+- "run the orchestra"
+- "run ai-orchestra"
+- "run the ai-orchestra folder"
+- "set up ai-orchestra"
+- "install ai-orchestra"
+- "configure agents in this project"
+- "what is this ai-orchestra folder?"
+- "investigate ai-orchestra"
+- "audit ai-orchestra" / "check the orchestra"
+
+Treat any of the above (or a close paraphrase) as an instruction to follow this file. Vague invocations like *"run ai-orchestra"* or *"what is this folder?"* signal the user may not yet know what the orchestra is — Phase 0.5 handles that case explicitly with a structured **what / steps / options** orientation before any probe runs.
 
 ---
 
@@ -26,23 +42,58 @@ If you cannot satisfy any of these, stop and ask the user.
 
 ## 0.5. Phase 0.5 — Orient the user
 
-**Before** you start probing, tell the user (in plain language, in chat) what is about to happen and why. The orchestra is consultative, not transactional — the user must feel in control of the install before any file is read.
+**Before** you start probing, orient the user. The orchestra is consultative, not transactional — the user must feel in control before any file is read.
 
-Send a short message in this shape (paraphrase as needed; do not parrot it verbatim):
+Phase 0.5 has two passes. Send both, in order, in a single message (or two if your IDE prefers shorter messages). Then wait for the user to reply.
 
-> "I'm about to run the orchestra. Before I touch any file, I will:
+### Pass A — What this is (always sent on the first invocation)
+
+Send a structured "what / steps / options" overview. The user may have just dropped the folder into the project root and asked "run ai-orchestra" without yet knowing what the orchestra is — this pass closes that gap.
+
+Use this shape (paraphrase as needed; do not parrot it verbatim):
+
+> "You've asked me to look at the `ai-orchestra/` folder. Here is what it is and how I can help.
+>
+> **What it is.** ai-orchestra is a project-agnostic agentic toolkit. It is a set of markdown specifications I read and act on to set up tailored AI infrastructure for this project — rules, skills, hooks, a learnings document — that fits the project's stack and the roles you want covered. v1 ships zero runtime code; everything is markdown the agent (me) executes.
+>
+> **What I can do for you.** Three modes of engagement:
+> - `Investigate only` — I probe the project, inventory existing AI infrastructure, classify its quality, and report findings without proposing or writing anything. Use this when you just want to know the current state.
+> - `Investigate + propose an install plan` (default) — I produce a dry-run plan showing what I would add, what I would preserve, and any quality concerns I found. Nothing is written until you approve.
+> - `Audit` — when the project already has `.ai-orchestra/install.json`, I switch to drift detection instead of a fresh install.
+>
+> **Install scope options** (only relevant if you proceed past investigation). I will recommend one of these based on what I find; you can always override:
+> - **Full kit** — every role (frontend, backend, QA, analytics, DevOps, security, mobile, AI/ML, tech-writer, PM) and the full skill set. Default for greenfield projects.
+> - **Selected roles** — a subset you pick. Useful when one or more roles are owned externally.
+> - **Primary + collaborators** — one primary role plus its declared partners as opt-in add-ons. Useful for focused installs (e.g., FE + QA).
+> - **Core only** — Director rule, learnings doc, audit skill, install marker. No role library. Useful when you want session protocol without the role concept.
+>
+> **Safety promise.** Dry-run first; I never overwrite hand-written content; I never delete user files automatically; no telemetry, no network calls."
+
+### Pass B — Procedural overview (always sent on the first invocation)
+
+Once Pass A is sent, immediately send the 5-step procedural breakdown so the user knows the order of operations.
+
+> "If you go past investigation, I will perform these 5 steps. The first 4 are read-only; only step 5 ever writes a file, and only after you reply `apply`.
 >
 > 1. Detect which IDE I'm running in.
 > 2. Probe the project to identify stacks, frameworks, and build setup.
 > 3. Inventory existing AI infrastructure — rules, skills, hooks, learnings docs, any shared agentic folder you may already use (`.agents/`, `.ai/`, `prompts/`, etc.), per-role ownership (e.g., a `backend/AGENTS.md` your team already maintains), and the overall quality of what's there.
-> 4. Build a proposed install plan with a recommended **install scope** based on what I found — one of `full-kit`, `selected-roles`, `primary + collaborators`, or `core-only`. You can always override the recommendation.
-> 5. Show you, in plain language, what is **NEW** (what the orchestra will add), what is **PRESERVED** (what stays untouched), an **AI INFRASTRUCTURE ASSESSMENT** if I detected weaknesses or external ownership in your existing setup (with proposed improve/replace/preserve actions for each finding), and the **RATIONALE** for the choices I made — including the chosen scope and where to place portable skills if you have a shared folder convention.
+> 4. Build a proposed install plan with a recommended install scope based on what I found.
+> 5. Show you, in plain language, what is **NEW** (what the orchestra will add), what is **PRESERVED** (what stays untouched), an **AI INFRASTRUCTURE ASSESSMENT** if I detected weaknesses or external ownership in your existing setup, and the **RATIONALE** for the non-default choices — then wait for your `apply` / `revise` / `abort` reply.
 >
-> I will not write a single file until you approve. If anything in the plan looks wrong, you can ask me to revise, skip specific items, or abort entirely."
+> Reply with one of: `proceed` (or `go ahead`, `do it`, etc. — any go-signal works) to start the probe; `investigate only` to stop after step 3 with a findings report; `audit` if you know the project is already installed; or `abort` to stop here without doing anything."
 
-This message replaces the implicit "trust me" of a silent install with explicit consent. After sending, proceed to Phase 1. The probe is allowed to run silently from here on; the user has been told the shape of the work.
+### After both passes are sent
 
-If the user has already invoked the orchestra with a specific instruction (e.g., "run the orchestra and skip the AGENTS.md update"), incorporate it as input to Phase 5 but still send the orientation message — the user benefits from seeing what the orchestra is going to do regardless.
+Wait for the user's reply. Map their answer to one of these branches:
+
+- **`proceed`-equivalent reply** → continue to Phase 1.
+- **`investigate only`** → continue to Phase 1, but at the end of Phase 3 stop and produce a findings-only report (project profile + existing-infra inventory + quality assessment) instead of building an install plan. Tell the user "investigation complete; reply `proceed` if you want me to build an install plan based on these findings, or `abort` to stop."
+- **`audit`** → continue to Phase 3; if `.ai-orchestra/install.json` is found, switch to upgrade-and-audit mode per Phase 3 of this file. If no marker is found, tell the user "no prior install detected; would you like me to run a fresh install instead?" and wait.
+- **`abort`** → stop. Do nothing further.
+- **An ambiguous reply** (e.g., the user picks an install scope upfront like "do core-only") → record the user's preference as input to Phase 6, then continue to Phase 1.
+
+If the user already invoked the orchestra with a specific instruction (e.g., "run the orchestra in core-only mode and skip the AGENTS.md update"), incorporate it as input to Phase 6 but still send Pass A and Pass B — the user benefits from seeing the structured overview regardless, especially if the project has teammates who didn't see the original invocation.
 
 ---
 

@@ -55,10 +55,18 @@ All four IDE adapters honour `installScope.mode` consistently:
 
 All four adapters renumber Idempotency contract → §10 and References → §11. Each adapter's References section adds links to `core/install-scope.md`, the §3.9 / §3.10 inventory inputs, and the `targetIssue` column conventions.
 
+### Added — first-encounter discoverability
+
+A developer dropping `ai-orchestra/` into a project's root for the first time should be able to invoke the orchestra with any natural variant of the trigger phrase and receive a structured "what / how / options" overview before any probe runs. v1.1.0 closes the previous discoverability gap with two coordinated additions:
+
+- `RUN.md` top — new "Recognising the invocation" section. Explicitly lists the vague trigger phrases the agent should treat as orchestra invocations (`run ai-orchestra`, `run the ai-orchestra folder`, `set up ai-orchestra`, `what is this ai-orchestra folder?`, `audit ai-orchestra`, etc.) and notes that vague invocations route to Phase 0.5's expanded orientation. Existing wording at the very top of the file generalised to "do something with the `ai-orchestra/` folder" so it covers investigate / audit / install equally.
+- `RUN.md` Phase 0.5 — restructured into two passes plus a branching reply handler. Pass A is a structured "what this is" message covering what the orchestra is, the three modes of engagement (`investigate only`, `investigate + propose plan`, `audit`), the four install scope options at a glance, and the safety promise (dry-run, no overwrites, no auto-deletes). Pass B is the procedural 5-step overview (existing content, kept). After both, the agent waits for the user's reply and routes to one of five branches: proceed-equivalent → Phase 1; `investigate only` → Phase 1 + stop after Phase 3 with a findings-only report; `audit` → Phase 3 with prior-install detection; `abort` → stop; ambiguous (user picks a scope upfront) → record preference and continue.
+- `README.md` — "How to use" expanded with the canonical list of trigger-phrase variants, a "What the orchestra does (5 steps)" subsection, an install scope options table mapping each mode to its target use case, and a safety-promise subsection. Whichever file an agent reads first (README.md or RUN.md), the user gets a consistent structured overview.
+
 ### Bookkeeping
 
 - `VERSION` bumped to `1.1.0-alpha`.
-- `README.md` updated to reference v1.1.0-alpha and the new `core/install-scope.md`.
+- `README.md` updated to reference v1.1.0-alpha and the new `core/install-scope.md`, plus the expanded "How to use" structure described above.
 
 ### Backward compatibility
 
