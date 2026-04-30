@@ -43,8 +43,9 @@ See [RUN.md](RUN.md) for the full bootstrap procedure.
 | Stack content packs (JS/TS, Python web, Salesforce / Commerce Cloud) | PR 6 — shipped (3 packs × 7 files; framework + schema; rules / skills / roles addenda layered onto universal core) |
 | Validation harness + test fixtures | PR 7 — shipped (3 fixtures, agent-driven harness, MIGRATION.md, v1 close-out) |
 | Installer hardening — placeholder URL removal, generic shared-folder detection, pre-install transparency | v1.0.1-alpha — shipped |
+| Role scope and quality-aware install — four scope modes, inventory-driven recommendation, per-issue improve / replace / preserve flow | v1.1.0-alpha — shipped |
 
-The current `VERSION` is recorded in the [VERSION](VERSION) file (currently `1.0.1-alpha`).
+The current `VERSION` is recorded in the [VERSION](VERSION) file (currently `1.1.0-alpha`).
 
 ## Supported IDEs (v1)
 
@@ -77,7 +78,8 @@ ai-orchestra/
 ├── _v1.x-backlog.md   # planned v1.x findings (F1–F8) with proposals
 ├── core/              # project-agnostic, tool-agnostic content
 │   ├── _lint.md       # schema linter contract (governs roles + skills + packs + URL hygiene)
-│   ├── install-plan-template.md  # canonical Part A (NEW/PRESERVED/RATIONALE) + Part B (diff) install-plan format
+│   ├── install-scope.md          # four install scope modes + resolver + recommendation engine (v1.1.0)
+│   ├── install-plan-template.md  # canonical Part A (NEW/PRESERVED/[ASSESSMENT]/RATIONALE) + Part B (diff) install-plan format
 │   ├── discovery/     # probe + signals + existing-infra detection (incl. tool-agnostic shared folders)
 │   ├── roles/         # role definitions (PR 2 — 10 roles + schema + overview)
 │   ├── skills/        # universal skill specs (PR 2 — 30 skills + schema)
@@ -114,8 +116,9 @@ See repository root.
 
 - [RUN.md](RUN.md) — the entry point any agent reads to run the orchestra.
 - [core/discovery/DETECTION.md](core/discovery/DETECTION.md) — how the discovery probe works.
-- [core/discovery/existing-infra.md](core/discovery/existing-infra.md) — how the orchestra detects and respects prior agentic setup, including tool-agnostic shared folders (`.agents/`, `.ai/`, `prompts/`, `docs/agents/`, etc.) introduced in v1.0.1.
-- [core/install-plan-template.md](core/install-plan-template.md) — canonical user-facing summary + diff format used in Phases 5 and 6 of an install (introduced in v1.0.1).
+- [core/discovery/existing-infra.md](core/discovery/existing-infra.md) — how the orchestra detects and respects prior agentic setup, including tool-agnostic shared folders (`.agents/`, `.ai/`, `prompts/`, `docs/agents/`, etc.) introduced in v1.0.1, plus per-role ownership detection (§3.9) and existing-AI-structure quality assessment (§3.10) introduced in v1.1.0.
+- [core/install-scope.md](core/install-scope.md) — the four install scope modes, the resolver, and the inventory-driven recommendation engine (introduced in v1.1.0).
+- [core/install-plan-template.md](core/install-plan-template.md) — canonical user-facing summary + diff format used in Phases 5 and 6 of an install (introduced in v1.0.1; extended in v1.1.0 with the AI INFRASTRUCTURE ASSESSMENT subsection, the `improve` action, the `targetIssue` column, and three new Phase 6 question forms).
 - [core/roles/_overview.md](core/roles/_overview.md) — registry of the ten v1 roles.
 - [core/director/_overview.md](core/director/_overview.md) — Director system: rule + learnings doc.
 - [core/scheduler/CONTRACT.md](core/scheduler/CONTRACT.md) — scheduler contract.

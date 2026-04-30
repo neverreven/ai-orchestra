@@ -12,7 +12,7 @@ This file is the authoritative reference for Phase 5 (build dry-run) and Phase 7
 |---|---------------|-------------|--------|-----------------|
 | 1 | [Director rule](../../core/director/RULE.md) + [project context](../../core/director/_overview.md) (consolidated) + skill catalog | `AGENTS.md` (project root) — orchestra-managed section | `create` or `extend-section` | See §3. |
 | 2 | [Director learnings template](../../core/director/learnings-template.md) | `_documentation/AI_LEARNINGS.md` (or detected equivalent) | `create` | If target exists, `merge-missing-sections` (do not touch existing sections). |
-| 3 | Each installed skill (from [core/skills/](../../core/skills/)) | (No file written by default.) Referenced by id + trigger phrases inside the AGENTS.md skill catalog; source path points into the orchestra core. When the user nominates a shared skill folder (see §8), files ARE written under that folder and the catalog references point there instead. | `register-only` (default) or `create` per skill (when `skillPlacementStrategy.type` is `shared`/`hybrid`) | Trigger phrases recorded in marker `skills[].triggers`. |
+| 3 | Each installed skill (from [core/skills/](../../core/skills/)) | (No file written by default.) Referenced by id + trigger phrases inside the AGENTS.md skill catalog; source path points into the orchestra core. When the user nominates a shared skill folder (see §8), files ARE written under that folder and the catalog references point there instead. | `register-only` (default) or `create` per skill (when `skillPlacementStrategy.type` is `shared`/`hybrid`) | Trigger phrases recorded in marker `skills[].triggers`. Filtered by `installScope.selectedSkills` — see §9. |
 | 4 | Stop-hook | (No file written — declared gap, see [`INSTALL.md`](INSTALL.md) §6.) | `skip-with-gap` | Manual fallback documented in `AGENTS.md`. |
 | 5 | MCP slots | `.codex/mcp.json` (entries under `mcpServers`) | `merge-json` | See [`mcp.md`](mcp.md). |
 | 6 | Install marker | `.ai-orchestra/install.json` | `create` (always overwrite) | Always overwrite; orchestra-owned. |
@@ -166,7 +166,51 @@ When `type: "hybrid"` was requested but degraded, set `"degradedTo": "shared"`.
 
 ---
 
-## 9. Idempotency contract
+## 9. Install scope handling
+
+The Codex adapter renders only the artifacts implied by `installScope.mode` plus the resolver's `selectedRoles` and `selectedSkills` per [`../../core/install-scope.md`](../../core/install-scope.md) §2 / §3. Because Codex's default skill placement is `register-only` (no per-skill files written into the project), most of the scope's effect is on the AGENTS.md managed-section content — specifically the role list and skill catalog.
+
+### 9.1 Per-mode rendering matrix
+
+| Artifact | `full-kit` | `selected-roles` | `primary-plus-collaborators` | `core-only` |
+|----------|------------|------------------|------------------------------|-------------|
+| `AGENTS.md` managed section role list (row 1) | every role | `selectedRoles` only | resolved set only | "no role library installed (core-only mode)" |
+| `AGENTS.md` skill catalog (row 1, §3.4) | every skill from every role + universals | union of skills for `selectedRoles` ∪ universals | union of skills for the resolved set ∪ universals | universals only (`cleanup`, `pre-release`, `ai-infra-audit`) |
+| Learnings doc (row 2) | rendered | rendered | rendered | rendered |
+| Skill files under `<sharedPath>` (row 3, only when `skillPlacementStrategy.type` is `shared` or `hybrid`-degraded-to-`shared`) | every skill | filtered by `selectedSkills` | filtered by `selectedSkills` | universals only |
+| Stop-hook (row 4) | declared gap (rendered the same way regardless of scope) | gap | gap | gap |
+| `.codex/mcp.json` MCP slots (row 5) | rendered | filtered by which `selectedRoles` request slots | filtered by which `selectedRoles` request slots | none (no role-derived slots; only Director-related slots if the orchestra core defines any in v2+) |
+| Install marker (row 6) | rendered | rendered | rendered | rendered |
+| Stack-pack additions to `AGENTS.md` (§7) | rendered (unaffected by scope) | rendered (unaffected by scope) | rendered (unaffected by scope) | rendered (unaffected by scope) |
+
+The Codex adapter retains its `register-only` default for skills regardless of scope mode — `core-only` does not switch to file-copying. When `skillPlacementStrategy.type` is `shared`, skill files DO get written, but only for `selectedSkills`.
+
+### 9.2 The `improve` action
+
+When Phase 6 §4.6 resolves a quality issue with `proposedAction: "improve"`, the adapter performs an in-place block rewrite of the target file. Preconditions:
+
+- The target file MUST contain a managed marker pair (the same `<!-- ai-orchestra: managed-section start -->` / `... end -->` convention from §3), OR be one of the orchestra-wholly-owned files (the learnings doc sections that match the template, `.ai-orchestra/install.json`, the `.codex/mcp.json` orchestra slots).
+- If neither precondition holds, the action degrades to `propose` and the user is asked one more time before any write.
+
+For Codex, `improve` most commonly applies to the AGENTS.md managed section (e.g., the §3.10 quality issue `lint.broken-skill-catalog-link` is fixable by regenerating the catalog from the resolved skill set). When `improve` fires, the row's `targetIssue` column references the originating `issue.id` from [`../../core/discovery/existing-infra.md`](../../core/discovery/existing-infra.md) §3.10.
+
+### 9.3 The `replace` proposal (rendered as `suffix-rename`)
+
+When Phase 6 §4.6 resolves a quality issue with `proposedAction: "replace"`, the adapter writes the orchestra's version under `<basename>.orchestra.<ext>` next to the original, leaves the original untouched, and records the row with `action: suffix-rename` and `targetIssue: <issue.id>`. Codex projects rarely accumulate per-rule files, so `replace` mostly applies to learnings doc forks or hand-written `.codex/` configurations.
+
+The next audit run after a `replace` proposal checks whether the original is still present and reports `replace.unresolved` after one full audit cycle.
+
+### 9.4 Recording the scope decision
+
+The adapter writes `installScope` to the install marker exactly once per install or upgrade per the schema in [`../../core/registry/install.schema.md`](../../core/registry/install.schema.md) §1.2.
+
+### 9.5 Idempotency under scope changes
+
+Re-running with a different `installScope.mode` is treated as an upgrade. The adapter recomputes the AGENTS.md managed-section content from the new resolved set and applies it via `extend-section`. Because Codex's default placement does not write per-skill files, scope-down transitions usually require no file deletion proposals — the orchestra simply removes affected entries from the AGENTS.md catalog. When `skillPlacementStrategy.type` is `shared`, however, the adapter surfaces `propose` rows for skill files that fall out of scope, with the same conservative "never delete user files automatically" policy as Cursor and Claude Code.
+
+---
+
+## 10. Idempotency contract
 
 - Re-running on a project where `.ai-orchestra/install.json` exists with the current core version produces only `skip` actions (or `propose` for user-edited content).
 - The marker's `history[]` array is **not** appended on idempotent re-runs that produce zero changes.
@@ -174,7 +218,7 @@ When `type: "hybrid"` was requested but degraded, set `"degradedTo": "shared"`.
 
 ---
 
-## 10. References
+## 11. References
 
 - [`INSTALL.md`](INSTALL.md) — top-level procedure that drives this file.
 - [`target-schema.md`](target-schema.md) — exact file shapes referenced from this table.
@@ -183,5 +227,7 @@ When `type: "hybrid"` was requested but degraded, set `"degradedTo": "shared"`.
 - [`../_contract.md`](../_contract.md) §6 — gap declaration framework that §5 above implements.
 - [`../cursor/mappings.md`](../cursor/mappings.md) — full-adapter reference; Codex diverges on skill installation strategy.
 - [`../claude-code/mappings.md`](../claude-code/mappings.md) — sibling baseline that copies skills.
-- [`../../core/discovery/existing-infra.md`](../../core/discovery/existing-infra.md) — §3.7 defines candidate shared-folder detection that drives §8.
-- [`../../core/registry/install.schema.md`](../../core/registry/install.schema.md) — schema of the marker entries this file produces (including `skillPlacementStrategy`).
+- [`../../core/install-scope.md`](../../core/install-scope.md) — install-scope modes, resolver, and the recommendation engine that drive §9.
+- [`../../core/discovery/existing-infra.md`](../../core/discovery/existing-infra.md) — §3.7 defines candidate shared-folder detection that drives §8; §3.9 / §3.10 produce the inventory inputs that drive §9 quality handling.
+- [`../../core/install-plan-template.md`](../../core/install-plan-template.md) — Part B's `targetIssue` column conventions used by §9.2 / §9.3.
+- [`../../core/registry/install.schema.md`](../../core/registry/install.schema.md) — schema of the marker entries this file produces (including `installScope` and `skillPlacementStrategy`).
