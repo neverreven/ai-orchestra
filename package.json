@@ -1,0 +1,55 @@
+{
+  "name": "@quillen-labs/ai-orchestra",
+  "version": "1.1.0-alpha",
+  "description": "Universal, project-agnostic agentic toolkit for any IDE-driven AI agent. Drop it into a project and ask your agent to 'run the ai-orchestra'.",
+  "keywords": [
+    "ai",
+    "agent",
+    "cursor",
+    "claude-code",
+    "codex",
+    "vscode",
+    "copilot",
+    "agents.md",
+    "skills",
+    "rules",
+    "mcp",
+    "agentic",
+    "orchestration"
+  ],
+  "homepage": "https://github.com/neverreven/ai-orchestra#readme",
+  "bugs": {
+    "url": "https://github.com/neverreven/ai-orchestra/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/neverreven/ai-orchestra.git"
+  },
+  "license": "MIT",
+  "author": "neverreven",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "bin": {
+    "ai-orchestra": "./bin/init.mjs"
+  },
+  "files": [
+    "bin/",
+    "adapters/",
+    "core/",
+    "_test-fixtures/",
+    "README.md",
+    "RUN.md",
+    "MIGRATION.md",
+    "CHANGELOG.md",
+    "VERSION",
+    "_v1.x-backlog.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "smoke": "node bin/init.mjs --help"
+  }
+}

@@ -19,9 +19,29 @@ The ai-orchestra is the practical realisation of an "AI Metaframework" pattern:
 
 It is a **set of markdown specifications** that any sufficiently capable IDE agent can read and act on. v1 ships zero runtime code.
 
+## Install
+
+```bash
+npx @quillen-labs/ai-orchestra@latest init
+```
+
+Run this from your project's root. It copies the `ai-orchestra/` specification folder into the current directory and writes a tiny `.ai-orchestra/installed-from.json` marker. **It does not modify `AGENTS.md`, `.cursor/`, `.claude/`, `.vscode/`, or any other agentic config** — that's the IDE agent's job once you ask it to "run the orchestra" (see [How to use](#how-to-use)). The CLI is a pure copy-from-package; no network calls, no telemetry.
+
+| Option | What it does |
+|---|---|
+| `--force` | Overwrite an existing `ai-orchestra/` folder. |
+| `--skip-fixtures` | Don't copy `_test-fixtures/` (~80 KB; recommended for production projects). |
+| `--no-marker` | Don't write `.ai-orchestra/installed-from.json`. |
+| `--version` / `-v` | Print the installed CLI/orchestra version. |
+| `--help` / `-h` | Print full usage. |
+
+To upgrade an existing install in-place: `npx @quillen-labs/ai-orchestra@latest init --force`. The IDE agent's audit skill will detect the version drift on the next "run the orchestra" and walk you through any migration needed (see [MIGRATION.md](MIGRATION.md)).
+
+Alternatively, you can clone the repo and copy the `ai-orchestra/` folder by hand — the package is just a thin convenience over that.
+
 ## How to use
 
-Drop the `ai-orchestra/` folder into a project's root, then ask your agent in any supported IDE one of:
+Once installed, ask your agent in any supported IDE one of:
 
 > "Go to the ai-orchestra folder and run the orchestra."
 > "run ai-orchestra"

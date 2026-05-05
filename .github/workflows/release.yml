@@ -1,0 +1,97 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+      - 'v*.*.*-*'
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  publish-npm:
+    name: Publish to npm
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Verify VERSION matches tag
+        shell: bash
+        run: |
+          VERSION_FILE=$(cat VERSION | tr -d '[:space:]')
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          TAG=${GITHUB_REF#refs/tags/v}
+          echo "VERSION file:   $VERSION_FILE"
+          echo "package.json:   $PKG_VERSION"
+          echo "Git tag:        $TAG"
+          if [ "$VERSION_FILE" != "$PKG_VERSION" ]; then
+            echo "::error::VERSION ($VERSION_FILE) does not match package.json ($PKG_VERSION)"
+            exit 1
+          fi
+          if [ "$PKG_VERSION" != "$TAG" ]; then
+            echo "::error::package.json ($PKG_VERSION) does not match tag ($TAG)"
+            exit 1
+          fi
+
+      - name: Smoke test the CLI
+        run: |
+          node bin/init.mjs --version
+          node bin/init.mjs --help
+
+      - name: Publish to npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [[ "${GITHUB_REF#refs/tags/v}" == *-* ]]; then
+            npm publish --access public --tag next
+          else
+            npm publish --access public
+          fi
+
+  github-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: publish-npm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract release notes from CHANGELOG
+        id: notes
+        shell: bash
+        run: |
+          TAG=${GITHUB_REF#refs/tags/v}
+          NOTES=$(awk -v tag="$TAG" '
+            BEGIN { found=0; printing=0 }
+            /^## \[/ {
+              if (printing) { exit }
+              if ($0 ~ tag) { printing=1; next }
+            }
+            printing { print }
+          ' CHANGELOG.md)
+          if [ -z "$NOTES" ]; then
+            NOTES="See CHANGELOG.md for v$TAG details."
+          fi
+          {
+            echo "notes<<EOF"
+            echo "$NOTES"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: v${{ github.ref_name }}
+          body: ${{ steps.notes.outputs.notes }}
+          prerelease: ${{ contains(github.ref_name, '-') }}
