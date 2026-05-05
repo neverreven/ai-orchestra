@@ -116,9 +116,22 @@ Cursor's `hooks.json` schema (v1):
 |-----------|--------|
 | File does not exist | `create` with `version: 1` and the orchestra's stop-hook entry under `hooks.stop`. No `start` entries are added by the orchestra. |
 | File exists, valid JSON, no `hooks.stop` array | Add `hooks.stop` with the orchestra's entry. |
-| File exists, `hooks.stop` array present, no orchestra entry | **Append** the orchestra's entry. Existing entries are preserved. |
+| File exists, `hooks.stop` array present, no orchestra entry, **no overlap detected** | **Append** the orchestra's entry. Existing entries are preserved. |
+| File exists, `hooks.stop` array present, no orchestra entry, **overlap detected per [`../../core/discovery/existing-infra.md`](../../core/discovery/existing-infra.md) §3.11** | **Do not append by default.** Route through [`../../core/conflict/stop-hook-overlap.md`](../../core/conflict/stop-hook-overlap.md) §3 / §4: the install plan asks the user to choose `skip-orchestra`, `replace-with-orchestra`, or `adopt-existing` in Phase 6. The chosen action determines what gets written. The decision is recorded under `installScope.stopHookOverlapResolution` per [`../../core/registry/install.schema.md`](../../core/registry/install.schema.md) §1.2. |
 | File exists, `hooks.stop` array present, orchestra entry already present (matched by `metadata.orchestra: true`) | Replace **only** the orchestra's entry; preserve all other entries verbatim. |
 | File exists but invalid JSON | Critical conflict — surface to user. Do not auto-repair. |
+
+### Overlap branch (introduced in v1.2.0)
+
+When the inventory in [`../../core/discovery/existing-infra.md`](../../core/discovery/existing-infra.md) §3.11 has classified one or more `hooks.stop` entries as `overlap`, the adapter MUST NOT silently merge — it follows the contract in [`../../core/conflict/stop-hook-overlap.md`](../../core/conflict/stop-hook-overlap.md). Per choice:
+
+| User choice (Phase 6) | What this adapter writes |
+|---|---|
+| `skip-orchestra` | No orchestra entry is appended. The existing project entry is preserved verbatim. The install marker records `stopHookOverlapResolution.value: "skip-orchestra"`. |
+| `replace-with-orchestra` | The matched project entry is removed from `hooks.stop`. The orchestra entry (per "Orchestra stop-hook entry" below) is appended. The marker records `stopHookOverlapResolution.value: "replace-with-orchestra"` plus a `replacedEntryEvidence` summary. |
+| `adopt-existing` | The matched project entry is rewritten in place to add `metadata.orchestra: true` and `metadata.contractVersion: "1.0"`. No orchestra entry is appended. The marker records `stopHookOverlapResolution.value: "adopt-existing"` plus the `adoptedEntryDigest` (SHA-256 of the prompt body). |
+
+After the chosen branch is applied, the rest of §5 (orchestra entry shape, start-hook preservation, stable serialisation) is unchanged.
 
 ### Orchestra stop-hook entry
 

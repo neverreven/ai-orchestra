@@ -122,6 +122,22 @@ For every entry in `marker.skills[]`:
 
 ---
 
+## 8.5 Stop-hook overlap resolution checks (introduced in v1.2.0)
+
+These checks verify the orchestra honoured the user's choice for the F4 stop-hook overlap (per [`../../core/conflict/stop-hook-overlap.md`](../../core/conflict/stop-hook-overlap.md)).
+
+| id | what | how | pass | fail | severity |
+|----|------|-----|------|------|----------|
+| `cursor.hooks.overlap.recorded` | The marker has an `installScope.stopHookOverlapResolution` object with `value`, `detectedAt`, `decidedAt`, `decidedBy` fields. | JSON path check. | All four fields present. | Any field missing. | critical |
+| `cursor.hooks.overlap.skip-honoured` | When `stopHookOverlapResolution.value === "skip-orchestra"`, the file `.cursor/hooks.json` does NOT contain any orchestra-tagged entry under `hooks.stop`. | Read the hook config; filter `hooks.stop` for `metadata.orchestra === true`; expect zero. | Zero orchestra entries. | One or more orchestra entries present. | critical |
+| `cursor.hooks.overlap.replace-honoured` | When `stopHookOverlapResolution.value === "replace-with-orchestra"`, exactly one orchestra-tagged entry exists under `hooks.stop` AND no other entry's prompt body matches the original `replacedEntryEvidence` snippet (verifies the project hook was actually removed). | Read the hook config; check tag count + scan remaining entry bodies. | One orchestra entry, no echoes of the replaced entry. | Zero or 2+ orchestra entries, OR replaced entry's snippet still present. | critical |
+| `cursor.hooks.overlap.adopt-honoured` | When `stopHookOverlapResolution.value === "adopt-existing"`, the entry referenced by `evidence.entryIndex` carries `metadata.orchestra: true` AND its prompt body's SHA-256 matches `adoptedEntryDigest`. | Read the entry; compute SHA-256; compare. | Tag present, digest match. | Tag missing, digest mismatch (drift), or entry removed. | warning (drift) / critical (missing) |
+| `cursor.hooks.overlap.no-overlap-clean` | When `stopHookOverlapResolution.value === null`, no overlap detection re-run produces a different verdict against the current `hooks.stop`. | Re-run the §3.11 detector against the current hook config. | Detection still reports no overlap. | Detection now reports overlap (a new project hook was added since install). | warning |
+
+If `cursor.hooks.overlap.adopt-honoured` reports a digest mismatch, the audit follows [`../../core/conflict/stop-hook-overlap.md`](../../core/conflict/stop-hook-overlap.md) §6: surface the drift, ask whether to re-adopt the new content or revert to the orchestra default. The check itself does not auto-resolve.
+
+---
+
 ## 9. Idempotency check (only on re-run)
 
 When the adapter detects an existing marker with the current orchestra version (Phase 3 of RUN.md), one extra check runs:
@@ -156,4 +172,5 @@ The audit skill consumes the same check list — running it later regenerates th
 - [`render-rules.md`](render-rules.md) — frontmatter shapes for §4.
 - [`../_contract.md`](../_contract.md) §2 — `post-install-checks.md` is a required adapter file.
 - [`../../core/registry/install.schema.md`](../../core/registry/install.schema.md) — marker schema for §8.
+- [`../../core/conflict/stop-hook-overlap.md`](../../core/conflict/stop-hook-overlap.md) — F4 contract verified by §8.5.
 - [`../../core/skills/audit/ai-infra-audit/SKILL.md`](../../core/skills/audit/ai-infra-audit/SKILL.md) — re-runs these checks on every audit.

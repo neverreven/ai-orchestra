@@ -107,6 +107,20 @@ When `marker.hooks.Stop.registered == false`, the post-install report names this
 
 ---
 
+## 8.5 Stop-hook overlap resolution checks (introduced in v1.2.0)
+
+Verify the orchestra honoured the user's choice for the F4 stop-hook overlap (per [`../../core/conflict/stop-hook-overlap.md`](../../core/conflict/stop-hook-overlap.md)). Skipped entirely on Claude Code versions where the hook gap applies (`hooks.Stop.registered === false`).
+
+| id | what | how | pass | fail | severity |
+|----|------|-----|------|------|----------|
+| `claude.hooks.overlap.recorded` | Marker has `installScope.stopHookOverlapResolution` with `value`, `detectedAt`, `decidedAt`, `decidedBy`. | JSON path check. | All four fields present. | Any field missing. | critical |
+| `claude.hooks.overlap.skip-honoured` | When `value === "skip-orchestra"`, `.claude/settings.json` `hooks.Stop` contains zero orchestra-tagged entries. | Read `hooks.Stop`; filter for `metadata.orchestra === true`. | Zero. | One or more. | critical |
+| `claude.hooks.overlap.replace-honoured` | When `value === "replace-with-orchestra"`, exactly one orchestra entry under `hooks.Stop` AND no other entry's body matches the original `replacedEntryEvidence` snippet. | Tag count + body scan. | One entry, replaced snippet absent. | Any other state. | critical |
+| `claude.hooks.overlap.adopt-honoured` | When `value === "adopt-existing"`, the entry at `evidence.entryIndex` carries `metadata.orchestra: true` AND its prompt body's SHA-256 matches `adoptedEntryDigest`. | Read entry; compute SHA-256; compare. | Tag present, digest matches. | Tag missing, digest mismatch (drift), or entry removed. | warning (drift) / critical (missing) |
+| `claude.hooks.overlap.no-overlap-clean` | When `value === null`, re-running detection still reports no overlap. | Re-run §3.11 detector. | No overlap. | Detection now reports overlap. | warning |
+
+---
+
 ## 9. Idempotency check (only on re-run)
 
 | id | what | how | pass | fail | severity |
@@ -131,4 +145,5 @@ Same as Cursor (per [`../cursor/post-install-checks.md`](../cursor/post-install-
 - [`../_contract.md`](../_contract.md) §2 — `post-install-checks.md` is a required adapter file.
 - [`../_stop-hook.md`](../_stop-hook.md) — stop-hook contract validated by §6.
 - [`../../core/registry/install.schema.md`](../../core/registry/install.schema.md) — marker schema for §8.
+- [`../../core/conflict/stop-hook-overlap.md`](../../core/conflict/stop-hook-overlap.md) — F4 contract verified by §8.5.
 - [`../../core/skills/audit/ai-infra-audit/SKILL.md`](../../core/skills/audit/ai-infra-audit/SKILL.md) — re-runs these checks on every audit.

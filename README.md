@@ -97,8 +97,9 @@ See [RUN.md](RUN.md) for the full bootstrap procedure.
 | Validation harness + test fixtures | PR 7 — shipped (3 fixtures, agent-driven harness, MIGRATION.md, v1 close-out) |
 | Installer hardening — placeholder URL removal, generic shared-folder detection, pre-install transparency | v1.0.1-alpha — shipped |
 | Role scope and quality-aware install — four scope modes, inventory-driven recommendation, per-issue improve / replace / preserve flow | v1.1.0-alpha — shipped |
+| npm distribution + F4 stop-hook overlap detection and resolution | v1.2.0 — shipped |
 
-The current `VERSION` is recorded in the [VERSION](VERSION) file (currently `1.1.0-alpha`).
+The current `VERSION` is recorded in the [VERSION](VERSION) file (currently `1.2.0`).
 
 ## Supported IDEs (v1)
 
@@ -139,6 +140,7 @@ ai-orchestra/
 │   ├── director/      # Director rule + learnings template (PR 3)
 │   ├── scheduler/     # declared scheduler contract — runner ships in v2 (PR 3)
 │   ├── notifications/ # declared notifications contract — router ships in v2 (PR 3)
+│   ├── conflict/      # universal conflict-resolution contracts (v1.2.0 — F4 stop-hook overlap)
 │   ├── registry/      # install.json + projects.json schemas
 │   └── stack-packs/   # stack-specific content layered onto universal core (PR 6)
 │       ├── _overview.md     # what packs are, how they layer
@@ -171,6 +173,7 @@ See repository root.
 - [core/discovery/DETECTION.md](core/discovery/DETECTION.md) — how the discovery probe works.
 - [core/discovery/existing-infra.md](core/discovery/existing-infra.md) — how the orchestra detects and respects prior agentic setup, including tool-agnostic shared folders (`.agents/`, `.ai/`, `prompts/`, `docs/agents/`, etc.) introduced in v1.0.1, plus per-role ownership detection (§3.9) and existing-AI-structure quality assessment (§3.10) introduced in v1.1.0.
 - [core/install-scope.md](core/install-scope.md) — the four install scope modes, the resolver, and the inventory-driven recommendation engine (introduced in v1.1.0).
+- [core/conflict/stop-hook-overlap.md](core/conflict/stop-hook-overlap.md) — universal contract for detecting and resolving stop-hook conceptual overlap with an existing project hook (introduced in v1.2.0; F4 from `_v1.x-backlog.md`).
 - [core/install-plan-template.md](core/install-plan-template.md) — canonical user-facing summary + diff format used in Phases 5 and 6 of an install (introduced in v1.0.1; extended in v1.1.0 with the AI INFRASTRUCTURE ASSESSMENT subsection, the `improve` action, the `targetIssue` column, and three new Phase 6 question forms).
 - [core/roles/_overview.md](core/roles/_overview.md) — registry of the ten v1 roles.
 - [core/director/_overview.md](core/director/_overview.md) — Director system: rule + learnings doc.

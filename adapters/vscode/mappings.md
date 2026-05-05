@@ -91,6 +91,19 @@ VS Code + Copilot has no documented session-end hook for the agent in v1. The ad
 
 The marker records `hooks.Stop.registered: false` and `hooks.Stop.gapReason: "vscode-copilot-no-session-end-hook"`.
 
+### Stop-hook overlap with a user-adopted fallback (introduced in v1.2.0)
+
+VS Code Copilot has no native session-end hook, so the orchestra has nothing to merge. If the user has adopted a manual fallback that updates the same learnings document the orchestra would target — for example, a `.github/copilot-instructions.md` "session protocol" passage, a saved Copilot Chat prompt, or a VS Code task wired to a save / window-close event — the inventory in [`../../core/discovery/existing-infra.md`](../../core/discovery/existing-infra.md) §3.11 still classifies the fallback as `overlap` per [`../../core/conflict/stop-hook-overlap.md`](../../core/conflict/stop-hook-overlap.md) §2.
+
+When detected, the adapter:
+
+1. Surfaces the overlap in the install plan as a `propose` row with the three-choice question form (`skip-orchestra` / `replace-with-orchestra` / `adopt-existing`).
+2. For `skip-orchestra`: the orchestra continues to record its session-end gap and adds a `note` pointing at the fallback.
+3. For `replace-with-orchestra`: the adapter cannot rewrite a `.github/copilot-instructions.md` passage or a saved prompt without explicit guidance, so the action degrades to `propose` — the install plan asks the user to remove the fallback themselves and includes a one-shot template for a session-end audit invocation. The marker records the chosen value plus `evidence.degradedTo: "propose"`.
+4. For `adopt-existing`: the marker records `stopHookOverlapResolution.value: "adopt-existing"` plus `adoptedEntryDigest`. The audit re-evaluates the digest on every run.
+
+When no fallback is detected, the adapter records `installScope.stopHookOverlapResolution.value: null`, `decidedBy: "default-no-overlap"`.
+
 ---
 
 ## 6. Conflict-handling actions

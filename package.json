@@ -1,6 +1,6 @@
 {
   "name": "@quillen-labs/ai-orchestra",
-  "version": "1.1.0-alpha",
+  "version": "1.2.0",
   "description": "Universal, project-agnostic agentic toolkit for any IDE-driven AI agent. Drop it into a project and ask your agent to 'run the ai-orchestra'.",
   "keywords": [
     "ai",

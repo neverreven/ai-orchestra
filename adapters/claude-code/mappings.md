@@ -94,9 +94,22 @@ Claude Code's `settings.json` schema (recent versions):
 | Claude Code version supports hooks AND file does not exist | `create` with the orchestra's `Stop` entry under `hooks`. |
 | Claude Code version supports hooks AND file exists, no `hooks.Stop` | Add `hooks.Stop` array with the orchestra's entry. |
 | Claude Code version supports hooks AND `hooks.Stop` already has the orchestra entry (matched by `metadata.orchestra: true`) | Replace **only** the orchestra's entry; preserve all other entries verbatim. |
-| Claude Code version supports hooks AND `hooks.Stop` exists but no orchestra entry | **Append** the orchestra's entry. Existing entries are preserved. |
+| Claude Code version supports hooks AND `hooks.Stop` exists, no orchestra entry, **no overlap detected** | **Append** the orchestra's entry. Existing entries are preserved. |
+| Claude Code version supports hooks AND `hooks.Stop` exists, no orchestra entry, **overlap detected per [`../../core/discovery/existing-infra.md`](../../core/discovery/existing-infra.md) §3.11** | **Do not append by default.** Route through [`../../core/conflict/stop-hook-overlap.md`](../../core/conflict/stop-hook-overlap.md) §3 / §4 — three-choice question form in Phase 6 (`skip-orchestra` / `replace-with-orchestra` / `adopt-existing`). Decision recorded under `installScope.stopHookOverlapResolution` per [`../../core/registry/install.schema.md`](../../core/registry/install.schema.md) §1.2. |
 | Claude Code version does NOT support hooks | `skip-with-gap` — do not touch `settings.json`. Record the gap in the install marker and the post-install report (per [`INSTALL.md`](INSTALL.md) §6). |
 | File exists but invalid JSON | Critical conflict — surface to user. Do not auto-repair. |
+
+### Overlap branch (introduced in v1.2.0)
+
+When the inventory in [`../../core/discovery/existing-infra.md`](../../core/discovery/existing-infra.md) §3.11 has classified one or more `hooks.Stop` entries as `overlap`, the adapter follows the contract in [`../../core/conflict/stop-hook-overlap.md`](../../core/conflict/stop-hook-overlap.md). Per choice:
+
+| User choice (Phase 6) | What this adapter writes |
+|---|---|
+| `skip-orchestra` | No orchestra entry is appended; existing project entry preserved. Marker: `stopHookOverlapResolution.value: "skip-orchestra"`. |
+| `replace-with-orchestra` | Matched project entry removed from `hooks.Stop`; orchestra entry appended. Marker: `stopHookOverlapResolution.value: "replace-with-orchestra"` plus `replacedEntryEvidence`. |
+| `adopt-existing` | Matched project entry rewritten in place with `metadata.orchestra: true` + `metadata.contractVersion: "1.0"`; orchestra entry NOT appended. Marker: `stopHookOverlapResolution.value: "adopt-existing"` plus `adoptedEntryDigest`. |
+
+When Claude Code's hook gap applies (`skip-with-gap` row above), the overlap branch does not execute — there is no `settings.json` to merge into. The audit will re-evaluate overlap on every audit invocation (per the contract §6) so a future Claude Code version with hook support automatically triggers the question on the next install / upgrade.
 
 ### Orchestra `Stop` hook entry
 

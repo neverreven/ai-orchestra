@@ -97,6 +97,20 @@ The Codex adapter declares the stop-hook as a gap (per [`INSTALL.md`](INSTALL.md
 
 ---
 
+## 8.5 Stop-hook overlap resolution checks (introduced in v1.2.0)
+
+Verify the orchestra honoured the user's choice for the F4 stop-hook overlap (per [`../../core/conflict/stop-hook-overlap.md`](../../core/conflict/stop-hook-overlap.md)). Codex has no native session-end hook, so these checks operate against any user-adopted fallback (project `AGENTS.md` "session protocol" passage, saved system prompt, etc.) detected by [`../../core/discovery/existing-infra.md`](../../core/discovery/existing-infra.md) §3.11. When no fallback is detected (`value: null`), only the recorded-marker check runs.
+
+| id | what | how | pass | fail | severity |
+|----|------|-----|------|------|----------|
+| `codex.hooks.overlap.recorded` | Marker has `installScope.stopHookOverlapResolution` with `value`, `detectedAt`, `decidedAt`, `decidedBy`. | JSON path check. | All four fields present. | Any field missing. | critical |
+| `codex.hooks.overlap.skip-honoured` | When `value === "skip-orchestra"`, the orchestra has not introduced any new "session-end audit" passage into `AGENTS.md`. | Search the marker's `agentsDoc` managed section for orchestra-added session-end content. | Absent. | Present. | warning |
+| `codex.hooks.overlap.replace-degraded` | When `value === "replace-with-orchestra"`, the marker carries `evidence.degradedTo: "propose"` (Codex cannot rewrite a fallback automatically — see [`mappings.md`](mappings.md) §5). | Field check. | Present. | Missing. | warning |
+| `codex.hooks.overlap.adopt-honoured` | When `value === "adopt-existing"`, the SHA-256 of the adopted fallback content matches `adoptedEntryDigest`. | Re-read the fallback location; compute SHA-256; compare. | Match. | Mismatch (drift) or fallback removed. | warning (drift) / critical (missing) |
+| `codex.hooks.overlap.no-overlap-clean` | When `value === null`, re-running detection still reports no overlap. | Re-run §3.11 detector. | No overlap. | Detection now reports overlap. | warning |
+
+---
+
 ## 9. Idempotency check (only on re-run)
 
 | id | what | how | pass | fail | severity |
@@ -126,4 +140,5 @@ Same as Cursor (per [`../cursor/post-install-checks.md`](../cursor/post-install-
 - [`../_contract.md`](../_contract.md) §2 — `post-install-checks.md` is a required adapter file.
 - [`../_stop-hook.md`](../_stop-hook.md) — stop-hook contract (declared gap for Codex).
 - [`../../core/registry/install.schema.md`](../../core/registry/install.schema.md) — marker schema for §8.
+- [`../../core/conflict/stop-hook-overlap.md`](../../core/conflict/stop-hook-overlap.md) — F4 contract verified by §8.5.
 - [`../../core/skills/audit/ai-infra-audit/SKILL.md`](../../core/skills/audit/ai-infra-audit/SKILL.md) — re-runs these checks on every audit.

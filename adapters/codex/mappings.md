@@ -91,6 +91,19 @@ Codex CLI has no documented session-end hook in v1. The adapter declares this as
 
 The marker records `hooks.Stop.registered: false` and `hooks.Stop.gapReason: "codex-no-session-end-hook"`.
 
+### Stop-hook overlap with a user-adopted fallback (introduced in v1.2.0)
+
+Codex has no native session-end hook, so the orchestra has nothing to merge. However, if the user has adopted a manual fallback that updates the same learnings document the orchestra would target — for example, a project-level `AGENTS.md` "session protocol" section, a Codex command in the project's `.codex/` config, or a saved system-prompt that asks Codex to update learnings on session end — the inventory in [`../../core/discovery/existing-infra.md`](../../core/discovery/existing-infra.md) §3.11 still classifies the fallback as `overlap` when it triggers the verb / path co-references defined in [`../../core/conflict/stop-hook-overlap.md`](../../core/conflict/stop-hook-overlap.md) §2.
+
+When detected, the adapter:
+
+1. Surfaces the overlap in the install plan as a `propose` row with the same three-choice question form (`skip-orchestra` / `replace-with-orchestra` / `adopt-existing`).
+2. For `skip-orchestra`: the orchestra continues to record its session-end gap and adds a `note` to the gap entry pointing at the user's fallback.
+3. For `replace-with-orchestra`: the adapter cannot remove a saved system-prompt or rewrite an `AGENTS.md` "session protocol" section without explicit guidance, so the action degrades to `propose` — the install plan asks the user to remove the fallback themselves and includes a one-shot template for a session-end audit invocation. The marker still records the chosen value and an `evidence.degradedTo: "propose"` flag for audit traceability.
+4. For `adopt-existing`: the marker records `stopHookOverlapResolution.value: "adopt-existing"` plus `adoptedEntryDigest` (SHA-256 of the fallback content). The audit re-evaluates the digest on every run and surfaces drift per [`../../core/conflict/stop-hook-overlap.md`](../../core/conflict/stop-hook-overlap.md) §6.
+
+When no fallback is detected, the adapter records `installScope.stopHookOverlapResolution.value: null`, `decidedBy: "default-no-overlap"` and the gap behaviour above is unchanged.
+
 ---
 
 ## 6. Conflict-handling actions

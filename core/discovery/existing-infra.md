@@ -352,6 +352,40 @@ Each `issue.id` follows the convention `<area>.<short-name>` so the install plan
 
 Performance budget: the quality assessment runs in addition to the rest of Phase 3 within the same 2-second budget. Schema lint reads only frontmatter and the first 200 lines of each artifact; coverage checks rely on already-inventoried metadata.
 
+### 3.11 Stop-hook conceptual overlap (introduced in v1.2.0)
+
+When the IDE's hook configuration (`.cursor/hooks.json`, `.claude/settings.json`, `.codex/...`, `.vscode/...`) contains an existing stop-hook entry that targets the same learnings document the orchestra would target, the inventory MUST classify the entry as `overlap` so the install plan can ask the user how to resolve it (rather than silently merging both hooks and producing duplicate work on every session end).
+
+The detector follows the contract in [`../conflict/stop-hook-overlap.md`](../conflict/stop-hook-overlap.md) §2:
+
+1. Skip entries already tagged `metadata.orchestra: true` (those are previous-orchestra entries, not third-party hooks).
+2. For each remaining `prompt`-type entry under `hooks.stop` (or the IDE-equivalent event), inspect the prompt body (case-insensitive substring scan, capped at first 4 KB) for either (a) a co-reference to the orchestra's resolved learnings path or any path matching `**/AI_LEARNINGS.md`, `**/learnings.md`, `**/AI_LEARNINGS.txt`, or (b) any of the verb co-references `update learnings`, `learning(s) doc`, `update the learnings`, `append to learnings`, `record what you learned`, `capture learnings`.
+3. An entry is classified `overlap` when condition (a) fires, OR when both (b) and a "type-prompt with no path" probe fire (per §2 of the contract — the verb is present and the orchestra's learnings path exists in the project even if the entry's prompt body doesn't currently reference it).
+
+Append the result to the inventory:
+
+```json
+"existingInfra": {
+  "stopHookOverlap": {
+    "detected": true,
+    "ide": "cursor",
+    "configPath": ".cursor/hooks.json",
+    "overlappingEntries": [
+      {
+        "index": 0,
+        "type": "prompt",
+        "matchedSignals": ["C2", "C3"],
+        "evidenceSnippet": "...update _documentation/AI_LEARNINGS.md with any new learnings..."
+      }
+    ]
+  }
+}
+```
+
+When `detected` is `false` the field MAY be omitted entirely. When `detected` is `true` the install plan adds the overlap row to Phase 6 per [`../conflict/stop-hook-overlap.md`](../conflict/stop-hook-overlap.md) §3, and the adapter routes the merge logic through that contract instead of the default `merge-json` action.
+
+Performance budget: the detector reads at most the first 4 KB of each existing hook entry's prompt body. It is bounded by the number of `hooks.stop` entries (typically 1–3) so it stays within the 2-second Phase 3 budget.
+
 ---
 
 ## 4. What the inventory does NOT include
@@ -394,5 +428,6 @@ The inventory phase should complete in **under 2 seconds** on a typical project.
 - [../install-scope.md](../install-scope.md) — recommendation engine that consumes `existingInfra.roles[]` and `existingInfra.quality`.
 - [../install-plan-template.md](../install-plan-template.md) — Part A's "AI INFRASTRUCTURE ASSESSMENT" section that surfaces §3.10 findings to the user.
 - [../_lint.md](../_lint.md) — schema-lint contract used in §3.10's quality check.
+- [../conflict/stop-hook-overlap.md](../conflict/stop-hook-overlap.md) — F4 universal contract consumed by §3.11 (detection) and the adapters' Phase 5 merge logic.
 - [../../RUN.md](../../RUN.md) — overall bootstrap procedure.
 - [../../adapters/_contract.md](../../adapters/_contract.md) — adapter consumption of the inventory.

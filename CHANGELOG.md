@@ -8,6 +8,58 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [1.2.0] — npm distribution + F4 stop-hook overlap resolution
+
+This minor release ships two coordinated workstreams: a real distribution mechanism (`npx @quillen-labs/ai-orchestra@latest init`) so the orchestra can be dropped into any project without copying the folder by hand, and the v1.x backlog's highest-priority finding (F4 — stop-hook conceptual overlap). The release leaves the `-alpha` suffix behind: the orchestra core has stabilised, the four adapters cover their declared surfaces with explicit gaps, and the universal contracts (install scope, install plan template, stop-hook overlap) have settled enough to call this a real `1.x` minor.
+
+### Added — npm distribution (`@quillen-labs/ai-orchestra`)
+
+The orchestra now ships as an npm package so any project can install it with one command:
+
+- `package.json` — package manifest. Name `@quillen-labs/ai-orchestra`, public access, `bin: { "ai-orchestra": "./bin/init.mjs" }`. Files include the spec folders (`core/`, `adapters/`, `_test-fixtures/`) and the top-level docs (`README.md`, `RUN.md`, `MIGRATION.md`, `CHANGELOG.md`, `VERSION`, `_v1.x-backlog.md`); excludes `.git/`, `.github/`, and `node_modules/`.
+- `bin/init.mjs` — Node.js installer CLI (no runtime dependencies, ESM, Node ≥ 18). Subcommand `init [target-dir]` copies the orchestra spec folder into the target project's root and writes `<target>/.ai-orchestra/installed-from.json` with the package version + ISO timestamp. Flags: `--force` (overwrite an existing folder), `--skip-fixtures` (omit `_test-fixtures/` to save ~80 KB), `--no-marker` (skip the install marker file). Help text and version reporting via `--help` / `--version`.
+- `.npmignore` — controls what ships in the published tarball; complements `package.json#files`.
+- `.github/workflows/release.yml` — GitHub Actions release workflow. Triggers on `v*.*.*` and `v*.*.*-*` tags. Validates `VERSION` ↔ `package.json#version` ↔ git tag, smoke-tests the CLI (`--version`, `--help`), publishes to npm with `--access public` (pre-release tags get `--tag next`), then creates a GitHub Release with notes extracted from this changelog. Requires the repo secret `NPM_TOKEN`.
+- `README.md` — new "Install" section near the top documenting the `npx` workflow and the upgrade path (`init --force`).
+
+This finding was previously listed as a v2 candidate ("Distribution mechanism") in `_v1.x-backlog.md`. Shipping it in v1.2.0 unblocks adoption — agents in any IDE can now ask the user to run `npx @quillen-labs/ai-orchestra@latest init` instead of guiding the user through a manual git-clone / copy step.
+
+### Added — F4: stop-hook overlap detection and resolution
+
+When a host project already has a stop hook (or an IDE-fallback equivalent) that updates the same learnings document the orchestra would target, pre-v1.2.0 silently appended the orchestra's hook alongside it — both fired on every session end and both edited the same file. v1.2.0 detects the overlap before merging and asks the user how to resolve it.
+
+- `core/conflict/stop-hook-overlap.md` — new universal contract (`core/conflict/` is a new directory introduced for cross-IDE conflict-resolution specs). Defines the four-signal detection scheme (C1 tagged-orchestra, C2 path co-reference, C3 verb co-reference, C4 type-prompt-with-no-path), the three-choice resolution flow (`skip-orchestra` / `replace-with-orchestra` / `adopt-existing`), the install-marker fields, and the audit behaviour for each recorded resolution.
+- `core/discovery/existing-infra.md` — new §3.11 (Stop-hook conceptual overlap). Detection-side spec consumed by the universal contract. Outputs `existingInfra.stopHookOverlap` to the inventory. Performance budget: bounded by the typical 1–3 entries under `hooks.stop`, stays within the 2-second Phase 3 budget.
+- `core/registry/install.schema.md` — `installScope.stopHookOverlapResolution` field added with full field-reference documentation. Records `value`, `detectedAt`, `decidedAt`, `decidedBy`, plus `replacedEntryEvidence` (when `value === "replace-with-orchestra"`) or `adoptedEntryDigest` (when `value === "adopt-existing"`). Markers without the field (v1.0 / v1.1 markers) are valid and treated as `value: null`, `decidedBy: "default-no-overlap"`; the audit migrates them on first run.
+- `adapters/cursor/mappings.md` §5 — overlap branch added to the `.cursor/hooks.json` merge logic. The "no orchestra entry" merge row splits into "no overlap detected" (existing append behaviour) and "overlap detected" (route through the universal contract). New "Overlap branch" subsection documents what the adapter writes per choice.
+- `adapters/claude-code/mappings.md` §5 — same shape as Cursor for `.claude/settings.json`. Overlap branch only executes on Claude Code versions that support hooks; on older versions the existing `skip-with-gap` row applies and the audit re-evaluates overlap on every audit invocation.
+- `adapters/codex/mappings.md` §5 — overlap-with-fallback branch added under the existing declared-gap section. Codex has no native session-end hook, so `replace-with-orchestra` degrades to `propose` (the adapter cannot rewrite a saved system prompt or `AGENTS.md` "session protocol" passage automatically). `skip-orchestra` and `adopt-existing` work as defined; the marker's `evidence.degradedTo: "propose"` flag records the degradation when relevant.
+- `adapters/vscode/mappings.md` §5 — overlap-with-fallback branch added with the same shape as Codex. The fallback locations VS Code Copilot users adopt include `.github/copilot-instructions.md` "session protocol" passages, saved Copilot Chat prompts, and VS Code tasks wired to save / window-close events. Same `replace-with-orchestra` → `propose` degradation rule.
+- `adapters/cursor/post-install-checks.md` §8.5 — five new checks: `cursor.hooks.overlap.recorded`, `…skip-honoured`, `…replace-honoured`, `…adopt-honoured`, `…no-overlap-clean`. Verify the chosen resolution was honoured and surface drift on `adopt-existing` digest mismatch.
+- `adapters/claude-code/post-install-checks.md` §8.5 — same five checks under `claude.hooks.overlap.*` ids. Skipped when the Claude Code hook gap applies (`hooks.Stop.registered === false`).
+- `adapters/codex/post-install-checks.md` §8.5 — same five checks under `codex.hooks.overlap.*` ids, with the `replace-with-orchestra` check verifying `evidence.degradedTo: "propose"` is recorded (since the adapter cannot natively rewrite the fallback).
+- `adapters/vscode/post-install-checks.md` §8.5 — same five checks under `vscode.hooks.overlap.*` ids, same `replace-with-orchestra → propose` degradation as Codex.
+
+The audit (per [`core/skills/audit/ai-infra-audit/SKILL.md`](core/skills/audit/ai-infra-audit/SKILL.md)) re-runs detection on every audit invocation and surfaces drift per [`core/conflict/stop-hook-overlap.md`](core/conflict/stop-hook-overlap.md) §6: a recorded `adopt-existing` resolution warns when the `adoptedEntryDigest` no longer matches; a recorded `replace-with-orchestra` warns when the project re-introduces an overlapping hook; a recorded `skip-orchestra` proposes offering the orchestra hook on next upgrade if the user removed their project hook.
+
+### Backward compatibility
+
+- v1.0 / v1.1 install markers without `installScope.stopHookOverlapResolution` are valid and read as `value: null`, `decidedBy: "default-no-overlap"`. The audit re-runs detection on first invocation against a pre-1.2.0 marker and writes the field with the current verdict.
+- The npm package is purely additive — projects that previously copied the orchestra by hand continue to work without change. The `bin/init.mjs` CLI is a thin convenience over the same copy operation.
+- All adapter section numbers are stable. The new "Overlap branch" subsection in §5 of each adapter's `mappings.md` is appended within §5 — no renumbering of §6 / §7 / §8 / §9 / §10 / §11.
+- The `core/conflict/` directory is new. No existing file was moved or renamed.
+
+### Deferred — F1, F2, F3, F5, F6, F7 + mobile pack (v1.3.0 scope)
+
+The remaining v1.x backlog items (`_v1.x-backlog.md` F2, F5, F1, F7, F3, F6, in their declared ship order) and the F7 mobile stack pack are deferred to v1.3.0. F4 was prioritised in v1.2.0 because it was the highest-impact UX issue surfaced by the pilot and produced silent duplicate work on the second invocation — the most trust-eroding scenario the orchestra could present. The remaining findings (Director rule double-load, skill name overlap, polyglot detection, always-on rule ceiling, pack rule glob filtering, mobile pack content) are quality-of-life and content-coverage improvements that don't gate adoption. v1.3.0 will batch them behind a single validation harness re-run + EXPECTED.md updates across all three fixtures.
+
+### Bookkeeping
+
+- `VERSION` bumped to `1.2.0` (no `-alpha` suffix; the orchestra core is stable).
+- `package.json#version` aligned with `VERSION`.
+- `_v1.x-backlog.md` — F4 entry moved to the new "Shipped" section with a back-link to this changelog entry; remaining entries unchanged.
+- `README.md` — Status table updated to reflect v1.2.0; new "Install" section for the npm distribution.
+
 ## [1.1.0-alpha] — Role scope and quality-aware install
 
 This minor release adds four install-scope modes, an inventory-driven recommendation engine that proposes a default mode based on what the orchestra finds in the target project, and a quality assessment of the existing AI structure that surfaces weak or corrupted artifacts to the user with `improve` / `replace` / `preserve` options. None of the changes are breaking. v1.0.x install markers without `installScope` continue to validate and are treated as `mode: "full-kit"`, `decidedBy: "default"`.
