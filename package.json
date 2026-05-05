@@ -32,7 +32,7 @@
     "node": ">=18"
   },
   "bin": {
-    "ai-orchestra": "./bin/init.mjs"
+    "ai-orchestra": "bin/init.mjs"
   },
   "files": [
     "bin/",
