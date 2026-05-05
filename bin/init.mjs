@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-// @quillen-labs/ai-orchestra installer.
+// @neverreven/ai-orchestra installer.
 // Usage:
-//   npx @quillen-labs/ai-orchestra init [--force] [--skip-fixtures] [target-dir]
-//   npx @quillen-labs/ai-orchestra --help
+//   npx @neverreven/ai-orchestra init [--force] [--skip-fixtures] [target-dir]
+//   npx @neverreven/ai-orchestra --help
 //
 // Copies the ai-orchestra/ folder into a target project so an IDE agent can
 // "run the orchestra". Pure file copy; no network calls; no telemetry; v1.
@@ -18,10 +18,10 @@ const flags = new Set(args.filter((a) => a.startsWith('--')));
 const positional = args.filter((a) => !a.startsWith('--'));
 
 const HELP_TEXT = `
-@quillen-labs/ai-orchestra — universal agentic toolkit installer
+@neverreven/ai-orchestra — universal agentic toolkit installer
 
 USAGE
-  npx @quillen-labs/ai-orchestra init [options] [target]
+  npx @neverreven/ai-orchestra init [options] [target]
 
 ARGUMENTS
   target              Project root to install into (defaults to current dir).
@@ -149,7 +149,7 @@ async function cmdInit() {
     const markerDir = path.join(targetRoot, '.ai-orchestra');
     await mkdir(markerDir, { recursive: true });
     const marker = {
-      installedFromPackage: '@quillen-labs/ai-orchestra',
+      installedFromPackage: '@neverreven/ai-orchestra',
       installedFromVersion: version,
       installedAt: new Date().toISOString(),
       note:

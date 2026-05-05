@@ -10,19 +10,19 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [1.2.0] — npm distribution + F4 stop-hook overlap resolution
 
-This minor release ships two coordinated workstreams: a real distribution mechanism (`npx @quillen-labs/ai-orchestra@latest init`) so the orchestra can be dropped into any project without copying the folder by hand, and the v1.x backlog's highest-priority finding (F4 — stop-hook conceptual overlap). The release leaves the `-alpha` suffix behind: the orchestra core has stabilised, the four adapters cover their declared surfaces with explicit gaps, and the universal contracts (install scope, install plan template, stop-hook overlap) have settled enough to call this a real `1.x` minor.
+This minor release ships two coordinated workstreams: a real distribution mechanism (`npx @neverreven/ai-orchestra@latest init`) so the orchestra can be dropped into any project without copying the folder by hand, and the v1.x backlog's highest-priority finding (F4 — stop-hook conceptual overlap). The release leaves the `-alpha` suffix behind: the orchestra core has stabilised, the four adapters cover their declared surfaces with explicit gaps, and the universal contracts (install scope, install plan template, stop-hook overlap) have settled enough to call this a real `1.x` minor.
 
-### Added — npm distribution (`@quillen-labs/ai-orchestra`)
+### Added — npm distribution (`@neverreven/ai-orchestra`)
 
 The orchestra now ships as an npm package so any project can install it with one command:
 
-- `package.json` — package manifest. Name `@quillen-labs/ai-orchestra`, public access, `bin: { "ai-orchestra": "./bin/init.mjs" }`. Files include the spec folders (`core/`, `adapters/`, `_test-fixtures/`) and the top-level docs (`README.md`, `RUN.md`, `MIGRATION.md`, `CHANGELOG.md`, `VERSION`, `_v1.x-backlog.md`); excludes `.git/`, `.github/`, and `node_modules/`.
+- `package.json` — package manifest. Name `@neverreven/ai-orchestra`, public access, `bin: { "ai-orchestra": "./bin/init.mjs" }`. Files include the spec folders (`core/`, `adapters/`, `_test-fixtures/`) and the top-level docs (`README.md`, `RUN.md`, `MIGRATION.md`, `CHANGELOG.md`, `VERSION`, `_v1.x-backlog.md`); excludes `.git/`, `.github/`, and `node_modules/`.
 - `bin/init.mjs` — Node.js installer CLI (no runtime dependencies, ESM, Node ≥ 18). Subcommand `init [target-dir]` copies the orchestra spec folder into the target project's root and writes `<target>/.ai-orchestra/installed-from.json` with the package version + ISO timestamp. Flags: `--force` (overwrite an existing folder), `--skip-fixtures` (omit `_test-fixtures/` to save ~80 KB), `--no-marker` (skip the install marker file). Help text and version reporting via `--help` / `--version`.
 - `.npmignore` — controls what ships in the published tarball; complements `package.json#files`.
 - `.github/workflows/release.yml` — GitHub Actions release workflow. Triggers on `v*.*.*` and `v*.*.*-*` tags. Validates `VERSION` ↔ `package.json#version` ↔ git tag, smoke-tests the CLI (`--version`, `--help`), publishes to npm with `--access public` (pre-release tags get `--tag next`), then creates a GitHub Release with notes extracted from this changelog. Requires the repo secret `NPM_TOKEN`.
 - `README.md` — new "Install" section near the top documenting the `npx` workflow and the upgrade path (`init --force`).
 
-This finding was previously listed as a v2 candidate ("Distribution mechanism") in `_v1.x-backlog.md`. Shipping it in v1.2.0 unblocks adoption — agents in any IDE can now ask the user to run `npx @quillen-labs/ai-orchestra@latest init` instead of guiding the user through a manual git-clone / copy step.
+This finding was previously listed as a v2 candidate ("Distribution mechanism") in `_v1.x-backlog.md`. Shipping it in v1.2.0 unblocks adoption — agents in any IDE can now ask the user to run `npx @neverreven/ai-orchestra@latest init` instead of guiding the user through a manual git-clone / copy step.
 
 ### Added — F4: stop-hook overlap detection and resolution
 

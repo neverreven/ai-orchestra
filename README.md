@@ -22,7 +22,7 @@ It is a **set of markdown specifications** that any sufficiently capable IDE age
 ## Install
 
 ```bash
-npx @quillen-labs/ai-orchestra@latest init
+npx @neverreven/ai-orchestra@latest init
 ```
 
 Run this from your project's root. It copies the `ai-orchestra/` specification folder into the current directory and writes a tiny `.ai-orchestra/installed-from.json` marker. **It does not modify `AGENTS.md`, `.cursor/`, `.claude/`, `.vscode/`, or any other agentic config** — that's the IDE agent's job once you ask it to "run the orchestra" (see [How to use](#how-to-use)). The CLI is a pure copy-from-package; no network calls, no telemetry.
@@ -35,7 +35,7 @@ Run this from your project's root. It copies the `ai-orchestra/` specification f
 | `--version` / `-v` | Print the installed CLI/orchestra version. |
 | `--help` / `-h` | Print full usage. |
 
-To upgrade an existing install in-place: `npx @quillen-labs/ai-orchestra@latest init --force`. The IDE agent's audit skill will detect the version drift on the next "run the orchestra" and walk you through any migration needed (see [MIGRATION.md](MIGRATION.md)).
+To upgrade an existing install in-place: `npx @neverreven/ai-orchestra@latest init --force`. The IDE agent's audit skill will detect the version drift on the next "run the orchestra" and walk you through any migration needed (see [MIGRATION.md](MIGRATION.md)).
 
 Alternatively, you can clone the repo and copy the `ai-orchestra/` folder by hand — the package is just a thin convenience over that.
 
