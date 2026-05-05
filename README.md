@@ -172,4 +172,3 @@ See repository root.
 - [_test-fixtures/VALIDATION.md](_test-fixtures/VALIDATION.md) — agent-driven validation procedure.
 - [MIGRATION.md](MIGRATION.md) — version-upgrade guidance and compatibility policy.
 - [_v1.x-backlog.md](_v1.x-backlog.md) — eight planned v1.x findings with priority, proposals, and touched files.
-- [PILOT_REPORT.md](PILOT_REPORT.md) — post-v1 pilot report against a real high-existing-infra host project; the source of the v1.x findings.

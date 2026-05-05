@@ -43,7 +43,7 @@ What already exists in the project that the orchestra will **not** touch, with e
 Examples of what to call out (one bullet each):
 
 - *"Your existing `AGENTS.md` (12 KB, hand-written, no orchestra section yet) — I will append a managed section at end-of-file but **leave your hand-written content above untouched**."*
-- *"Your `.cursor/rules/host-project-context.mdc` (always-on) — untouched."*
+- *"Your `.cursor/rules/<project>-context.mdc` (always-on) — untouched."*
 - *"Your `.cursor/skills/cleanup/SKILL.md` — your version stays at this path; my universal `cleanup` skill will be installed as `cleanup.orchestra/SKILL.md` (suffix-rename per conflict policy) so both versions coexist."*
 - *"Your `.agents/` folder containing 4 hand-written skill specs — untouched (and recognised as your shared skill home — see Skill placement in RATIONALE)."*
 - *"Your existing `.cursor/hooks.json` `start` hook (environment check) — preserved verbatim; I am only adding to `hooks.stop`."*
