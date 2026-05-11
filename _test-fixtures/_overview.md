@@ -16,6 +16,16 @@ Three fixtures cover the v1 surface area:
 | [`ongoing-python-web/`](ongoing-python-web/) | `python-web` (FastAPI) | Detection, existing-infra preservation (existing `AGENTS.md`, existing `.cursor/rules/`), conflict-resolution actions (`extend-section`, `suffix-rename`), idempotent re-run | Existing `AGENTS.md`, existing Cursor rule |
 | [`salesforce-cartridge/`](salesforce-cartridge/) | `salesforce` (sfdx + SFRA polyglot) + `js-ts` overlay | Multi-stack detection, Apex + LWC + SFRA + sfdx rule activation, multi-pack layering | None |
 
+## 1.1 Adversarial fixture set (v1.3.0+)
+
+Three adversarial fixtures target error-handling and upgrade paths — scenarios the v1 fixtures do not cover because they use only the happy path:
+
+| Fixture | Stack | Tests | Adversarial scenario |
+|---------|-------|-------|---------------------|
+| [`broken-markers/`](broken-markers/) | `python-web` (FastAPI) | Malformed managed-section marker detection; critical-conflict blocking; partial-install plan for unblocked artifacts | Pre-existing `CLAUDE.md` (unclosed start marker), `AGENTS.md` (nested markers), `.github/copilot-instructions.md` (transposed markers) |
+| [`name-collision/`](name-collision/) | `js-ts` (React + Vite + TypeScript) | Skill name overlap detection; suffix-rename disambiguation; `[Orchestra]` prefix in renamed copies; overlap report in post-install summary | Pre-existing `cleanup` skill in `.cursor/skills/`, `.claude/commands/`, and `.github/prompts/` — all collide with orchestra's `cleanup` skill |
+| [`upgrade-from-v1/`](upgrade-from-v1/) | `js-ts` (React + TypeScript) | Version mismatch detection; upgrade mode; stale rule + skill proposals; additive new-skill install; schema migration (v1→v2 marker); learnings doc preservation; history append; global registry update | Pre-existing v1.0.0 install marker with stale rule and skill files; user-edited learnings doc |
+
 Fixtures are intentionally minimal — each has exactly enough source code to trigger the matching detection signals from [`../core/discovery/signals/`](../core/discovery/signals/). They do not need to compile, run, or pass tests.
 
 ---
@@ -87,7 +97,7 @@ The v1 fixture set deliberately does NOT cover:
 - **Stacks without a first-class pack.** Go, Rust, .NET, mobile native — these have signal files but no fixtures in v1. The infrastructure to add them is in place; v1.x or v2 will grow the set.
 - **Adapter-specific fixtures.** Each fixture is run through the **detected** adapter for the IDE the validating agent is using. There is no per-adapter fixture matrix in v1; the same fixture validates against any adapter.
 - **Runtime behaviour.** Fixtures don't compile or execute. The orchestra is markdown-only in v1; runtime work is v2.
-- **Failure injection.** Fixtures with deliberately broken metadata (malformed `package.json`, missing `force-app/`) are not in the v1 set. Adversarial fixtures are v2 backlog.
+- **Failure injection (partial).** Adversarial fixtures covering broken markers, name collisions, and v1→v2 upgrades are now in the v1.3.0 set (see [§1.1](#11-adversarial-fixture-set-v130)). Fixtures with deliberately broken *source code* metadata (malformed `package.json`, missing `force-app/`) are still v2 backlog.
 - **Real production codebases.** The post-v1 pilot dry-runs the orchestra against a host project on a separate experiment branch — that's the real-world validation.
 
 ---

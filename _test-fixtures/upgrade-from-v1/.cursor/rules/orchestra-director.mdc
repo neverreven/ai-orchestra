@@ -1,0 +1,17 @@
+---
+description: AI Director session protocol (installed by ai-orchestra v1.0.0)
+alwaysApply: true
+---
+
+# Upgrade fixture — AI Director
+
+> **This file was installed by ai-orchestra v1.0.0.** Stale — missing Scheduler section added in v1.2.0.
+
+## Session Startup Protocol
+
+1. Read `_documentation/AI_LEARNINGS.md`.
+2. Read project context.
+
+## Session End
+
+Review for learnings.

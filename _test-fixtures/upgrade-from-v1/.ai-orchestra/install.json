@@ -1,0 +1,63 @@
+{
+  "_schema": "ai-orchestra/install/v1",
+  "orchestra": {
+    "version": "1.0.0",
+    "installedAt": "2025-01-15T10:00:00.000Z",
+    "adapter": "cursor"
+  },
+  "project": {
+    "name": "upgrade-from-v1",
+    "rootPath": "/path/to/project"
+  },
+  "stacks": [
+    {
+      "id": "js-ts",
+      "confidence": 0.82,
+      "frameworks": ["react", "vite"],
+      "stackPack": "core/stack-packs/js-ts"
+    }
+  ],
+  "skills": [
+    {
+      "id": "cleanup",
+      "category": "cleanup",
+      "sourcePath": "core/skills/cleanup/SKILL.md",
+      "targetPath": ".cursor/skills/cleanup/SKILL.md",
+      "status": "installed"
+    },
+    {
+      "id": "pre-release",
+      "category": "pre-release",
+      "sourcePath": "core/skills/pre-release/SKILL.md",
+      "targetPath": ".cursor/skills/pre-release/SKILL.md",
+      "status": "installed"
+    }
+  ],
+  "rules": [
+    {
+      "id": "orchestra-context",
+      "targetPath": ".cursor/rules/orchestra-context.mdc",
+      "alwaysOn": true
+    },
+    {
+      "id": "orchestra-director",
+      "targetPath": ".cursor/rules/orchestra-director.mdc",
+      "alwaysOn": true
+    }
+  ],
+  "hooks": {
+    "stop": {
+      "registered": true,
+      "contractVersion": "1.0",
+      "lastRun": null
+    }
+  },
+  "history": [
+    {
+      "at": "2025-01-15T10:00:00.000Z",
+      "action": "install",
+      "orchestraVersion": "1.0.0",
+      "status": "success"
+    }
+  ]
+}
