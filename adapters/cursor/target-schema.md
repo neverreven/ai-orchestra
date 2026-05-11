@@ -186,7 +186,7 @@ After merge, the file looks like this (when only the orchestra has touched it):
       {
         "type": "prompt",
         "metadata": { "orchestra": true, "contractVersion": "1.0" },
-        "prompt": "Review this conversation for any new project-specific learning...",
+        "prompt": "First, evaluate the scheduler: read ai-orchestra/core/scheduler/RUNNER.md §0–§3 and run any overdue jobs. If all jobs are up to date, continue immediately. Then, review this conversation for any new project-specific learning...",
         "loop_limit": 1
       }
     ]

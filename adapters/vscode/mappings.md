@@ -94,8 +94,8 @@ The project's original prompt file is never modified. The post-install report in
 
 VS Code + Copilot has no documented session-end hook for the agent in v1. The adapter declares this as a gap (per [`INSTALL.md`](INSTALL.md) §6) and provides three manual fallbacks:
 
-1. Saying "audit AI infra" or `/ai-infra-audit` in Copilot Chat → triggers the audit, which includes a learnings review.
-2. Saying "review this session for learnings" → instructs the agent to walk the conversation and propose entries for the learnings doc.
+1. Saying "audit AI infra" or `/ai-infra-audit` in Copilot Chat → triggers the audit, which includes a scheduler check and a learnings review.
+2. Saying "review this session for learnings" → instructs the agent to (a) evaluate the scheduler via `ai-orchestra/core/scheduler/RUNNER.md §0–§3`, then (b) walk the conversation and propose entries for the learnings doc.
 3. The user runs the audit skill on a schedule (their own task scheduler).
 
 The marker records `hooks.Stop.registered: false` and `hooks.Stop.gapReason: "vscode-copilot-no-session-end-hook"`.

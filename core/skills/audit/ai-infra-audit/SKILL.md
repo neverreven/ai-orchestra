@@ -44,6 +44,22 @@ An audit report with:
 - A proposed diff (dry-run format per [adapters/_contract.md](../../../../adapters/_contract.md)) for any pending-review items.
 - Suggested next action (run again after review, escalate, or close).
 
+## Schedule
+
+Default periodic job descriptor (see [`../../../scheduler/jobs/periodic-audit.job.json`](../../../scheduler/jobs/periodic-audit.job.json)):
+
+```json
+{
+  "id": "periodic-audit",
+  "runs": { "kind": "skill", "skill_id": "audit/ai-infra-audit" },
+  "schedule": { "kind": "manual" },
+  "missed_run_policy": "catchup-once",
+  "enabled": true
+}
+```
+
+In v1 the kind is `manual` — the user invokes on demand. In v2, change `kind` to `cron` with `"expr": "0 9 * * 1"` to activate automatic weekly runs. See [`../../../scheduler/CONTRACT.md`](../../../scheduler/CONTRACT.md) for the full descriptor schema.
+
 ## References
 
 - [../../_schema.md](../../_schema.md)

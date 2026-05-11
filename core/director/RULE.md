@@ -84,15 +84,26 @@ If `{{LEARNINGS_PATH}}` exceeds `{{LEARNINGS_LINE_BUDGET}}` lines:
 - Move material that has hardened into project standard practice into the project context document, then delete it from learnings.
 - The audit skill (`ai-infra-audit`) flags an oversized learnings doc on every audit run.
 
+## Scheduler
+
+After completing steps 1–3 of the Session Startup Protocol, evaluate the scheduler:
+
+4. Read `ai-orchestra/core/scheduler/RUNNER.md` and follow it from §0.
+
+The check is fast (typically under one second of reasoning for projects with no due jobs). If all jobs are up to date, continue with the user's request immediately — do not surface routine skips. Only `warning` or `error` outcomes from the runner require the user's attention before proceeding.
+
+In v1 all jobs are `kind: "manual"` by default, so the runner exits after the presence check without invoking any skill. The scheduler activates automatically in v2 without any rule or marker change.
+
 ## Session-End Behaviour
 
 If the IDE supports a stop-hook, an end-of-session prompt fires automatically. When it does:
 
-1. Review the conversation for any learning that was not captured mid-session.
-2. Apply it using the **Update Mechanics** above.
-3. Make no edit if nothing new was learned. Empty is the common case and is fine.
+1. Evaluate the scheduler (run `core/scheduler/RUNNER.md` §0–§3) — overdue jobs run first, while context is warm.
+2. Review the conversation for any learning that was not captured mid-session.
+3. Apply it using the **Update Mechanics** above.
+4. Make no edit if nothing new was learned. Empty is the common case and is fine.
 
-If no stop-hook is wired, perform this review manually before closing the session.
+If no stop-hook is wired, perform steps 2–4 manually before closing the session.
 
 ## Orchestra context (do not modify)
 

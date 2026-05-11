@@ -95,8 +95,8 @@ Costs:
 
 Codex CLI has no documented session-end hook in v1. The adapter declares this as a gap (per [`INSTALL.md`](INSTALL.md) §6) and provides three manual fallbacks the user can invoke:
 
-1. Saying "audit AI infra" → triggers `ai-infra-audit`, which includes a learnings review.
-2. Saying "review this session for learnings" → instructs the agent to walk the conversation and propose entries for the learnings doc.
+1. Saying "audit AI infra" → triggers `ai-infra-audit`, which includes a learnings review and a scheduler check.
+2. Saying "review this session for learnings" → instructs the agent to (a) evaluate the scheduler via `ai-orchestra/core/scheduler/RUNNER.md §0–§3`, then (b) walk the conversation and propose entries for the learnings doc.
 3. The user runs the audit skill on a schedule (their own cron / launchd / systemd timer).
 
 The marker records `hooks.Stop.registered: false` and `hooks.Stop.gapReason: "codex-no-session-end-hook"`.
