@@ -3,7 +3,7 @@
 ## Identity
 
 - **Pack id:** `python-web`
-- **Pack version:** `1.0.0-alpha`
+- **Pack version:** `1.1.0`
 - **Compatible orchestra versions:** `1.0.x`
 - **Primary detection signal:** [`../../discovery/signals/python.md`](../../discovery/signals/python.md)
 - **Frameworks covered:** Django, Flask, FastAPI, plus generic Python web service patterns
@@ -21,6 +21,9 @@ Where the frameworks diverge, the pack ships separate rule files so the agent ca
 - [`rules/django.md`](rules/django.md) — Django-specific patterns (models, views, ORM, migrations).
 - [`rules/flask.md`](rules/flask.md) — Flask-specific patterns (app factory, blueprints, extensions).
 - [`rules/fastapi.md`](rules/fastapi.md) — FastAPI-specific patterns (Pydantic, dependency injection, async).
+- [`rules/async-patterns.md`](rules/async-patterns.md) — Python async/asyncio depth rules (concurrency, offloading, error handling).
+- [`rules/testing.md`](rules/testing.md) — Python testing patterns (pytest, mocking, DB isolation, parametrize).
+- [`rules/database.md`](rules/database.md) — database access depth rules (SQLAlchemy, Django ORM, migrations, pooling).
 - [`skills.md`](skills.md) — Python-specific addenda for universal skills.
 - [`roles.md`](roles.md) — Python-specific addenda for universal roles.
 

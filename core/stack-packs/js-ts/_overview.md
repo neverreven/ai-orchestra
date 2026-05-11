@@ -3,7 +3,7 @@
 ## Identity
 
 - **Pack id:** `js-ts`
-- **Pack version:** `1.0.0-alpha`
+- **Pack version:** `1.1.0`
 - **Compatible orchestra versions:** `1.0.x`
 - **Primary detection signal:** [`../../discovery/signals/js-ts.md`](../../discovery/signals/js-ts.md)
 - **Frameworks covered:** React, Vue, Svelte, Next, Vite, Node, plain JavaScript, TypeScript
@@ -21,6 +21,9 @@ The pack does not pick a side between framework variants of the same family. It 
 - [`rules/typescript.md`](rules/typescript.md) — TypeScript discipline (strict mode, narrowing, generics).
 - [`rules/vite.md`](rules/vite.md) — Vite build, config, and dev-server conventions.
 - [`rules/node-server.md`](rules/node-server.md) — Node HTTP service patterns (Express / Fastify / Hono).
+- [`rules/next-rsc.md`](rules/next-rsc.md) — Next.js App Router and React Server Component patterns.
+- [`rules/node-api.md`](rules/node-api.md) — Node.js API service depth rules (routing, async, security, observability).
+- [`rules/testing.md`](rules/testing.md) — JS/TS testing patterns (structure, mocks, coverage, E2E).
 - [`skills.md`](skills.md) — JS/TS-specific addenda for universal skills.
 - [`roles.md`](roles.md) — JS/TS-specific addenda for universal roles.
 
@@ -44,7 +47,7 @@ When a project legitimately mixes frameworks (e.g., React in the SPA, Vue in a l
 - React Native, Expo, or other mobile-React variants — those are tracked under the future `mobile` pack.
 - Specific state-management library opinions (Redux vs Zustand vs Jotai vs MobX). Patterns reference state shape and selectors generically.
 - Specific styling approaches (CSS-in-JS vs CSS Modules vs Tailwind). Where a pattern depends on a styling choice, both flavors are mentioned.
-- Specific testing-library opinions (Vitest vs Jest vs node:test). Patterns name properties (deterministic, isolated, fast feedback) rather than tools.
+- Specific testing-framework opinions on tool selection (Vitest vs Jest vs node:test). `testing.md` covers framework-agnostic patterns that apply regardless of tool choice.
 - Project-specific code, scaffolding generators, or code-mod scripts.
 
 ## References
