@@ -8,6 +8,10 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [1.3.1] — npm postinstall guidance + README version fix
+
+Added a `postinstall` npm script to `package.json` that prints a one-line redirect message when users run `npm i @neverreven/ai-orchestra`. The message explains the package is a spec folder (not a code library) and directs to `npx @neverreven/ai-orchestra init`. Updated the README `currently 1.2.0` line to `1.3.0` (caught late), README now reflects correct version.
+
 ## [1.3.0] — F2 always-on downgrade + F7 mobile pack + F5 skill overlap + F1 polyglot + F3 ceiling + F6 glob filter
 
 This minor release ships six coordinated improvements across the install runtime, the conflict model, the stack-pack catalog, and the validation harness. The theme: **safer installs** (no surprise always-on rule proliferation), **smarter packs** (only install what actually matches the project), and **broader coverage** (mobile-native and cross-platform projects are first-class citizens). All four adapters are updated in parallel; no adapter falls behind.

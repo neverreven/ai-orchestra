@@ -108,7 +108,7 @@ See [RUN.md](RUN.md) for the full bootstrap procedure.
 | npm distribution + F4 stop-hook overlap detection and resolution | v1.2.0 — shipped |
 | F2 always-on rule downgrade on suffix-rename, F7 mobile stack pack (Capacitor/RN/Flutter/MAUI), F5 skill overlap disambiguation, F1 sub-project detection, F3 always-on ceiling check, F6 pack rule glob filter | v1.3.0 — shipped |
 
-The current `VERSION` is recorded in the [VERSION](VERSION) file (currently `1.3.0`).
+The current `VERSION` is recorded in the [VERSION](VERSION) file (currently `1.3.1`).
 
 ## Supported IDEs (v1)
 
