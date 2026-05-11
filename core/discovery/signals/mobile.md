@@ -1,9 +1,9 @@
 # Signal: mobile (Mobile native + cross-platform)
 
-> Generic detection in v1. Stack pack content arrives in v1.1+. Mobile is **always a secondary signal** — typically coexists with `js-ts` (React Native, Capacitor, Cordova), `dotnet` (MAUI, Xamarin), or appears alone (Android Java/Kotlin, iOS Swift/Objective-C, Flutter).
+> Mobile is **always a secondary signal** — typically coexists with `js-ts` (React Native, Capacitor, Cordova), `dotnet` (MAUI, Xamarin), or appears alone (Android Java/Kotlin, iOS Swift/Objective-C, Flutter).
 
 **Stack id:** `mobile`
-**Stack pack:** _none in v1; `core/stack-packs/mobile/` reserved for v1.1+_
+**Stack pack:** [`core/stack-packs/mobile/`](../../stack-packs/mobile/_overview.md) (since v1.3.0)
 
 ## Strong signals (weight 3 each)
 
@@ -58,3 +58,4 @@ Sub-flavours are recorded in `profile.frameworks`.
 ## References
 
 - [DETECTION.md](../DETECTION.md) — overall probe procedure.
+- [`../../stack-packs/mobile/_overview.md`](../../stack-packs/mobile/_overview.md) — mobile stack pack (activated when this signal fires).

@@ -175,26 +175,59 @@ This stability is what makes idempotent re-runs produce zero diff.
 | `append` | Target present, no markers, append safe. | Append with separator. (Used for the learnings missing-sections case.) | `appended` |
 | `merge-json` | Target is a JSON file managed by Cursor (`hooks.json`, `mcp.json`). | Parse, merge per file's specific rules, re-serialise. | `merged` |
 | `merge-missing-sections` | Learnings doc, sections-only addition. | Add only sections that are missing. | `seeded missing sections` |
-| `suffix-rename` | Target present, content non-orchestra, conflict policy says preserve. | Write the orchestra's version under `<basename>.orchestra.<ext>`. | `suffix-renamed: <new path>` |
+| `suffix-rename` | Target present, content non-orchestra, conflict policy says preserve. | Write the orchestra's version under `<basename>.orchestra.<ext>`. When the source artifact has `alwaysApply: true` frontmatter, the renamed copy is downgraded — see §6.1. | `suffix-renamed: <new path>` |
 | `propose` | Critical decision required. | Add to `proposals[]` in the install plan; do not write. User decides post-confirmation. | (no marker entry until applied) |
 
 The adapter MUST aggregate the per-artifact actions into a single `history[]` entry on the install marker (per [`../../core/registry/install.schema.md`](../../core/registry/install.schema.md) §1.4). The phrase from the right column above is included in the entry's `summary` field. Per-artifact paths are recorded in the marker's parallel arrays — `rules[]`, `skills[]`, `mcpSlots[]` — so the audit can always reconstruct what was touched without parsing free-form summary text.
+
+### 6.1 Always-on downgrade on suffix-rename
+
+When `suffix-rename` is the conflict action for any artifact whose rendered frontmatter includes `alwaysApply: true` (i.e., the Director rule or the orchestra-context rule), the adapter MUST transform the renamed copy's frontmatter before writing:
+
+1. Set `alwaysApply: false`.
+2. Prepend the `description` value with `[Orchestra — manual trigger] ` so the user can distinguish the downgraded copy in Cursor's rule listing.
+3. Add a one-line comment above the body (after the closing `---` fence): `<!-- This rule was suffix-renamed because the project already owns a rule at the original path. It is NOT always-on to avoid double-loading with the project's version. To use it, invoke it manually or change alwaysApply back to true after removing the project's version. -->`
+
+**Why.** Both the project's original rule and the orchestra's renamed copy would otherwise carry `alwaysApply: true`, causing the IDE to load both into every session. This creates competing session protocols (for the Director rule) or duplicate context (for the orchestra-context rule). Downgrading the renamed copy ensures only the project's original fires by default; the user can explicitly switch if they prefer the orchestra version.
+
+**Post-install report.** When an always-on downgrade fires, the install plan's Part A summary MUST include a dedicated note: "The orchestra's `<artifact-name>` was renamed to `<new-path>` and downgraded from always-on to manual-trigger because your project already owns `<original-path>`. To use the orchestra version instead, delete or rename the project's file and set `alwaysApply: true` in the orchestra copy."
+
+**Audit behaviour.** On subsequent audits, if the check `rules.suffix-renamed.downgraded` (see [`post-install-checks.md`](post-install-checks.md) §4.1) detects that a suffix-renamed copy has been manually set back to `alwaysApply: true` while the original still exists at the target path, the audit surfaces a `warning` telling the user they now have two always-on rules of the same kind and asks whether to demote one.
 
 ---
 
 ## 7. Stack packs
 
-When the project profile detected one or more first-class stacks (JS/TS web, Python web, Salesforce — see [`../../core/discovery/signals/`](../../core/discovery/signals/)), the adapter applies stack-pack content from [`../../core/stack-packs/<stack-id>/`](../../core/stack-packs/) per the layering rules in [`../../core/stack-packs/_overview.md`](../../core/stack-packs/_overview.md) §3.
+When the project profile detected one or more first-class stacks (JS/TS web, Python web, Salesforce, mobile — see [`../../core/discovery/signals/`](../../core/discovery/signals/)), the adapter applies stack-pack content from [`../../core/stack-packs/<stack-id>/`](../../core/stack-packs/) per the layering rules in [`../../core/stack-packs/_overview.md`](../../core/stack-packs/_overview.md) §3.
+
+### 7.1 Pack rule glob filtering (introduced in v1.3.0)
+
+Before rendering any pack rule file, the adapter evaluates whether the rule is relevant to the project:
+
+1. Read the rule file's `## When this applies` section and extract the file-glob pattern(s) it declares.
+2. Test each glob against the project's **tracked file set** (files visible to the agent at the project root, excluding `node_modules/`, `vendor/`, `.venv/`, `dist/`, `build/`, `_test-fixtures/`).
+3. If **at least one file matches** any of the rule's globs → install the rule.
+4. If **zero files match** all of the rule's globs → **skip the rule**. Record it in `stacks[].skippedPackRules[]` in the install marker.
+
+Record installed rules in `stacks[].installedPackRules[]`.
+
+**Why this matters.** A JS/TS project that uses only browser-side React has no Node HTTP server files. The `node-server.md` rule's globs (`**/*.{js,mjs,ts}` under `server/`, `src/server/`, etc.) match zero files and the rule is dead weight. Filtering removes it from the rule listing and keeps the IDE's always-on context focused.
+
+**Audit re-evaluation.** On every audit run, the adapter re-tests `skippedPackRules[]` globs. If matching files have since been added to the project, the rule is automatically installed on the next upgrade (with a `create` action). The audit reports newly-matchable skipped rules as `info`-severity drift so the user is notified.
+
+**Rules with no explicit glob.** If a pack rule's `## When this applies` section does not declare a file-glob (some rules apply to the entire project rather than specific files), the rule is **always installed** regardless of glob filtering.
+
+### 7.2 Pack content materialisation
 
 The Cursor adapter materialises pack content as follows:
 
-- **Pack rule files** (`core/stack-packs/<stack-id>/rules/<topic>.md`) — each rule file becomes a `.cursor/rules/<stack-id>-<topic>.mdc` always-on rule with `globs:` derived from the rule's `## When this applies` section. Rendering follows [`render-rules.md`](render-rules.md) for `.mdc` files.
+- **Pack rule files** (`core/stack-packs/<stack-id>/rules/<topic>.md`) — each rule that passes glob-filtering (§7.1) becomes a `.cursor/rules/<stack-id>-<topic>.mdc` glob-scoped rule with `globs:` derived from the rule's `## When this applies` section. Rendering follows [`render-rules.md`](render-rules.md) for `.mdc` files.
 - **Pack `skills.md`** — an addendum file `.cursor/rules/<stack-id>-skills-addenda.mdc` is created (manual-trigger rule) with the pack's per-skill addenda. The agent consults it when invoking the matching universal skill.
 - **Pack `roles.md`** — appended into the `AGENTS.md` managed section under a `### Stack roles addenda` subsection so the role guidance is visible to all agents that read `AGENTS.md`.
 
-The adapter records every applied pack in the install marker under `stacks[].stackPack` per [`../../core/registry/install.schema.md`](../../core/registry/install.schema.md) §1.2 (e.g., `"core/stack-packs/js-ts"`) and `stacks[].stackPackVersion` (the pack's declared version). Re-running the adapter against a project where a pack has been updated triggers re-rendering of the pack's `.mdc` files; the post-install checks include drift detection for stack-pack content.
+The adapter records every applied pack in the install marker under `stacks[].stackPack` per [`../../core/registry/install.schema.md`](../../core/registry/install.schema.md) §1.2 (e.g., `"core/stack-packs/js-ts"`) and `stacks[].stackPackVersion` (the pack's declared version), plus `stacks[].installedPackRules[]` and `stacks[].skippedPackRules[]` (per §7.1). Re-running the adapter against a project where a pack has been updated triggers re-rendering of the pack's `.mdc` files; the post-install checks include drift detection for stack-pack content.
 
-If a project's profile detects a stack that does not have a first-class pack in v1 (Go, Rust, .NET, generic mobile), the adapter records the detection in the install marker but does not write any pack-derived rule files; the audit reports this as `info`-severity drift, not a failure.
+If a project's profile detects a stack that does not have a first-class pack (Go, Rust, .NET), the adapter records the detection in the install marker but does not write any pack-derived rule files; the audit reports this as `info`-severity drift, not a failure.
 
 ---
 

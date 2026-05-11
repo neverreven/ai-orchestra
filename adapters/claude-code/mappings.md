@@ -68,6 +68,15 @@ The body is the source `SKILL.md` content from the first `# <Skill Name>` headin
 
 After install, the user invokes the skill in Claude Code with `/<skill-id>` (e.g., `/ai-infra-audit`, `/cleanup`).
 
+### Description disambiguation on skill suffix-rename
+
+When a skill undergoes `suffix-rename` because `.claude/commands/<skill-id>.md` already exists with non-orchestra content, the adapter MUST modify the renamed copy's `description` frontmatter:
+
+1. Prepend `[Orchestra] ` to the synthesised description.
+2. Append the note: ` The project also defines a skill named '<skill-id>' at '.claude/commands/<skill-id>.md' — read both and choose the one that fits.`
+
+The project's original command file is never modified. The post-install report includes an `## Overlapping skills` section listing every such overlap side-by-side.
+
 ### Folder mirroring
 
 Auxiliary files in the source skill folder (`template.md`, `checklist.md`, `examples/`) are NOT copied for Claude Code in v1 — slash commands are single files. Skills that depend on auxiliary content reference those files via path inside `ai-orchestra/core/skills/<category>/<skill-id>/`, and the rendered command body explains how the agent should fetch them. This is a deliberate v1 simplification; v2 may introduce a per-command directory convention if Claude Code's command system gains folder support.
@@ -142,17 +151,36 @@ The Claude Code adapter uses the same action set as Cursor:
 | `append` | Target present, no markers, append safe (rare for this adapter). |
 | `merge-json` | Target is a JSON file managed by Claude Code (`settings.json`, `.mcp.json`). |
 | `merge-missing-sections` | Learnings doc, sections-only addition. |
-| `suffix-rename` | Target present with non-orchestra content; preserve user file under `<basename>.orchestra.<ext>`. |
+| `suffix-rename` | Target present with non-orchestra content; preserve user file under `<basename>.orchestra.<ext>`. When the source artifact would have been rendered with always-on semantics (Director context in `CLAUDE.md`), the renamed copy is downgraded — see §6.1. |
 | `propose` | Critical decision required. Add to `proposals[]`; do not write. |
 | `skip-with-gap` | Adapter cannot satisfy a clause for this IDE/version; record in `gaps[]`. |
 
 Every action is logged in the install marker per [`../../core/registry/install.schema.md`](../../core/registry/install.schema.md) §1.4.
 
+### 6.1 Always-on downgrade on suffix-rename
+
+Claude Code renders the Director rule and project context as a managed section of `CLAUDE.md` (always loaded). When a suffix-rename conflict occurs on `CLAUDE.md` itself (because the project already has a hand-written `CLAUDE.md` with existing content that the adapter cannot safely extend), the adapter writes the orchestra's version to `CLAUDE.orchestra.md`. In this scenario:
+
+1. The renamed copy (`CLAUDE.orchestra.md`) MUST include a leading note at the top of the managed section: `> **Note:** This file is a suffix-renamed orchestra copy. It is NOT auto-loaded by Claude Code. To use the orchestra's session protocol, copy the content below into your main `CLAUDE.md` managed section or rename this file to `CLAUDE.md` after removing the original.`
+2. The adapter MUST NOT record `CLAUDE.orchestra.md` as having `alwaysApply: true` equivalence in the install marker — the marker field `rules[].alwaysOn` is set to `false` for renamed copies.
+
+For **skill** suffix-renames (§4 row conflicts), no downgrade applies — skills are not always-on in Claude Code (they are on-demand slash commands).
+
+**Post-install report.** Same as the Cursor adapter (per [`../cursor/mappings.md`](../cursor/mappings.md) §6.1): when a downgrade fires, Part A names the renamed file and explains the user's options.
+
+**Audit behaviour.** The audit checks whether the `CLAUDE.orchestra.md` file has been promoted (renamed to `CLAUDE.md`) while the old `CLAUDE.md` still exists; if both are present, it surfaces a `warning`.
+
 ---
 
 ## 7. Stack packs
 
-When the project profile detected one or more first-class stacks (JS/TS web, Python web, Salesforce — see [`../../core/discovery/signals/`](../../core/discovery/signals/)), the adapter applies stack-pack content from [`../../core/stack-packs/<stack-id>/`](../../core/stack-packs/) per the layering rules in [`../../core/stack-packs/_overview.md`](../../core/stack-packs/_overview.md) §3. For Claude Code, since Claude Code lacks per-rule files with glob activation, stack-pack content lands as additional sections inside the `CLAUDE.md` managed area: pack rules and roles addenda inline; pack skills addenda referenced from the skill catalog. The applied pack is recorded in `stacks[].stackPack` and `stacks[].stackPackVersion`.
+When the project profile detected one or more first-class stacks (JS/TS web, Python web, Salesforce, mobile — see [`../../core/discovery/signals/`](../../core/discovery/signals/)), the adapter applies stack-pack content from [`../../core/stack-packs/<stack-id>/`](../../core/stack-packs/) per the layering rules in [`../../core/stack-packs/_overview.md`](../../core/stack-packs/_overview.md) §3. For Claude Code, since Claude Code lacks per-rule files with glob activation, stack-pack content lands as additional sections inside the `CLAUDE.md` managed area: pack rules and roles addenda inline; pack skills addenda referenced from the skill catalog. The applied pack is recorded in `stacks[].stackPack` and `stacks[].stackPackVersion`.
+
+### Pack rule glob filtering (introduced in v1.3.0)
+
+Before including any pack rule section in the `CLAUDE.md` managed area, the adapter evaluates whether the rule is relevant by testing its `## When this applies` globs against the project's tracked files. Rules whose globs match zero files are **omitted** from the managed-section content and recorded in `stacks[].skippedPackRules[]`. Installed rules are recorded in `stacks[].installedPackRules[]`. The audit re-evaluates skipped rules and proposes adding newly-relevant ones on the next upgrade.
+
+Pack rules with no explicit glob in `## When this applies` are always included.
 
 The marker reserves `stacks[].stackPack` per detected stack so a future orchestra-upgrade run can layer in the actual content without a fresh install.
 

@@ -14,6 +14,10 @@ Contract for the [validation harness](../VALIDATION.md). The orchestra dry-run p
 
 No other stacks should detect (no Python files, no Salesforce metadata, no Go/Rust/.NET signals).
 
+### Sub-projects
+
+`profile.subProjects` must be an **empty array**. This fixture has no top-level subdirectories with manifest files (only `src/` which contains source files, not a manifest).
+
 ### Frameworks
 
 The `js-ts` stack's framework list (recorded in `profile.frameworks`) must include:
@@ -76,7 +80,7 @@ For Cursor, expected pack-derived rule files:
 | `.cursor/rules/js-ts-vite.mdc` | rendered from [`../../core/stack-packs/js-ts/rules/vite.md`](../../core/stack-packs/js-ts/rules/vite.md) |
 | `.cursor/rules/js-ts-skills-addenda.mdc` | rendered from [`../../core/stack-packs/js-ts/skills.md`](../../core/stack-packs/js-ts/skills.md) |
 
-The pack's `rules/node-server.md` is **also** rendered into a `.cursor/rules/js-ts-node-server.mdc` file (pack-level decision: include all rule files; the rule's own `globs:` scopes activation).
+The pack's `rules/node-server.md` is **skipped** by the glob filter (introduced in v1.3.0 per [`../../adapters/cursor/mappings.md`](../../adapters/cursor/mappings.md) §7.1): this fixture has no server-side files (`server/**/*.{js,ts}`, `src/server/**/*.{js,ts}` match zero tracked files). It must NOT appear in `.cursor/rules/`.
 
 The pack's `roles.md` content is appended into the `AGENTS.md` managed section under a `### Stack roles addenda` subsection.
 
@@ -103,9 +107,13 @@ For VS Code: declared gaps from [`../../adapters/vscode/INSTALL.md`](../../adapt
   "id": "js-ts",
   "stackPack": "core/stack-packs/js-ts",
   "stackPackVersion": "1.0.0-alpha",
-  "frameworks": ["react", "vite"]
+  "frameworks": ["react", "vite"],
+  "installedPackRules": ["rules/react.md", "rules/typescript.md", "rules/vite.md"],
+  "skippedPackRules": ["rules/node-server.md"]
 }
 ```
+
+`subProjects` must be present (as an empty array): `"subProjects": []`.
 
 `hooks.stop` must be populated with `contractVersion: "1.0"` and `lastRun: null`.
 
@@ -149,7 +157,10 @@ Zero `create`, zero `extend-section` (except the registry's history), zero confl
 | Framework list | `react` + `vite`, no extras. |
 | Existing-infra inventory | Empty. |
 | Universal core install | All entries from §2 present as `create`. |
-| Stack pack install | js-ts pack rules + skills addenda rendered; roles addenda merged into AGENTS.md. |
+| Sub-project scan | `subProjects: []` (no top-level manifest dirs). |
+| Stack pack install | js-ts 3 rules installed (`react`, `typescript`, `vite`); `node-server.md` skipped (glob filter); skills addenda rendered; roles addenda merged into AGENTS.md. |
+| Pack rule marker | `installedPackRules` = `["rules/react.md","rules/typescript.md","rules/vite.md"]`; `skippedPackRules` = `["rules/node-server.md"]`. |
+| Always-on ceiling | Count of always-on `.mdc` files ≤ 4 → no warning. |
 | Conflicts | None. |
 | Adapter gaps | None for Cursor; declared gaps surfaced for the other three. |
 | Registry marker | Exactly one stack entry; hook contractVersion populated. |

@@ -14,6 +14,10 @@ The defining behaviour for this fixture: **multi-sub-flavour Salesforce detectio
 |----------|------------|-------|
 | `salesforce` | ≥ 0.85 | Multiple strong signals: `sfdx-project.json` + `force-app/` + `cartridges/`. Total weight ≥ 9 (very high). |
 
+### Sub-projects
+
+`profile.subProjects` must be an **empty array**. This fixture has no sub-directories with manifest files (`cartridges/` and `force-app/` contain source code, not package manifests at their root).
+
 No other stacks should detect at first-class confidence:
 
 - **`js-ts`:** the cartridges contain `.js` files, but they are inside `cartridges/<cartridge>/cartridge/...` paths. The discovery probe attributes these to SFRA, not generic JS/TS, because there is no project-root `package.json`. Validation MUST confirm `js-ts` confidence is below threshold (< 0.6) for this fixture.
@@ -65,7 +69,7 @@ Same set as in [`../empty-js/EXPECTED.md`](../empty-js/EXPECTED.md) §2 — univ
 
 ### Stack pack layer (salesforce)
 
-For Cursor, expected pack-derived rule files (all four — the pack always ships its complete rule set; per-rule `globs:` activate against matching files):
+For Cursor, expected pack-derived rule files. All four rules pass the v1.3.0 glob filter because the fixture contains files that match each rule's globs:
 
 | Path | Source | Activation glob |
 |------|--------|-----------------|
@@ -94,9 +98,13 @@ Same as `empty-js`: zero for Cursor; declared gaps surfaced for Claude Code / Co
   "id": "salesforce",
   "stackPack": "core/stack-packs/salesforce",
   "stackPackVersion": "1.0.0-alpha",
-  "frameworks": ["salesforce-sfdx", "salesforce-sfra"]
+  "frameworks": ["salesforce-sfdx", "salesforce-sfra"],
+  "installedPackRules": ["rules/apex.md", "rules/lwc.md", "rules/sfra.md", "rules/sfdx.md"],
+  "skippedPackRules": []
 }
 ```
+
+`subProjects` must be present as `"subProjects": []`.
 
 `hooks.stop` must be populated with `contractVersion: "1.0"` and `lastRun: null`.
 
@@ -133,7 +141,10 @@ The most subtle re-run check for this fixture: the multi-sub-flavour `frameworks
 | Test framework list | Empty. |
 | Existing-infra inventory | Empty. |
 | Universal core install | All entries from §2 present as `create`. |
-| Stack pack install | All four rule files (apex, lwc, sfra, sfdx) + skills addenda rendered; roles addenda merged into AGENTS.md. |
+| Sub-project scan | `subProjects: []` (no manifest dirs at top level). |
+| Stack pack install | All four rule files (apex, lwc, sfra, sfdx) pass glob filter + skills addenda rendered; `skippedPackRules: []`; roles addenda merged into AGENTS.md. |
+| Pack rule marker | `installedPackRules` = 4 entries; `skippedPackRules` = `[]`. |
+| Always-on ceiling | Count of always-on `.mdc` files ≤ 4 → no warning. |
 | Conflicts | None. |
 | Adapter gaps | None for Cursor; declared gaps surfaced for the others. |
 | Registry marker | One stack entry with both sub-flavours; hook contractVersion populated. |

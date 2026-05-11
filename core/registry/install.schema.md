@@ -43,8 +43,14 @@ The `.ai-orchestra/` directory at the target project root is reserved for orches
       "confidence": 0.97,
       "frameworks": ["react", "vite"],
       "stackPack": "core/stack-packs/js-ts",
-      "stackPackVersion": "1.0.0-alpha"
+      "stackPackVersion": "1.0.0-alpha",
+      "installedPackRules": ["rules/react.md", "rules/typescript.md", "rules/vite.md"],
+      "skippedPackRules": ["rules/node-server.md"]
     }
+  ],
+
+  "subProjects": [
+    { "path": "server", "manifest": "server/package.json", "type": "package.json" }
   ],
 
   "roles": [
@@ -85,8 +91,8 @@ The `.ai-orchestra/` directory at the target project root is reserved for orches
   },
 
   "rules": [
-    { "id": "project-context", "path": ".cursor/rules/project-context.mdc",   "source": "core/rules/project-context.template.md" },
-    { "id": "director",        "path": ".cursor/rules/ai-director.mdc",       "source": "core/rules/director.template.md" }
+    { "id": "project-context", "path": ".cursor/rules/orchestra-context.mdc",   "source": "adapter-generated", "alwaysOn": true },
+    { "id": "director",        "path": ".cursor/rules/ai-director.mdc",         "source": "core/director/RULE.md", "alwaysOn": true }
   ],
 
   "hooks": {
@@ -155,12 +161,15 @@ The `.ai-orchestra/` directory at the target project root is reserved for orches
 | `project.root` | Yes | Absolute path to the project root at install time. May go stale if the project moves; the audit can reconcile. |
 | `stacks[]` | Yes | Detected stacks with confidence and framework lists. |
 | `stacks[].stackPack` | Conditional | Path to the stack pack (relative to orchestra core). `null` for stacks with no pack in the current version. |
+| `stacks[].installedPackRules[]` | Conditional | List of pack rule file names (e.g., `rules/react.md`) that were installed for this stack. Present when a stack pack was applied. Empty array when all rules were filtered out. |
+| `stacks[].skippedPackRules[]` | Conditional | List of pack rule file names that were skipped because their `## When this applies` globs matched zero tracked files in the project at install time. The audit re-evaluates these on every run — if matching files appear later, the rule is installed on the next upgrade. |
+| `subProjects[]` | Conditional | Sub-packages detected by the secondary scan in [`../discovery/DETECTION.md`](../discovery/DETECTION.md) §3.4. Each entry is `{ "path": string, "manifest": string, "type": string }`. `path` is the subdirectory relative to the project root; `manifest` is the relative path to the manifest file; `type` is the manifest filename (e.g., `Cargo.toml`). Absent (or empty array) when no sub-projects were detected. Stack packs in v1.3 remain root-scoped; this field is informational only. |
 | `roles[]` | Yes | Role identifiers installed for this project. Computed by the resolver in [`../install-scope.md`](../install-scope.md) §2 from `installScope.mode` plus the user's selection. Always sorted; always de-duplicated. |
 | `skills[]` | Yes | Skill identifiers installed, with category and source path. Computed by the resolver in [`../install-scope.md`](../install-scope.md) §3 from `roles[]` plus the universal skill set. |
 | `installScope` | Yes | Records how the install was scoped and the recommendation engine's input to that decision. `mode` is one of `full-kit`, `selected-roles`, `primary-plus-collaborators`, `core-only` per [`../install-scope.md`](../install-scope.md) §1. `primaryRole` is the chosen primary role id when `mode` is `primary-plus-collaborators`; `null` otherwise. `selectedRoles` mirrors `roles[]` (kept here for self-containment when an audit reads only this field). `optedOutUniversals[]` lists universal role ids the user explicitly opted out of (typically empty). `decidedAt` is the ISO 8601 timestamp of the decision. `decidedBy` is `default` (no human input — applied automatically), `user` (user picked an option without a recommendation), `user-accepted-recommendation`, or `user-override` (user picked a mode different from the recommendation). `recommendation` records the engine's proposed mode and a one-sentence rationale (always present even when `decidedBy` is `default`). Markers without `installScope` (older v1.0.x installs) are treated as `mode: "full-kit"`, `decidedBy: "default"`. |
 | `installScope.stopHookOverlapResolution` | Yes (since v1.2.0) | Records how the orchestra resolved a stop-hook conceptual overlap with an existing project hook (per [`../conflict/stop-hook-overlap.md`](../conflict/stop-hook-overlap.md)). `value` is one of `"skip-orchestra"`, `"replace-with-orchestra"`, `"adopt-existing"`, or `null` when no overlap was detected. `detectedAt` and `decidedAt` are ISO 8601 timestamps. `decidedBy` is `"user"` (user picked one of the three resolutions in Phase 6) or `"default-no-overlap"` (no overlap detected, no question asked). When `value` is `"replace-with-orchestra"`, the field also carries `replacedEntryEvidence` (a one-line summary of the removed project hook). When `value` is `"adopt-existing"`, the field also carries `adoptedEntryDigest` (an SHA-256 hex of the adopted prompt body, used by the audit to detect drift). When `value` is `null`, only the four base fields are present. Markers without this field (v1.0 / v1.1 markers) are valid and treated as `value: null`, `decidedBy: "default-no-overlap"`; the audit migrates them on first run by re-running detection and writing the field. |
 | `skillPlacementStrategy` | Yes | Records where portable skills are installed and the basis for the decision. `type` is one of `ide-specific` (default — skills only under the IDE folder, e.g., `.cursor/skills/`), `shared` (skills under a tool-agnostic folder the user nominated, e.g., `.agents/`), or `hybrid` (skills under both, with the IDE-folder copy as a stub pointing to the shared file). `sharedPath` is the user-nominated folder when `type` is `shared` or `hybrid`; `null` otherwise. `decidedAt` is the ISO 8601 timestamp of the decision. `decidedBy` is `user` (chosen explicitly during Phase 6) or `default` (no candidate detected, so `ide-specific` was applied automatically). |
-| `rules[]` | Yes | Rules installed, with target path and source template. |
+| `rules[]` | Yes | Rules installed, with target path and source template. Each entry is `{ "id": string, "path": string, "source": string, "action"?: string, "alwaysOn": bool, "sourceAlwaysApply"?: bool }`. `alwaysOn` records whether the rule is active as always-on in the IDE after install (`true` for normally-installed always-on rules; `false` for suffix-renamed copies that were downgraded per the F2 always-on downgrade policy). `sourceAlwaysApply` is `true` when the source template declares `alwaysApply: true` — present only on suffix-renamed entries to let post-install checks verify the downgrade was applied. |
 | `hooks` | Yes | Map of event name → registration metadata. Empty object if no hooks installed. Each entry has `registered: bool`, `path: string`, `contractVersion: string` (per [`../../adapters/_stop-hook.md`](../../adapters/_stop-hook.md) — `"1.0"` in v1), and optional `lastRun: ISO-8601 | null` (updated after each hook fire). |
 | `mcpSlots[]` | Yes | MCP slots the orchestra registered. Empty array if none. |
 | `learnings` | Yes | Learnings document location and whether the orchestra seeded it. |

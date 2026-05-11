@@ -8,6 +8,81 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [1.3.0] — F2 always-on downgrade + F7 mobile pack + F5 skill overlap + F1 polyglot + F3 ceiling + F6 glob filter
+
+This minor release ships six coordinated improvements across the install runtime, the conflict model, the stack-pack catalog, and the validation harness. The theme: **safer installs** (no surprise always-on rule proliferation), **smarter packs** (only install what actually matches the project), and **broader coverage** (mobile-native and cross-platform projects are first-class citizens). All four adapters are updated in parallel; no adapter falls behind.
+
+### Added — F2: always-on rule downgrade on suffix-rename
+
+When an orchestra artifact that carries `alwaysApply: true` (the Director rule or the orchestra-context rule) undergoes `suffix-rename` because the project already owns a rule at the target path, the renamed copy is now **downgraded to manual-trigger** before being written.
+
+- `adapters/cursor/render-rules.md` §5.6 — frontmatter transformation spec for the renamed copy: `alwaysApply: false`, `[Orchestra — manual trigger]` description prefix, explanatory HTML comment.
+- `adapters/cursor/mappings.md` §6.1 — always-on downgrade policy: when and why.
+- `adapters/cursor/post-install-checks.md` §4.1 — four new checks (`rules.suffix-renamed.downgraded`, `…description-prefix`, `…body-comment`, `…no-double-always-on`).
+- Claude Code, Codex, VS Code adapters receive parallel §6.1 downgrade policies and §4.1 post-install checks appropriate to each IDE's always-on mechanism (`CLAUDE.md`, `AGENTS.md`, `copilot-instructions.md`).
+- `core/registry/install.schema.md` — `rules[].alwaysOn` and `rules[].sourceAlwaysApply` fields added to support check logic.
+
+### Added — F7: mobile stack pack
+
+New first-class stack pack for mobile development (Capacitor, React Native, Flutter, MAUI, Android native, iOS native).
+
+- `core/stack-packs/mobile/_overview.md` — pack identity, detection, layering rules, and scope.
+- `core/stack-packs/mobile/rules/touch-and-viewport.md` — touch targets, safe areas, viewport, pointer-coarse patterns.
+- `core/stack-packs/mobile/rules/native-plugin-lifecycle.md` — plugin init, permission flows, platform conditionals, bridge etiquette.
+- `core/stack-packs/mobile/rules/offline-and-sync.md` — offline-first patterns, pull-to-refresh, background sync, network-status gating.
+- `core/stack-packs/mobile/rules/app-store-readiness.md` — signing, versioning, icons/splash, permissions, privacy manifests, store-submission checklist.
+- `core/stack-packs/mobile/skills.md` — mobile-specific addenda for universal skills.
+- `core/stack-packs/mobile/roles.md` — mobile-specific non-negotiables for roles (mobile-engineer, devops-sre, qa-engineer, security-engineer).
+- `core/discovery/signals/mobile.md` — cross-link to new pack added.
+
+### Added — F5: skill name overlap disambiguation
+
+When an orchestra skill undergoes `suffix-rename` because the project already has a skill of the same id, the renamed copy's description is now prefixed with `[Orchestra]` and includes a disambiguation note pointing to the project's skill.
+
+- `adapters/cursor/render-rules.md` §5.5 — description disambiguation spec for suffix-renamed skills.
+- `adapters/cursor/post-install-checks.md` §5.1 — three new checks (`skills.overlap.description-prefix`, `…disambiguation-note`, `…report`).
+- Claude Code `mappings.md` §4 and Codex `mappings.md` §3 (catalog entry level) receive equivalent disambiguation specs.
+- VS Code `mappings.md` §4 updated.
+- Post-install report now includes an `## Overlapping skills` section when any skill overlap was detected.
+
+### Added — F1: secondary scan for sub-project detection
+
+Discovery now performs a lightweight secondary scan (depth-1 subdirectories only) to detect sub-packages within the repository.
+
+- `core/discovery/DETECTION.md` §3.4 — secondary scan procedure (10 manifest types, 20-entry cap, 1-second budget).
+- `core/registry/install.schema.md` — `subProjects[]` field added (each entry: `path`, `manifest`, `type`). In v1.3, stack packs remain root-scoped; the field is informational.
+- All four adapter `post-install-checks.md` — §8.6 sub-project detection checks (`marker.subprojects.scanned`, `…paths-valid`).
+- All three fixture `EXPECTED.md` files updated to assert `subProjects: []`.
+
+### Added — F3: always-on rule ceiling check
+
+A new non-blocking post-install warning fires when the number of always-on rules/context sources exceeds 4 after install.
+
+- `adapters/cursor/post-install-checks.md` §8.7 — counts `.mdc` files with `alwaysApply: true`; warns if > 4.
+- Claude Code, Codex, VS Code adapters receive §8.7 equivalents appropriate to their always-on loading mechanism (number of auto-loaded `CLAUDE.md` / `AGENTS.md` / `copilot-instructions.md` files).
+- Non-blocking: the check lists each always-on source so the user can decide which to demote; the orchestra never auto-demotes.
+
+### Added — F6: pack rule glob filtering
+
+Pack rules whose `## When this applies` globs match zero tracked files in the target project are now **skipped** at install time rather than installed unconditionally.
+
+- `adapters/cursor/mappings.md` §7.1 — glob-filter procedure, `installedPackRules[]`, `skippedPackRules[]`, audit re-evaluation.
+- Claude Code, Codex, VS Code `mappings.md` §7 — parallel pack rule glob filtering specs.
+- `core/registry/install.schema.md` — `stacks[].installedPackRules[]` and `stacks[].skippedPackRules[]` fields added.
+- All four adapter `post-install-checks.md` — §8.8 pack rule filter checks (`packs.<stack>.filter.recorded`, `…skipped-rules.no-files`/`…not-in-managed-section`).
+- All three fixture `EXPECTED.md` files updated to reflect filtered vs. installed rules and the new marker fields.
+
+### Changed — fixture EXPECTED.md contracts updated
+
+All three validation fixtures (`empty-js`, `ongoing-python-web`, `salesforce-cartridge`) updated to reflect the new v1.3.0 expectations: `subProjects[]` field, `installedPackRules[]`/`skippedPackRules[]` marker fields, glob-filter decisions per fixture, and ceiling check pass conditions.
+
+### Backward compatibility
+
+- v1.2 install markers without `subProjects`, `installedPackRules`, or `skippedPackRules` are valid. The audit adds these fields on the next upgrade run.
+- The section §5.5 in `render-rules.md` (previously "always-on downgrade") is now §5.6; §5.5 is the new "skill disambiguation" section. The only cross-reference to the old §5.5 in `post-install-checks.md` has been updated.
+- No adapter section numbering changed for §6 / §7 / §8 / §9 / §10 / §11 of any adapter's `mappings.md`. New subsections are additive (§7.1, §7.2, §8.6–§8.8).
+- The `core/stack-packs/` directory gains `mobile/` as a new subdirectory. No existing stack pack was modified.
+
 ## [1.2.0] — npm distribution + F4 stop-hook overlap resolution
 
 This minor release ships two coordinated workstreams: a real distribution mechanism (`npx @neverreven/ai-orchestra@latest init`) so the orchestra can be dropped into any project without copying the folder by hand, and the v1.x backlog's highest-priority finding (F4 — stop-hook conceptual overlap). The release leaves the `-alpha` suffix behind: the orchestra core has stabilised, the four adapters cover their declared surfaces with explicit gaps, and the universal contracts (install scope, install plan template, stop-hook overlap) have settled enough to call this a real `1.x` minor.

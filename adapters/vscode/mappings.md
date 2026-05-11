@@ -79,6 +79,15 @@ The default `mode: 'agent'` is correct for all v1 orchestra skills (they coordin
 
 `.github/prompts/<id>.prompt.md` is a flat single file per skill. Auxiliary files in the source skill folder (`template.md`, `checklist.md`, `examples/`) are NOT copied — the rendered prompt body references them by path inside `ai-orchestra/core/skills/<category>/<skill-id>/`. This is a deliberate v1 simplification that mirrors the Claude Code adapter.
 
+### Description disambiguation on skill suffix-rename
+
+When a skill undergoes `suffix-rename` because `.github/prompts/<skill-id>.prompt.md` already exists with non-orchestra content, the adapter MUST modify the renamed copy's `description` frontmatter:
+
+1. Prepend `[Orchestra] ` to the synthesised description.
+2. Append the note: ` The project also defines a prompt named '<skill-id>' at '.github/prompts/<skill-id>.prompt.md' — read both and choose the one that fits.`
+
+The project's original prompt file is never modified. The post-install report includes an `## Overlapping skills` section listing every such overlap side-by-side.
+
 ---
 
 ## 5. Stop-hook (declared gap)
@@ -118,17 +127,34 @@ VS Code uses the same action set as Cursor:
 | `append` | Target present, no markers, append safe. |
 | `merge-json` | Target is a JSON file managed by the orchestra (`.vscode/mcp.json`). |
 | `merge-missing-sections` | Learnings doc, sections-only addition. |
-| `suffix-rename` | Target present with non-orchestra content; preserve user file under `<basename>.orchestra.<ext>`. |
+| `suffix-rename` | Target present with non-orchestra content; preserve user file under `<basename>.orchestra.<ext>`. When the source artifact would have been rendered with always-on semantics (Director context in `copilot-instructions.md`), the renamed copy is downgraded — see §6.1. |
 | `propose` | Critical decision required. |
 | `skip-with-gap` | Adapter cannot satisfy a clause for this IDE/version; recorded in `gaps[]`. |
 
 Every action is logged in the install marker per [`../../core/registry/install.schema.md`](../../core/registry/install.schema.md) §1.4.
+
+### 6.1 Always-on downgrade on suffix-rename
+
+The VS Code adapter renders the Director rule and project context as a managed section of `.github/copilot-instructions.md` (mirrored to `AGENTS.md`). When a suffix-rename conflict occurs on `.github/copilot-instructions.md` (because the project already has a hand-written version with content that the adapter cannot safely extend due to malformed markers), the adapter writes the orchestra's version to `copilot-instructions.orchestra.md`. In this scenario:
+
+1. The renamed copy (`copilot-instructions.orchestra.md`) MUST include a leading note: `> **Note:** This file is a suffix-renamed orchestra copy. VS Code Copilot does NOT auto-load it. To use the orchestra's session protocol, fix the malformed markers in `copilot-instructions.md` or replace it with this file (renamed back to `copilot-instructions.md`).`
+2. The install marker records `rules[].alwaysOn: false` for the renamed copy.
+
+The same logic applies to `AGENTS.md` — if it undergoes suffix-rename (malformed markers), the renamed `AGENTS.orchestra.md` carries the downgrade note and `alwaysOn: false` in the marker.
+
+For **skill** suffix-renames (`.github/prompts/<skill-id>.prompt.md` conflicts), no always-on downgrade applies — prompt files are on-demand and never always-on.
+
+**Post-install report.** Same as the Cursor adapter (per [`../cursor/mappings.md`](../cursor/mappings.md) §6.1): when a downgrade fires, Part A names the renamed file and explains the user's options.
 
 ---
 
 ## 7. Stack packs
 
 When the project profile detects one or more first-class stacks, the adapter applies stack-pack content from [`../../core/stack-packs/<stack-id>/`](../../core/stack-packs/) per the layering rules in [`../../core/stack-packs/_overview.md`](../../core/stack-packs/_overview.md) §3. Stack-pack rule and roles content lands as additional sections inside the `.github/copilot-instructions.md` managed area; pack skills addenda are wired into the per-skill prompt files under `.github/prompts/`. The applied pack is recorded in `stacks[].stackPack` and `stacks[].stackPackVersion`.
+
+### Pack rule glob filtering (introduced in v1.3.0)
+
+Before including any pack rule section in the `copilot-instructions.md` managed area, the adapter tests the rule's `## When this applies` globs against the project's tracked files. Rules whose globs match zero files are **omitted** from the managed-section content. Installed rules are recorded in `stacks[].installedPackRules[]`; skipped rules in `stacks[].skippedPackRules[]`. The audit re-evaluates skipped rules and proposes adding newly-relevant ones on the next upgrade. Pack rules with no explicit glob are always included.
 
 In a future v1.x, this adapter may switch to using `.github/instructions/<stack>.instructions.md` (Copilot's per-stack instruction-file convention) with `applyTo` glob patterns — see [`INSTALL.md`](INSTALL.md) §6 for the v1 limitation.
 

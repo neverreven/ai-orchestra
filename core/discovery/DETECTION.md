@@ -30,6 +30,10 @@ The probe produces a **project profile** in this shape:
   "ciSystems": ["github-actions"],
   "documentationFiles": ["README.md", "AGENTS.md", "CONTRIBUTING.md"],
   "isPolyglot": false,
+  "subProjects": [
+    { "path": "server", "manifest": "server/package.json", "type": "package.json" },
+    { "path": "src-tauri", "manifest": "src-tauri/Cargo.toml", "type": "Cargo.toml" }
+  ],
   "openQuestions": []
 }
 ```
@@ -68,11 +72,37 @@ Regardless of stack:
 - **CI system**: presence of `.github/workflows/`, `.gitlab-ci.yml`, `.circleci/config.yml`, `azure-pipelines.yml`, `Jenkinsfile`, `bitbucket-pipelines.yml`.
 - **Documentation files at root**: any `*.md` file at the repository root, especially `README.md`, `AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`, `CHANGELOG.md`, files matching `PROJECT_DOC_*.md`, `*-DESIGN.md`, etc.
 
-### 3.4 Polyglot resolution
+### 3.4 Secondary scan — sub-project detection
+
+After the root scan completes (§3.1–§3.3), perform a lightweight secondary scan to detect sub-packages within the repository:
+
+1. List **direct subdirectories** of the project root (depth = 1 only). Exclude: `node_modules`, `vendor`, `.venv`, `target`, `dist`, `build`, `_test-fixtures`, `.git`, `.cursor`, `.claude`, `.github`, any directory starting with `.`.
+2. For each remaining subdirectory, check for the presence of **any of these manifest files** at the sub-directory root:
+   - `package.json`
+   - `Cargo.toml`
+   - `pyproject.toml`
+   - `go.mod`
+   - `pom.xml`
+   - `build.gradle` or `build.gradle.kts`
+   - `*.csproj` (any file matching this glob at sub-directory root)
+   - `sfdx-project.json`
+3. For each subdirectory that contains one or more of these manifests, record a sub-project entry in `profile.subProjects[]`:
+   ```json
+   { "path": "<relative path from project root>", "manifest": "<relative path to manifest>", "type": "<manifest filename>" }
+   ```
+   If a subdirectory contains multiple manifests, record one entry per manifest.
+4. Cap the sub-project list at **20 entries** to stay within the performance budget. If more than 20 are found, include the first 20 (alphabetical by path) and add an open question noting the truncation.
+
+**What this field is — and is not.**
+`subProjects[]` is a profile-level annotation that gives the install plan visibility into polyglot sub-packages (e.g., a `server/` backend, a `src-tauri/` Rust shell, an `android/` native layer). In v1.3, stack packs remain root-scoped: the root stack detection drives pack installation, and sub-project stacks are informational. Future versions may apply per-sub-project pack layering.
+
+**Performance budget.** The secondary scan reads only the directory listing + a single file-existence check per candidate subdirectory per manifest filename. It must complete within **1 second** on projects with up to 200 top-level directories.
+
+### 3.5 Polyglot resolution
 
 If two or more stacks pass the 0.6 confidence threshold, set `profile.isPolyglot = true`. The install plan should pull stack packs for **every detected stack** (not just the highest-scoring one).
 
-### 3.5 Open questions
+### 3.6 Open questions
 
 Anything below threshold but with non-zero evidence is potentially interesting. For each such case, append an entry to `profile.openQuestions`:
 

@@ -73,6 +73,21 @@ Render the structured result to the user as a numbered list, with failures group
 
 ---
 
+## 4.1 Suffix-renamed always-on downgrade checks
+
+When the install marker's `rules[]` includes any entry with `action: "suffix-rename"` whose source artifact was always-on (the Director rule or orchestra-context rule), these checks verify the downgrade was applied correctly per [`render-rules.md`](render-rules.md) §5.6 and [`mappings.md`](mappings.md) §6.1:
+
+| id | what | how | pass | fail | severity |
+|----|------|-----|------|------|----------|
+| `rules.suffix-renamed.downgraded` | Every suffix-renamed copy of an always-on source has `alwaysApply: false` in its frontmatter. | For each `marker.rules[]` entry where `action == "suffix-rename"` AND `sourceAlwaysApply == true`: parse the frontmatter of the file at `path`. | `alwaysApply` is `false`. | `alwaysApply` is `true` or missing. | critical |
+| `rules.suffix-renamed.description-prefix` | The renamed copy's `description` starts with `[Orchestra — manual trigger] `. | Parse frontmatter `description`. | Prefix present. | Prefix missing. | warning |
+| `rules.suffix-renamed.body-comment` | The renamed copy has the explanatory HTML comment on the first line after the closing `---` fence. | Read first non-blank line after frontmatter. | Comment present. | Comment missing. | warning |
+| `rules.suffix-renamed.no-double-always-on` | No two rules of the same orchestra kind (Director or context) are both `alwaysApply: true`. | Enumerate all `.mdc` files in `.cursor/rules/`; for each pair sharing an orchestra kind (matched by description substring), at most one has `alwaysApply: true`. | At most one per kind. | Two or more always-on of the same kind. | warning |
+
+Checks in this section are **skipped** when no suffix-renamed always-on rules exist in the marker. The audit re-runs them on every invocation (the fourth check catches manual re-promotion after install).
+
+---
+
 ## 5. Skill-folder checks
 
 For every entry in `marker.skills[]`:
@@ -84,6 +99,20 @@ For every entry in `marker.skills[]`:
 | `skills.<id>.frontmatter.name` | Frontmatter `name` matches folder name. | Parse YAML. | Match. | Mismatch. | critical |
 | `skills.<id>.frontmatter.description` | Frontmatter `description` is non-empty and includes at least one trigger phrase from the source SKILL.md. | Parse YAML; regex search. | Match. | Missing. | warning |
 | `skills.<id>.body.required-sections` | Body has `## Trigger`, `## When to use`, `## When NOT to use`, `## Process`, `## Output`, `## References`. | Heading regex. | All present. | Any missing. | critical |
+
+---
+
+## 5.1 Skill name overlap checks
+
+When the install marker's `skills[]` includes any entry with `action: "suffix-rename"` (a skill was renamed because the project already had a folder of the same name at `.cursor/skills/<skill-id>/`), these checks verify the disambiguation was applied correctly per [`render-rules.md`](render-rules.md) §5.5:
+
+| id | what | how | pass | fail | severity |
+|----|------|-----|------|------|----------|
+| `skills.overlap.description-prefix` | Every suffix-renamed orchestra skill has `[Orchestra]` at the start of its `description` frontmatter. | Parse YAML frontmatter of each renamed skill file. | Prefix present. | Prefix missing. | warning |
+| `skills.overlap.disambiguation-note` | The description includes the disambiguation note pointing at the project skill's path. | Substring search in `description`. | Note present. | Note missing. | warning |
+| `skills.overlap.report` | The post-install report contains an `## Overlapping skills` section listing each overlap. | Check that the Phase 9 closing message (or the install marker's `history[]` install entry `summary`) contains the string "Overlapping skills". | Present when overlaps exist. | Missing when `marker.skills[]` has suffix-renamed entries. | warning |
+
+Checks in this section are **skipped** when no suffix-renamed skills exist in the marker.
 
 ---
 
@@ -135,6 +164,47 @@ These checks verify the orchestra honoured the user's choice for the F4 stop-hoo
 | `cursor.hooks.overlap.no-overlap-clean` | When `stopHookOverlapResolution.value === null`, no overlap detection re-run produces a different verdict against the current `hooks.stop`. | Re-run the §3.11 detector against the current hook config. | Detection still reports no overlap. | Detection now reports overlap (a new project hook was added since install). | warning |
 
 If `cursor.hooks.overlap.adopt-honoured` reports a digest mismatch, the audit follows [`../../core/conflict/stop-hook-overlap.md`](../../core/conflict/stop-hook-overlap.md) §6: surface the drift, ask whether to re-adopt the new content or revert to the orchestra default. The check itself does not auto-resolve.
+
+---
+
+## 8.8 Pack rule glob filter checks (introduced in v1.3.0)
+
+For each detected stack that has a pack applied (i.e., `stacks[].stackPack` is non-null in the marker):
+
+| id | what | how | pass | fail | severity |
+|----|------|-----|------|------|----------|
+| `packs.<stack>.installed-rules.files-exist` | Every rule file listed in `stacks[].installedPackRules[]` has a corresponding `.cursor/rules/<stack-id>-<topic>.mdc` file. | File check per entry. | All exist. | Any missing. | critical |
+| `packs.<stack>.skipped-rules.no-files` | No rule file listed in `stacks[].skippedPackRules[]` has a corresponding file in `.cursor/rules/`. | Negative file check per entry. | None found. | A skipped rule's file is present (it was manually created or not properly filtered). | warning |
+| `packs.<stack>.filter.recorded` | The marker has both `installedPackRules[]` and `skippedPackRules[]` for each applied pack (both may be empty arrays, but both must be present). | JSON path check. | Both present. | Either absent. | warning |
+
+Checks in this section are **skipped** for stacks that have no pack applied (`stacks[].stackPack === null`).
+
+---
+
+## 8.7 Always-on rule ceiling check (introduced in v1.3.0)
+
+This check is **informational and non-blocking** — it makes the always-on rule count visible before context-window pressure bites. The audit re-runs it on every invocation.
+
+| id | what | how | pass | fail | severity |
+|----|------|-----|------|------|----------|
+| `cursor.rules.always-on.count` | Count all `.mdc` files in `.cursor/rules/` that have `alwaysApply: true` in their frontmatter. | Enumerate `.cursor/rules/*.mdc`; parse each frontmatter; count `alwaysApply: true` entries. | Count ≤ 4. | Count > 4: emit `warning` listing each always-on rule with its `description`. | warning |
+
+When the count exceeds 4, the post-install report MUST list each always-on rule (file path + `description` value) so the user can decide which, if any, to demote to manual-trigger. The check does not auto-demote any rule.
+
+**Soft threshold rationale.** The orchestra itself installs at most 2 always-on rules (`ai-director.mdc` + `orchestra-context.mdc`). Projects with 1–2 hand-authored always-on rules will land at 3–4 total — comfortably within the threshold. Projects that already have 3+ always-on rules before the install are likely to cross the threshold; they are the primary audience for this warning.
+
+---
+
+## 8.6 Sub-project detection check (introduced in v1.3.0)
+
+Verifies that the secondary scan in [`../../core/discovery/DETECTION.md`](../../core/discovery/DETECTION.md) §3.4 ran and its results are recorded in the marker:
+
+| id | what | how | pass | fail | severity |
+|----|------|-----|------|------|----------|
+| `marker.subprojects.scanned` | When top-level subdirectories with manifest files exist in the project, the marker contains a `subProjects[]` field (even if empty). | Check for `subProjects` key in marker JSON. | Field present. | Field absent (marker was written by a pre-v1.3 adapter). | info |
+| `marker.subprojects.paths-valid` | Every `subProjects[].path` in the marker is a real subdirectory of the project root. | File check per entry. | All exist. | Any missing. | warning |
+
+This check runs on every install and audit. Pre-v1.3 markers without `subProjects` fail only the first check at `info` severity — not an error; the audit proposes adding the field on the next upgrade.
 
 ---
 

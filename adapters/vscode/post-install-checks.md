@@ -52,6 +52,20 @@ For both `.github/copilot-instructions.md` and `AGENTS.md`:
 
 ---
 
+## 4.1 Suffix-renamed always-on downgrade checks
+
+When the install produced a `suffix-rename` for an always-on artifact (the `copilot-instructions.md` or `AGENTS.md` managed content, resulting in `copilot-instructions.orchestra.md` or `AGENTS.orchestra.md`), these checks verify the downgrade was applied correctly per [`mappings.md`](mappings.md) §6.1:
+
+| id | what | how | pass | fail | severity |
+|----|------|-----|------|------|----------|
+| `vscode.suffix-renamed.downgrade-note` | The suffix-renamed file (if present) contains the leading blockquote note explaining it is NOT auto-loaded. | Regex match for `> **Note:** This file is a suffix-renamed orchestra copy`. | Present. | Missing. | warning |
+| `vscode.suffix-renamed.marker-not-always-on` | The install marker's corresponding `rules[]` entry has `alwaysOn: false`. | JSON path check on marker. | `false`. | `true` or missing. | critical |
+| `vscode.suffix-renamed.no-double-load` | The original and the `.orchestra.` copy do not both contain the orchestra managed-section markers. | Check for marker pair in both files. | At most one file has the markers. | Both files have the marker pair. | warning |
+
+Checks in this section are **skipped** when no suffix-renamed always-on artifacts exist in the marker.
+
+---
+
 ## 5. Skill-prompt checks
 
 For every entry in `marker.skills[]`:
@@ -62,6 +76,20 @@ For every entry in `marker.skills[]`:
 | `skills.<id>.frontmatter.mode` | Frontmatter has `mode: 'agent'`. | Parse YAML. | Match. | Other or missing. | critical |
 | `skills.<id>.frontmatter.description` | Frontmatter has a non-empty `description` that includes at least one trigger phrase from the source SKILL.md. | Parse YAML; regex search. | Match. | Missing or no triggers. | warning |
 | `skills.<id>.body.required-sections` | Body has `## Trigger`, `## When to use`, `## When NOT to use`, `## Process`, `## Output`, `## References`. | Heading regex. | All present. | Any missing. | critical |
+
+---
+
+## 5.1 Skill name overlap checks
+
+When the install marker's `skills[]` includes any entry with `action: "suffix-rename"` (a skill was renamed because the project already had a same-named prompt file at `.github/prompts/<skill-id>.prompt.md`), these checks verify the disambiguation was applied correctly per [`mappings.md`](mappings.md) §4:
+
+| id | what | how | pass | fail | severity |
+|----|------|-----|------|------|----------|
+| `vscode.skills.overlap.description-prefix` | Every suffix-renamed orchestra skill has `[Orchestra]` at the start of its `description` frontmatter. | Parse YAML frontmatter of each renamed skill file. | Prefix present. | Prefix missing. | warning |
+| `vscode.skills.overlap.disambiguation-note` | The description includes the disambiguation note pointing at the project skill's path. | Substring search in `description`. | Note present. | Note missing. | warning |
+| `vscode.skills.overlap.report` | The post-install report contains an `## Overlapping skills` section listing each overlap. | Check Phase 9 closing message or marker install-entry `summary`. | Present when overlaps exist. | Missing when `marker.skills[]` has suffix-renamed entries. | warning |
+
+Checks in this section are **skipped** when no suffix-renamed skills exist in the marker.
 
 ---
 
@@ -111,6 +139,42 @@ Verify the orchestra honoured the user's choice for the F4 stop-hook overlap (pe
 | `vscode.hooks.overlap.replace-degraded` | When `value === "replace-with-orchestra"`, the marker carries `evidence.degradedTo: "propose"` (VS Code cannot rewrite a fallback automatically — see [`mappings.md`](mappings.md) §5). | Field check. | Present. | Missing. | warning |
 | `vscode.hooks.overlap.adopt-honoured` | When `value === "adopt-existing"`, the SHA-256 of the adopted fallback content matches `adoptedEntryDigest`. | Re-read the fallback location; compute SHA-256; compare. | Match. | Mismatch (drift) or fallback removed. | warning (drift) / critical (missing) |
 | `vscode.hooks.overlap.no-overlap-clean` | When `value === null`, re-running detection still reports no overlap. | Re-run §3.11 detector. | No overlap. | Detection now reports overlap. | warning |
+
+---
+
+## 8.8 Pack rule glob filter checks (introduced in v1.3.0)
+
+For each detected stack with a pack applied (`stacks[].stackPack` non-null):
+
+| id | what | how | pass | fail | severity |
+|----|------|-----|------|------|----------|
+| `vscode.packs.<stack>.filter.recorded` | Both `installedPackRules[]` and `skippedPackRules[]` are present for each applied pack. | JSON path check. | Both present (arrays, possibly empty). | Either absent. | warning |
+| `vscode.packs.<stack>.skipped-rules.not-in-managed-section` | No rule content from `skippedPackRules[]` appears in the `copilot-instructions.md` managed section. | Search managed-section headings for rule topic names. | Absent. | Present (filter was not applied). | warning |
+
+Checks skipped when no pack is applied.
+
+---
+
+## 8.7 Always-on context ceiling check (introduced in v1.3.0)
+
+VS Code Copilot auto-loads `.github/copilot-instructions.md` and any `.github/instructions/*.instructions.md` files. This check counts total auto-loaded instruction sources:
+
+| id | what | how | pass | fail | severity |
+|----|------|-----|------|------|----------|
+| `vscode.context.always-on.count` | Count `.github/copilot-instructions.md` (1 if present) + all files matching `.github/instructions/*.instructions.md`. | File count. | Count ≤ 4. | Count > 4: emit `warning` listing each file and its approximate size. | warning |
+
+When the count exceeds 4, the post-install report lists each instruction file so the user can decide which content to consolidate or move to on-demand prompts.
+
+---
+
+## 8.6 Sub-project detection check (introduced in v1.3.0)
+
+Same as the Cursor adapter (per [`../cursor/post-install-checks.md`](../cursor/post-install-checks.md) §8.6):
+
+| id | what | how | pass | fail | severity |
+|----|------|-----|------|------|----------|
+| `marker.subprojects.scanned` | Marker contains `subProjects[]` field when sub-directories with manifests exist. | Key presence check. | Present. | Absent. | info |
+| `marker.subprojects.paths-valid` | Every `subProjects[].path` is a real subdirectory of the project root. | File check per entry. | All exist. | Any missing. | warning |
 
 ---
 

@@ -52,6 +52,20 @@ For both `CLAUDE.md` and `AGENTS.md`:
 
 ---
 
+## 4.1 Suffix-renamed always-on downgrade checks
+
+When the install produced a `suffix-rename` for an always-on artifact (the `CLAUDE.md` managed content, resulting in `CLAUDE.orchestra.md`), these checks verify the downgrade was applied correctly per [`mappings.md`](mappings.md) §6.1:
+
+| id | what | how | pass | fail | severity |
+|----|------|-----|------|------|----------|
+| `claude.suffix-renamed.downgrade-note` | `CLAUDE.orchestra.md` (if present) contains the leading blockquote note explaining it is NOT auto-loaded. | Regex match for `> **Note:** This file is a suffix-renamed orchestra copy`. | Present. | Missing. | warning |
+| `claude.suffix-renamed.marker-not-always-on` | The install marker's corresponding `rules[]` entry has `alwaysOn: false`. | JSON path check on marker. | `false`. | `true` or missing. | critical |
+| `claude.suffix-renamed.no-double-load` | `CLAUDE.md` and `CLAUDE.orchestra.md` do not both contain the orchestra managed-section markers. | Check for marker pair in both files. | At most one file has the markers. | Both files have the marker pair. | warning |
+
+Checks in this section are **skipped** when no suffix-renamed always-on artifacts exist in the marker.
+
+---
+
 ## 5. Skill-file checks
 
 For every entry in `marker.skills[]`:
@@ -61,6 +75,20 @@ For every entry in `marker.skills[]`:
 | `skills.<id>.file.exists` | `.claude/commands/<skill-id>.md` exists. | File check. | Exists. | Absent. | critical |
 | `skills.<id>.frontmatter.description` | Frontmatter has a non-empty `description` that includes at least one trigger phrase from the source SKILL.md. | Parse YAML; regex search. | Match. | Missing or no triggers. | warning |
 | `skills.<id>.body.required-sections` | Body has `## Trigger`, `## When to use`, `## When NOT to use`, `## Process`, `## Output`, `## References`. | Heading regex. | All present. | Any missing. | critical |
+
+---
+
+## 5.1 Skill name overlap checks
+
+When the install marker's `skills[]` includes any entry with `action: "suffix-rename"` (a skill was renamed because the project already had a same-named command at `.claude/commands/<skill-id>.md`), these checks verify the disambiguation was applied correctly per [`mappings.md`](mappings.md) §4:
+
+| id | what | how | pass | fail | severity |
+|----|------|-----|------|------|----------|
+| `claude.skills.overlap.description-prefix` | Every suffix-renamed orchestra skill has `[Orchestra]` at the start of its `description` frontmatter. | Parse YAML frontmatter of each renamed skill file. | Prefix present. | Prefix missing. | warning |
+| `claude.skills.overlap.disambiguation-note` | The description includes the disambiguation note pointing at the project skill's path. | Substring search in `description`. | Note present. | Note missing. | warning |
+| `claude.skills.overlap.report` | The post-install report contains an `## Overlapping skills` section listing each overlap. | Check that the Phase 9 closing message or marker install-entry `summary` contains "Overlapping skills". | Present when overlaps exist. | Missing when `marker.skills[]` has suffix-renamed entries. | warning |
+
+Checks in this section are **skipped** when no suffix-renamed skills exist in the marker.
 
 ---
 
@@ -118,6 +146,42 @@ Verify the orchestra honoured the user's choice for the F4 stop-hook overlap (pe
 | `claude.hooks.overlap.replace-honoured` | When `value === "replace-with-orchestra"`, exactly one orchestra entry under `hooks.Stop` AND no other entry's body matches the original `replacedEntryEvidence` snippet. | Tag count + body scan. | One entry, replaced snippet absent. | Any other state. | critical |
 | `claude.hooks.overlap.adopt-honoured` | When `value === "adopt-existing"`, the entry at `evidence.entryIndex` carries `metadata.orchestra: true` AND its prompt body's SHA-256 matches `adoptedEntryDigest`. | Read entry; compute SHA-256; compare. | Tag present, digest matches. | Tag missing, digest mismatch (drift), or entry removed. | warning (drift) / critical (missing) |
 | `claude.hooks.overlap.no-overlap-clean` | When `value === null`, re-running detection still reports no overlap. | Re-run §3.11 detector. | No overlap. | Detection now reports overlap. | warning |
+
+---
+
+## 8.8 Pack rule glob filter checks (introduced in v1.3.0)
+
+For each detected stack with a pack applied (`stacks[].stackPack` non-null):
+
+| id | what | how | pass | fail | severity |
+|----|------|-----|------|------|----------|
+| `claude.packs.<stack>.filter.recorded` | Both `installedPackRules[]` and `skippedPackRules[]` are present for each applied pack. | JSON path check. | Both present (arrays, possibly empty). | Either absent. | warning |
+| `claude.packs.<stack>.skipped-rules.not-in-managed-section` | No rule content from `skippedPackRules[]` appears in the `CLAUDE.md` managed section. | Search managed-section headings for rule topic names. | Absent. | Present (filter was not applied). | warning |
+
+Checks skipped when no pack is applied.
+
+---
+
+## 8.7 Always-on context ceiling check (introduced in v1.3.0)
+
+Claude Code auto-loads `CLAUDE.md` (and any `CLAUDE.md` found in parent directories). The orchestra contributes one managed section to `CLAUDE.md`. This check counts how many distinct always-on context sources are active after install:
+
+| id | what | how | pass | fail | severity |
+|----|------|-----|------|------|----------|
+| `claude.context.always-on.count` | Count distinct auto-loaded context files: project-root `CLAUDE.md` + any parent `CLAUDE.md` files (up to 3 levels) + `~/.claude/CLAUDE.md` if present. | Check file existence at each path. | Count ≤ 4 total auto-loaded files. | Count > 4: emit `warning` listing each file and its approximate size. | warning |
+
+When the count exceeds 4, the post-install report lists each auto-loaded file so the user can decide which content to consolidate or move to on-demand commands.
+
+---
+
+## 8.6 Sub-project detection check (introduced in v1.3.0)
+
+Same as the Cursor adapter (per [`../cursor/post-install-checks.md`](../cursor/post-install-checks.md) §8.6). Check ids use prefix `claude.*` instead of `cursor.*`:
+
+| id | what | how | pass | fail | severity |
+|----|------|-----|------|------|----------|
+| `marker.subprojects.scanned` | Marker contains `subProjects[]` field when sub-directories with manifests exist. | Key presence check. | Present. | Absent. | info |
+| `marker.subprojects.paths-valid` | Every `subProjects[].path` is a real subdirectory of the project root. | File check per entry. | All exist. | Any missing. | warning |
 
 ---
 

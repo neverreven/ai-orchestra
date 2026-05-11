@@ -1,4 +1,4 @@
-# Fixture `ongoing-python-web` — expected outcome
+﻿# Fixture `ongoing-python-web` — expected outcome
 
 Contract for the [validation harness](../VALIDATION.md). The orchestra dry-run plan against this fixture must satisfy the criteria below.
 
@@ -15,6 +15,10 @@ The defining behaviour for this fixture: **the orchestra preserves the pre-exist
 | `python-web` | ≥ 0.8 | Strong: `pyproject.toml` (weight 3); `app/main.py` with `from fastapi import FastAPI` (medium framework signal); pytest in dev-deps. Total weight ≥ 6. |
 
 No other stacks should detect (no JS/TS file presence, no Salesforce metadata).
+
+### Sub-projects
+
+`profile.subProjects` must be an **empty array**. This fixture has no top-level subdirectories with manifest files.
 
 ### Frameworks
 
@@ -69,11 +73,13 @@ For Cursor (the v1 reference adapter):
 
 | Path | Action | Rationale |
 |------|--------|-----------|
-| `.cursor/rules/python-web-python.mdc` | `create` | Pack rule (universal Python discipline). |
+| `.cursor/rules/python-web-python.mdc` | `create` | Pack rule — passes glob filter (`.py` files present). |
 | `.cursor/rules/python-web-django.mdc` | `create` | Pack rule (rendered even though Django isn't detected — pack ships all rule files; the rule's own glob scopes activation). |
 | `.cursor/rules/python-web-flask.mdc` | `create` | Pack rule (same reasoning). |
-| `.cursor/rules/python-web-fastapi.mdc` | `create` | Pack rule. The fixture's primary framework. |
+| `.cursor/rules/python-web-fastapi.mdc` | `create` | Pack rule — passes glob filter (FastAPI dep + `.py` files). |
 | `.cursor/rules/python-web-skills-addenda.mdc` | `create` | Pack skills addenda. |
+
+`python-web-django.mdc` and `python-web-flask.mdc` are **not created** — skipped by the v1.3.0 glob filter (no `manage.py`, no `django`/`flask` dep in this fixture).
 
 The pack's `roles.md` content is appended into the orchestra-managed section of `AGENTS.md` under `### Stack roles addenda`. (This is part of the same `extend-section` action on `AGENTS.md`, not a separate plan entry.)
 
@@ -85,6 +91,20 @@ The plan must contain:
 - One `skip` on `.cursor/rules/python-style.mdc` with rationale "pre-existing project rule, not orchestra-owned".
 - Zero `suffix-rename` actions (no orchestra file would collide with the pre-existing project rule's filename).
 - Zero blind overwrites.
+
+### Pack rule glob filter (v1.3.0)
+
+The python-web pack's rules are evaluated against the fixture's file tree:
+
+| Rule file | Glob | Match? | Action |
+|-----------|------|--------|--------|
+| `rules/python.md` | `**/*.py` | Yes (`app/main.py`) | Install |
+| `rules/fastapi.md` | `**/*.py` + `fastapi` dep | Yes | Install |
+| `rules/django.md` | `manage.py` or `django` dep | No | **Skip** |
+| `rules/flask.md` | `flask` dep | No | **Skip** |
+
+`skippedPackRules` must contain `["rules/django.md", "rules/flask.md"]`.
+`installedPackRules` must contain `["rules/python.md", "rules/fastapi.md"]`.
 
 If the plan proposes to write to `AGENTS.md` with action `create` (instead of `extend-section`) or to `.cursor/rules/python-style.mdc` with any action other than `skip`, **validation fails**.
 
@@ -103,9 +123,13 @@ For Claude Code / Codex / VS Code: the existing-infra inventory finds no IDE-spe
   "id": "python-web",
   "stackPack": "core/stack-packs/python-web",
   "stackPackVersion": "1.0.0-alpha",
-  "frameworks": ["fastapi"]
+  "frameworks": ["fastapi"],
+  "installedPackRules": ["rules/python.md", "rules/fastapi.md"],
+  "skippedPackRules": ["rules/django.md", "rules/flask.md"]
 }
 ```
+
+`subProjects` must be present as `"subProjects": []` (no sub-package manifests in this fixture).
 
 `hooks.stop` must be populated with `contractVersion: "1.0"` and `lastRun: null`.
 
@@ -162,7 +186,10 @@ A plan that does not acknowledge the pre-existing files (even if the plan happen
 | Universal core install | All entries from §2 present with correct actions. |
 | `AGENTS.md` handling | `extend-section`, never `create`. |
 | `.cursor/rules/python-style.mdc` handling | `skip`, never any other action. |
-| Stack pack install | python-web pack 4 rule files + 1 skills addenda rendered; roles addenda merged into `AGENTS.md` managed section. |
+| Sub-project scan | `subProjects: []` (no top-level manifest dirs). |
+| Stack pack install | python-web: `python.mdc` + `fastapi.mdc` installed; `django.mdc` + `flask.mdc` skipped (glob filter); skills addenda rendered; roles addenda merged into `AGENTS.md` managed section. |
+| Pack rule marker | `installedPackRules` = `["rules/python.md","rules/fastapi.md"]`; `skippedPackRules` = `["rules/django.md","rules/flask.md"]`. |
+| Always-on ceiling | Count of always-on `.mdc` files ≤ 4 → no warning. |
 | Conflicts | Exactly one `extend-section` on `AGENTS.md`, one `skip` on the pre-existing rule. |
 | Adapter gaps | None for Cursor; declared gaps surfaced for the others. |
 | Registry marker | One `python-web` stack entry; existing-infra recorded; hook contractVersion populated. |

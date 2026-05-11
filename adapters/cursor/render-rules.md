@@ -211,6 +211,76 @@ If the source skill folder includes `template.md`, `checklist.md`, or `examples/
 
 The folder structure mirrors the source, except all live as siblings of `SKILL.md` in `.cursor/skills/<skill-id>/`.
 
+### 5.5 Description disambiguation on skill suffix-rename
+
+When a skill undergoes `suffix-rename` because `.cursor/skills/<skill-id>/` already exists with non-orchestra content (per [`mappings.md`](mappings.md) §6), the adapter MUST modify the renamed copy's `description` frontmatter field before writing. This prevents the two skills' trigger phrases from being indistinguishable in Cursor's skill listing.
+
+**Procedure:**
+
+1. Read the `description` field (or the first `## When to use` / blockquote paragraph as fallback) from the **existing project skill's** `SKILL.md`.
+2. Extract a short label from it: the first sentence, truncated to 60 characters, stripped of Markdown.
+3. Prepend the orchestra skill's synthesised description (per §5.2) with:
+   `[Orchestra] `
+4. Append a disambiguation note after the trigger phrases:
+   ` The project also defines a skill named '<skill-id>' at '.cursor/skills/<skill-id>/SKILL.md' — read both and choose the one that fits.`
+
+**Final shape for the renamed copy's description:**
+
+```
+[Orchestra] <summary line>. Use when the user says <trigger phrases>. The project also defines a skill named '<skill-id>' at '.cursor/skills/<skill-id>/SKILL.md' — read both and choose the one that fits.
+```
+
+The `>-` folded-block scalar still applies; YAML collapses internal newlines.
+
+**The project's original skill is never modified.** Only the orchestra's renamed copy gets the disambiguation prefix.
+
+---
+
+## 5.6 Frontmatter transformation on suffix-rename (always-on downgrade)
+
+When a rule file with `alwaysApply: true` undergoes `suffix-rename` (per [`mappings.md`](mappings.md) §6.1), the adapter transforms the frontmatter of the **renamed copy only** (the project's original file is never touched):
+
+### Source frontmatter (before transformation)
+
+```yaml
+---
+description: AI Director — session protocol for context continuity. Reads accumulated learnings at session start; captures new ones during and at session end.
+alwaysApply: true
+---
+```
+
+### Transformed frontmatter (what gets written to the renamed copy)
+
+```yaml
+---
+description: "[Orchestra — manual trigger] AI Director — session protocol for context continuity. Reads accumulated learnings at session start; captures new ones during and at session end."
+alwaysApply: false
+---
+```
+
+### Rules
+
+| Aspect | Behaviour |
+|--------|-----------|
+| `alwaysApply` | Always set to `false` on the renamed copy. |
+| `description` prefix | `[Orchestra — manual trigger] ` prepended. Use double-quoted YAML string when the prefix introduces characters that need escaping. |
+| Body comment | Insert `<!-- This rule was suffix-renamed because the project already owns a rule at the original path. It is NOT always-on to avoid double-loading with the project's version. To use it, invoke it manually or change alwaysApply back to true after removing the project's version. -->` on the first line after the closing `---` fence, followed by one blank line before the body content. |
+| `globs` | If the source would have had `globs` (e.g., a stack-pack rule), preserve the globs unchanged on the renamed copy — they are harmless when `alwaysApply: false` (manual-trigger rules ignore globs). |
+| Body content | Unchanged from the source rendering. Placeholder substitution still applies. |
+
+### Which artifacts can trigger this
+
+In v1, only two orchestra artifacts are rendered with `alwaysApply: true`:
+
+1. **Director rule** (`ai-director.mdc` → renamed to `ai-director.orchestra.mdc` on conflict).
+2. **Orchestra-context rule** (`orchestra-context.mdc` → renamed to `orchestra-context.orchestra.mdc` on conflict).
+
+Stack-pack rules are **not** always-on — they use `globs:` for conditional activation — so this transformation does not apply to them even if they undergo `suffix-rename`.
+
+### Determinism
+
+The transformation is deterministic: the prefix is a fixed string, the `alwaysApply` flip is unconditional, and the body comment is static. Idempotent re-runs that encounter the same conflict produce byte-identical renamed copies.
+
 ---
 
 ## 6. Stop-hook prompt rendering

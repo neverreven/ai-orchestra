@@ -58,6 +58,16 @@ The Codex managed-section content includes one section that other adapters do no
 
 Codex matches user input against the trigger phrases and follows the path link to execute the skill. Full content shape is in [`target-schema.md`](target-schema.md) §2.
 
+### Skill trigger-phrase disambiguation on name overlap
+
+When the project's `AGENTS.md` (outside the orchestra-managed section) already contains a skill catalog entry — or any prose section — that uses the same trigger phrases as an orchestra skill, the adapter MUST disambiguate in the managed-section catalog entry:
+
+1. Prefix the skill's catalog entry description with `[Orchestra] `.
+2. Append the note: ` Note: the project also defines a same-named or same-triggered skill — see the non-managed sections of AGENTS.md. Read both entries and choose the one that fits.`
+3. Surface the overlap in the post-install report's `## Overlapping skills` section, listing the orchestra skill's id and trigger phrases alongside the project's conflicting text.
+
+The project's original content outside the managed section is never modified.
+
 ---
 
 ## 4. `register-only` action — skill installation
@@ -123,11 +133,26 @@ Codex uses the same action set as Cursor and Claude Code:
 
 Every action is logged in the install marker per [`../../core/registry/install.schema.md`](../../core/registry/install.schema.md) §1.4.
 
+### 6.1 Always-on downgrade on suffix-rename
+
+The Codex adapter renders the Director rule and project context into a managed section of `AGENTS.md`. If the managed-section `extend-section` action encounters a malformed marker pair (the only conflict scenario that can trigger a suffix-rename for the AGENTS.md target), the adapter writes the orchestra's version to `AGENTS.orchestra.md`. In this scenario:
+
+1. The renamed copy (`AGENTS.orchestra.md`) MUST include a leading note: `> **Note:** This file is a suffix-renamed orchestra copy. Codex does not auto-load it. To use the orchestra's managed content, fix the malformed markers in `AGENTS.md` or replace it with this file.`
+2. The install marker records `rules[].alwaysOn: false` for the renamed copy.
+
+For **skill** suffix-renames (when `skillPlacementStrategy.type` is `shared` and the shared folder has a same-named entry), no always-on downgrade applies — skills are reference-based in Codex and never always-on.
+
+**Post-install report.** When the downgrade fires, Part A names the renamed file and explains the user's options (same phrasing as the Cursor adapter per [`../cursor/mappings.md`](../cursor/mappings.md) §6.1, adapted for the Codex context).
+
 ---
 
 ## 7. Stack packs
 
 When the project profile detects one or more first-class stacks, the Codex adapter applies stack-pack content from [`../../core/stack-packs/<stack-id>/`](../../core/stack-packs/) per the layering rules in [`../../core/stack-packs/_overview.md`](../../core/stack-packs/_overview.md) §3. Since Codex lacks per-rule files, stack-pack rule content lands as additional sections inside the `AGENTS.md` managed area, with skill addenda referenced via links in the skill catalog (Codex's reference-not-copy strategy applies to pack skills as well as universal skills). The applied pack is recorded in `stacks[].stackPack` and `stacks[].stackPackVersion`.
+
+### Pack rule glob filtering (introduced in v1.3.0)
+
+Before including any pack rule section in the `AGENTS.md` managed area, the adapter tests the rule's `## When this applies` globs against the project's tracked files. Rules whose globs match zero files are **omitted** from the managed-section content. Installed rules are recorded in `stacks[].installedPackRules[]`; skipped rules in `stacks[].skippedPackRules[]`. The audit re-evaluates and proposes adding newly-relevant ones on the next upgrade. Pack rules with no explicit glob are always included.
 
 ---
 
