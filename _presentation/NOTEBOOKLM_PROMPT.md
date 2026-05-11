@@ -10,9 +10,15 @@
 2. Create a new notebook.
 3. Add source → "Upload file" → select `AI_ORCHESTRA_OVERVIEW.md`.
 4. Wait for the source to be indexed.
-5. Click "Studio" in the top-right → "Presentation".
-6. Paste the prompt below into the instructions field.
+5. Click **Studio** in the right panel → **Slide deck**.
+6. Paste the prompt below into the customise/instructions field.
 7. Click "Generate".
+
+> **Other Studio formats worth trying:**
+> - **Audio Overview** — generates a podcast-style briefing (use the separate audio prompt at the bottom of this file).
+> - **Mind Map** — good for a quick architecture overview to share beforehand.
+> - **Infographic** — compact one-page visual summary, useful as a leave-behind.
+> - **Reports** — produces a formatted written brief if you need a pre-read document for the audience.
 
 ---
 
@@ -111,7 +117,7 @@ Formatting requirements:
 
 ## Alternative: Audio Overview prompt (for a podcast-style briefing before the presentation)
 
-If you want to generate a short audio overview first (to understand the material or share with colleagues who prefer listening), click "Audio Overview" in Studio and use this prompt:
+If you want to generate a short audio overview first (to understand the material or share with colleagues who prefer listening), click **Audio Overview** in Studio and use this prompt:
 
 ```
 Generate a 6-minute conversational briefing on AI Orchestra for two senior engineers — one sceptical about adding more tooling, one excited about agentic development. The sceptical one should ask the hard questions (maintenance burden, safety, IDE lock-in, what happens when it goes wrong). The enthusiastic one should answer from the source. Cover the problem, the concept, how it works, what it installs, the self-improving loop, and the safety guarantees. End with both agreeing on a single most important benefit. Keep the tone sharp and professional — no hype, no jargon beyond what's in the source.
