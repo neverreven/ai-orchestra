@@ -2,6 +2,14 @@
 
 > Universal, project-agnostic agentic toolkit. Drop it into any project's root, ask any agent in any IDE to "run the orchestra", and the orchestra will investigate the project, respect what's already there, and install a tailored agentic infrastructure — skills, sub-agents, rules, hooks, MCP slots, and a self-improving learnings system — that fits the stack and roles of the project.
 
+> [!IMPORTANT]
+> **Don't use `npm install` for this package.** This is not a code library — it's a spec folder your AI agent reads and acts on. Installing it into `node_modules/` doesn't work.
+> The correct command is:
+> ```bash
+> npx @neverreven/ai-orchestra@latest init
+> ```
+> This copies the `ai-orchestra/` folder into your project root. See [Install](#install) below.
+
 ## What it is
 
 The ai-orchestra is the practical realisation of an "AI Metaframework" pattern:
@@ -98,8 +106,9 @@ See [RUN.md](RUN.md) for the full bootstrap procedure.
 | Installer hardening — placeholder URL removal, generic shared-folder detection, pre-install transparency | v1.0.1-alpha — shipped |
 | Role scope and quality-aware install — four scope modes, inventory-driven recommendation, per-issue improve / replace / preserve flow | v1.1.0-alpha — shipped |
 | npm distribution + F4 stop-hook overlap detection and resolution | v1.2.0 — shipped |
+| F2 always-on rule downgrade on suffix-rename, F7 mobile stack pack (Capacitor/RN/Flutter/MAUI), F5 skill overlap disambiguation, F1 sub-project detection, F3 always-on ceiling check, F6 pack rule glob filter | v1.3.0 — shipped |
 
-The current `VERSION` is recorded in the [VERSION](VERSION) file (currently `1.2.0`).
+The current `VERSION` is recorded in the [VERSION](VERSION) file (currently `1.3.0`).
 
 ## Supported IDEs (v1)
 
@@ -117,8 +126,9 @@ Adapters for additional tools (Windsurf, Continue, Cody, etc.) are tracked in th
 - JavaScript / TypeScript web (React, Vue, Svelte, Next, Vite, Node)
 - Python web (Django, Flask, FastAPI)
 - Salesforce / Commerce Cloud (Apex, LWC, SFRA, sfdx)
+- Mobile (Capacitor, React Native, Flutter, MAUI, Android native, iOS native) — added in v1.3.0
 
-Other stacks are still detected by generic signals; deep stack-specific guidance for them lands in v1.1+.
+Other stacks are detected by generic signals; deep stack-specific guidance for them lands in v2.
 
 ## Repository layout
 
@@ -147,7 +157,8 @@ ai-orchestra/
 │       ├── _schema.md       # required structure of a pack folder
 │       ├── js-ts/           # React/Vue/Svelte/Next/Vite/Node + TypeScript
 │       ├── python-web/      # Django, Flask, FastAPI + universal Python
-│       └── salesforce/      # Apex, LWC, SFRA (Commerce Cloud), sfdx
+│       ├── salesforce/      # Apex, LWC, SFRA (Commerce Cloud), sfdx
+│       └── mobile/          # Capacitor, React Native, Flutter, MAUI, Android, iOS
 ├── adapters/          # IDE-specific install logic
 │   ├── _contract.md   # adapter interface specification
 │   ├── _stop-hook.md  # stop-hook contract (PR 3)
