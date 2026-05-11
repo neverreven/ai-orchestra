@@ -107,6 +107,7 @@ Tell the user:
 - That AGENTS.md now declares the orchestra's role list, skill catalog, and trigger phrases — Codex CLI will pick this up at the next session.
 - Skills execute by reading `ai-orchestra/core/skills/<category>/<skill-id>/SKILL.md` when the agent matches a trigger phrase from `AGENTS.md`. There is no separate commands directory.
 - The Director's session-end behaviour is **manual** (declared gap — see §6). Suggest the user say "audit AI infra" or "review this session for learnings" at session end, or run those phrases on a schedule.
+- Whether a global registry entry was created or updated at `~/.ai-orchestra/projects.json`. If this is the first install on the machine, mention that multi-project skills (`multi-project-audit`, `upgrade-all`) are now available.
 
 ---
 

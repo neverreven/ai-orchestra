@@ -135,6 +135,7 @@ Tell the user, in the closing message:
 - That the orchestra's stop-hook will fire at the end of the next conversation in this project.
 - How to invoke the audit skill: "Ask the agent to `audit AI infra` (or any of the trigger phrases in [`../../core/skills/audit/ai-infra-audit/SKILL.md`](../../core/skills/audit/ai-infra-audit/SKILL.md))."
 - Any MCP slots that were registered but require the user to attach a real server (per the slot list in [`mcp.md`](mcp.md)).
+- Whether a global registry entry was created or updated at `~/.ai-orchestra/projects.json`. If this is the first install on the machine, mention that multi-project skills (`multi-project-audit`, `upgrade-all`) are now available.
 
 ---
 

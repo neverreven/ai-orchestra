@@ -113,6 +113,7 @@ Tell the user:
 - Custom prompts available: `/<skill-id>` for each installed skill (e.g., `/ai-infra-audit`, `/cleanup`). Available in Copilot Chat.
 - The MCP servers are registered in `.vscode/mcp.json`. The user may need to restart VS Code or run "MCP: Reload Servers" to pick them up.
 - The Director's session-end behaviour is **manual** (declared gap — see §6).
+- Whether a global registry entry was created or updated at `~/.ai-orchestra/projects.json`. If this is the first install on the machine, mention that multi-project skills (`multi-project-audit`, `upgrade-all`) are now available.
 
 ---
 

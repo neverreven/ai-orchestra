@@ -115,6 +115,7 @@ Tell the user:
 - Slash commands now available: `/<skill-id>` for each installed skill.
 - Whether the stop-hook was wired (`Stop` event in `settings.json`) or skipped (older Claude Code — see §6).
 - How to invoke the audit skill: `/ai-infra-audit`.
+- Whether a global registry entry was created or updated at `~/.ai-orchestra/projects.json`. If this is the first install on the machine, mention that multi-project skills (`multi-project-audit`, `upgrade-all`) are now available.
 
 ---
 
