@@ -2,13 +2,11 @@
 
 > Universal, project-agnostic agentic toolkit. Drop it into any project's root, ask any agent in any IDE to "run the orchestra", and the orchestra will investigate the project, respect what's already there, and install a tailored agentic infrastructure — skills, sub-agents, rules, hooks, MCP slots, and a self-improving learnings system — that fits the stack and roles of the project.
 
-> [!IMPORTANT]
-> **Don't use `npm install` for this package.** This is not a code library — it's a spec folder your AI agent reads and acts on. Installing it into `node_modules/` doesn't work.
-> The correct command is:
+> **Quick start:** Run the command below from your project root — it copies the spec folder in. Then ask your agent: *"run the ai-orchestra"*.
 > ```bash
 > npx @neverreven/ai-orchestra@latest init
 > ```
-> This copies the `ai-orchestra/` folder into your project root. See [Install](#install) below.
+> This is a spec folder your AI agent reads and acts on, not a code library. If you landed here from the `npm i` command shown in the sidebar, the package itself will explain what to do next.
 
 ## What it is
 
@@ -120,6 +118,35 @@ If the inventory finds external ownership of a role (e.g., `backend/AGENTS.md` w
 
 See [RUN.md](RUN.md) for the full bootstrap procedure.
 
+### Starting fresh — greenfield projects
+
+If your project has no agentic infrastructure yet, the orchestra is the fastest path to a complete, self-maintaining baseline. One guided session installs everything:
+
+| What you get | Details |
+|-------------|---------|
+| **Session protocol** | Director rule that loads project context at the start of every session and reviews for learnings at the end. |
+| **Self-improving memory** | `_documentation/AI_LEARNINGS.md` — grows automatically as the agent captures patterns, decisions, and preferences across sessions. |
+| **Role library** | Up to 10 roles (Frontend, Backend, QA, DevOps, Security, Mobile, AI/ML, Tech-Writer, Analytics, PM). You pick which ones apply — or take the full kit. |
+| **30+ skills** | Audit, cleanup, pre-release, code review, security baseline, deployment checklist, dependency audit, and more. Invoked by trigger phrases in any chat. |
+| **Stack-specific rules** | Auto-detected patterns for your stack (React, TypeScript, Next.js, Node, Python/FastAPI/Django, Salesforce, mobile, Rust/Tauri, and more). |
+| **Stop-hook** | In supported IDEs (Cursor, Claude Code), a session-end hook automatically reviews the conversation and updates the learnings doc — no manual step needed. |
+| **MCP slots** | Pre-wired placeholder slots for the roles you installed. Fill them in when you add MCP servers. |
+| **Install marker** | `.ai-orchestra/install.json` — tracks the installed version and scope, enabling future upgrades and drift detection. |
+
+Nothing is written until you review the dry-run plan and say `apply`. The first 4 of the 5 steps are completely read-only.
+
+**How to start:**
+```bash
+# 1. Copy the spec into your project
+npx @neverreven/ai-orchestra@latest init
+
+# 2. Open the project in your IDE and ask your agent:
+#    "run the ai-orchestra"
+#    The agent reads RUN.md and guides you through the rest.
+```
+
+For a new project the recommended scope is **Full kit** — you can always remove roles later. The orchestra will never add more than you approved.
+
 ## Status
 
 | Area | State |
@@ -139,7 +166,7 @@ See [RUN.md](RUN.md) for the full bootstrap procedure.
 | Scheduler runner (RUNNER.md + periodic-audit job), JS/TS + Python + Salesforce stack pack depth rules (3 rules each), multi-project orchestration (global registry + multi-project-audit + upgrade-all skills) | v1.4.0-dev — shipped in repo |
 | Adapter parity (render-rules.md for Claude Code, Codex, VS Code + enriched §9 idempotency checks), adversarial test fixtures (broken-markers, name-collision, upgrade-from-v1), Rust/Tauri stack pack (4 rules, skills + roles addenda), `extract` CLI subcommand | v1.4.0-dev — shipped in repo |
 
-The current `VERSION` is recorded in the [VERSION](VERSION) file (currently `1.4.0`).
+The current `VERSION` is recorded in the [VERSION](VERSION) file (currently `1.4.1`).
 
 ## Supported IDEs (v1)
 

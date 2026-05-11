@@ -8,6 +8,12 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [1.4.1] — README UX improvements
+
+Replaced the confrontational `[!IMPORTANT]` "don't use npm install" banner with a concise, welcoming Quick Start callout. The postinstall script (v1.3.1) already handles the accidental `npm install` case gracefully, so the hard warning was redundant and set a poor first impression.
+
+Added a **"Starting fresh — greenfield projects"** section to the README explaining exactly what a first-time install on a project with no agentic infrastructure produces: session protocol, self-improving memory, role library, 30+ skills, stack-specific rules, stop-hook, MCP slots, and install marker. Includes a two-command quick-start example.
+
 ## [1.4.0] — Scheduler, stack pack depth rules, adapter parity, adversarial fixtures, Rust pack, extract CLI
 
 This release ships seven coordinated improvements spanning the scheduler runtime, all four adapters, four stack packs, the test fixture set, and the CLI. The theme: **production-ready depth** — every previously baseline adapter now has a full `render-rules.md` specification; the scheduler has an executable runner; stack packs have expert-level depth rules; error-handling edge cases have adversarial fixture contracts; and the CLI can extract the orchestra out of a host repo.
