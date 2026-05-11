@@ -269,3 +269,4 @@ Re-running with a different `installScope.mode` is treated as an upgrade. The ad
 - [`../../core/discovery/existing-infra.md`](../../core/discovery/existing-infra.md) — §3.7 defines candidate shared-folder detection that drives §8; §3.9 / §3.10 produce the inventory inputs that drive §9 quality handling.
 - [`../../core/install-plan-template.md`](../../core/install-plan-template.md) — Part B's `targetIssue` column conventions used by §9.2 / §9.3.
 - [`../../core/registry/install.schema.md`](../../core/registry/install.schema.md) — schema of the marker entries this file produces (including `installScope` and `skillPlacementStrategy`).
+- [`render-rules.md`](render-rules.md) — exact rendering details for managed sections, skill catalog, and the idempotency contract.

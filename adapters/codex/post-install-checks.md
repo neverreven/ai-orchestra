@@ -177,9 +177,14 @@ Same as the Cursor adapter (per [`../cursor/post-install-checks.md`](../cursor/p
 
 ## 9. Idempotency check (only on re-run)
 
+Re-render the managed section from the same inputs and compare against the content currently between the markers in `AGENTS.md`.
+
 | id | what | how | pass | fail | severity |
 |----|------|-----|------|------|----------|
-| `idempotency.zero-diff` | Re-running the install produced only `skip` actions (or `propose` for user-edited content). | Inspect Phase 5's plan output. | Zero non-skip actions. | Any unexpected `create` / `extend-section` / `merge-json`. | critical |
+| `idempotency.zero-diff` | Every rendered artifact is byte-identical to the file on disk. | Re-render via `render-rules.md` with the inputs from the install marker. Compare. | Zero diff. | Report which file and which section diverged. | critical |
+| `idempotency.history-stable` | `history[]` did not grow. | Read the marker; the last `history[]` entry's `at` timestamp should match the install/upgrade timestamp, not now. | Unchanged. | Extra `history[]` entry means a re-run wrote to the marker unintentionally. | warning |
+
+A zero-diff result proves the determinism contract from [`render-rules.md`](render-rules.md) §8. If it fails, either the rendering has a source of non-determinism (bug) or a file was edited externally (expected — the audit surfaces this as drift).
 
 ---
 

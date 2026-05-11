@@ -152,6 +152,7 @@ These gaps are recorded in the install plan's `gaps[]` array and surfaced in the
 | [`target-schema.md`](target-schema.md) | The "after" state — what gets written and how. |
 | [`mcp.md`](mcp.md) | MCP slot mapping for `.mcp.json`. |
 | [`post-install-checks.md`](post-install-checks.md) | Health checks executed in Phase 8. |
+| [`render-rules.md`](render-rules.md) | Exact rendering rules for managed sections, skill files, and the stop-hook prompt body. |
 
 ---
 
