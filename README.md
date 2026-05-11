@@ -47,6 +47,32 @@ To upgrade an existing install in-place: `npx @neverreven/ai-orchestra@latest in
 
 Alternatively, you can clone the repo and copy the `ai-orchestra/` folder by hand — the package is just a thin convenience over that.
 
+### Extracting to a standalone repo
+
+If your team wants to version or share the orchestra spec independently of the host project, the `extract` subcommand copies it out:
+
+```bash
+# From inside the host project (the one that has ai-orchestra/ in its root)
+npx @neverreven/ai-orchestra extract
+
+# Extract to a specific destination and initialise a git repo
+npx @neverreven/ai-orchestra extract --to=../my-orchestra --git
+
+# Extract and remove from the host in one step
+npx @neverreven/ai-orchestra extract --to=../my-orchestra --git --clean
+```
+
+| Option | What it does |
+|--------|-------------|
+| `[project-root]` | Root of the host project (defaults to current dir). |
+| `--from=<path>` | Explicit path to the `ai-orchestra/` folder (if not at `<root>/ai-orchestra/`). |
+| `--to=<path>` | Destination (defaults to `../ai-orchestra-standalone`). |
+| `--force` | Overwrite destination if non-empty. |
+| `--clean` | Delete the source `ai-orchestra/` after copying. |
+| `--git` | Run `git init` and create an initial commit in the destination. |
+
+After extraction the host project no longer contains `ai-orchestra/`. If the host's git history tracked it, run `git rm -r --cached ai-orchestra/` and commit before pushing.
+
 ## How to use
 
 Once installed, ask your agent in any supported IDE one of:
@@ -107,6 +133,9 @@ See [RUN.md](RUN.md) for the full bootstrap procedure.
 | Role scope and quality-aware install — four scope modes, inventory-driven recommendation, per-issue improve / replace / preserve flow | v1.1.0-alpha — shipped |
 | npm distribution + F4 stop-hook overlap detection and resolution | v1.2.0 — shipped |
 | F2 always-on rule downgrade on suffix-rename, F7 mobile stack pack (Capacitor/RN/Flutter/MAUI), F5 skill overlap disambiguation, F1 sub-project detection, F3 always-on ceiling check, F6 pack rule glob filter | v1.3.0 — shipped |
+| npm postinstall redirect message, README accuracy fixes | v1.3.1 — shipped |
+| Scheduler runner (RUNNER.md + periodic-audit job), JS/TS + Python + Salesforce stack pack depth rules (3 rules each), multi-project orchestration (global registry + multi-project-audit + upgrade-all skills) | v1.4.0-dev — shipped in repo |
+| Adapter parity (render-rules.md for Claude Code, Codex, VS Code + enriched §9 idempotency checks), adversarial test fixtures (broken-markers, name-collision, upgrade-from-v1), Rust/Tauri stack pack (4 rules, skills + roles addenda), `extract` CLI subcommand | v1.4.0-dev — shipped in repo |
 
 The current `VERSION` is recorded in the [VERSION](VERSION) file (currently `1.3.1`).
 
@@ -127,6 +156,7 @@ Adapters for additional tools (Windsurf, Continue, Cody, etc.) are tracked in th
 - Python web (Django, Flask, FastAPI)
 - Salesforce / Commerce Cloud (Apex, LWC, SFRA, sfdx)
 - Mobile (Capacitor, React Native, Flutter, MAUI, Android native, iOS native) — added in v1.3.0
+- Rust / Tauri (ownership + borrowing, error handling, async/Tokio, Tauri v2) — added in v1.4.0-dev
 
 Other stacks are detected by generic signals; deep stack-specific guidance for them lands in v2.
 
@@ -158,20 +188,24 @@ ai-orchestra/
 │       ├── js-ts/           # React/Vue/Svelte/Next/Vite/Node + TypeScript
 │       ├── python-web/      # Django, Flask, FastAPI + universal Python
 │       ├── salesforce/      # Apex, LWC, SFRA (Commerce Cloud), sfdx
-│       └── mobile/          # Capacitor, React Native, Flutter, MAUI, Android, iOS
+│       ├── mobile/          # Capacitor, React Native, Flutter, MAUI, Android, iOS
+│       └── rust/            # Rust + Tauri v2 (ownership, errors, async/Tokio, Tauri)
 ├── adapters/          # IDE-specific install logic
 │   ├── _contract.md   # adapter interface specification
 │   ├── _stop-hook.md  # stop-hook contract (PR 3)
 │   ├── cursor/        # full v1 (PR 4 — INSTALL/mappings/target-schema/render-rules/mcp/post-install-checks)
-│   ├── claude-code/   # baseline v1 (PR 5 — same 5 files; gap on older Claude Code hooks)
-│   ├── codex/         # baseline v1 (PR 5 — same 5 files; references skills from core, no copy)
-│   └── vscode/        # baseline v1 (PR 5 — same 5 files; .github/prompts/ + .vscode/mcp.json)
-└── _test-fixtures/    # sample projects for agent-driven validation (PR 7)
-    ├── _overview.md           # fixture purpose + v1 fixture set
-    ├── VALIDATION.md          # agent procedure for running the harness
-    ├── empty-js/              # fresh React+Vite, no existing infra
-    ├── ongoing-python-web/    # FastAPI with pre-existing AGENTS.md + Cursor rule
-    └── salesforce-cartridge/  # sfdx + SFRA polyglot Salesforce project
+│   ├── claude-code/   # baseline v1 (PR 5 — INSTALL/mappings/target-schema/render-rules/mcp/post-install-checks)
+│   ├── codex/         # baseline v1 (PR 5 — same 6 files; references skills from core, no copy)
+│   └── vscode/        # baseline v1 (PR 5 — same 6 files; .github/prompts/ + .vscode/mcp.json)
+└── _test-fixtures/    # sample projects for agent-driven validation (PR 7 + v1.4.0)
+    ├── _overview.md              # fixture purpose + v1 + adversarial fixture sets
+    ├── VALIDATION.md             # agent procedure for running the harness
+    ├── empty-js/                 # fresh React+Vite, no existing infra
+    ├── ongoing-python-web/       # FastAPI with pre-existing AGENTS.md + Cursor rule
+    ├── salesforce-cartridge/     # sfdx + SFRA polyglot Salesforce project
+    ├── broken-markers/           # [adversarial] malformed managed-section markers
+    ├── name-collision/           # [adversarial] project-owned skill collides with orchestra skill
+    └── upgrade-from-v1/          # [adversarial] pre-existing v1.0.0 install requires upgrade
 ```
 
 ## License

@@ -2,10 +2,12 @@
 // @neverreven/ai-orchestra installer.
 // Usage:
 //   npx @neverreven/ai-orchestra init [--force] [--skip-fixtures] [target-dir]
+//   npx @neverreven/ai-orchestra extract [--from=<path>] [--to=<path>] [--clean] [--git]
 //   npx @neverreven/ai-orchestra --help
 //
-// Copies the ai-orchestra/ folder into a target project so an IDE agent can
-// "run the orchestra". Pure file copy; no network calls; no telemetry; v1.
+// init:    Copies the ai-orchestra/ specification folder into a target project.
+// extract: Moves an existing ai-orchestra/ out of a host project into a
+//          standalone folder (or repo). Pure file operations; no network calls.
 
 import { readFile, mkdir, copyFile, readdir, stat, lstat } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
@@ -22,18 +24,31 @@ const HELP_TEXT = `
 
 USAGE
   npx @neverreven/ai-orchestra init [options] [target]
+  npx @neverreven/ai-orchestra extract [options] [project-root]
 
-ARGUMENTS
-  target              Project root to install into (defaults to current dir).
+COMMANDS
+  init      Copy the ai-orchestra/ specification folder into a target project.
+  extract   Move an existing ai-orchestra/ out of a host project into a
+            standalone directory (useful before extracting to its own repo).
 
-OPTIONS
+INIT OPTIONS
+  [target]            Project root to install into (defaults to current dir).
   --force             Overwrite an existing ai-orchestra/ folder if present.
   --skip-fixtures     Don't copy _test-fixtures/ (saves ~80 KB; recommended).
-  --no-marker         Don't write the version marker file (.ai-orchestra/installed-from.json).
+  --no-marker         Don't write .ai-orchestra/installed-from.json.
   --version, -v       Print the installer version and exit.
   --help, -h          Print this help and exit.
 
-WHAT IT DOES
+EXTRACT OPTIONS
+  [project-root]      Root of the host project containing ai-orchestra/
+                      (defaults to current dir).
+  --from=<path>       Explicit path to the ai-orchestra/ folder to extract.
+  --to=<path>         Destination directory (default: ../ai-orchestra-standalone).
+  --force             Overwrite destination if it already exists and is non-empty.
+  --clean             Delete the source ai-orchestra/ folder after copying.
+  --git               Run "git init" + initial commit in the destination folder.
+
+WHAT init DOES
   1. Copies the ai-orchestra/ specification folder (markdown, ~250 KB) into
      <target>/ai-orchestra/.
   2. Writes <target>/.ai-orchestra/installed-from.json with the version + ISO
@@ -42,12 +57,19 @@ WHAT IT DOES
      "run the ai-orchestra". The agent reads ai-orchestra/RUN.md and follows
      the dry-run-first install flow described there.
 
-WHAT IT DOES NOT DO
-  - It never modifies AGENTS.md, .cursor/, .claude/, .vscode/, .github/, or
-    anything else under <target>/. The IDE agent does that, with your consent,
-    after you ask it to "run the ai-orchestra".
-  - It never makes network calls.
-  - It never collects telemetry.
+WHAT extract DOES
+  1. Copies the ai-orchestra/ folder (or --from path) to the --to destination.
+  2. Writes a minimal package.json in the destination (private: true, no scripts)
+     if one is not already present.
+  3. Optionally runs "git init" + an initial commit (--git).
+  4. Optionally removes the source folder (--clean).
+  Does NOT modify AGENTS.md, .cursor/, .claude/, .vscode/, .github/, or
+  anything else in the host project.
+
+WHAT NEITHER COMMAND DOES
+  - Modifies agentic config files (that's the IDE agent's job).
+  - Makes network calls.
+  - Collects telemetry.
 
 LEARN MORE
   https://github.com/neverreven/ai-orchestra
@@ -166,6 +188,111 @@ async function cmdInit() {
   logNextSteps(targetRoot);
 }
 
+async function cmdExtract() {
+  const version = await readVersion();
+  logHeader(version);
+
+  const projectRoot = path.resolve(positional[1] ?? '.');
+
+  // Resolve source: --from=<path> or <project-root>/ai-orchestra/
+  const fromFlag = args.find((a) => a.startsWith('--from='));
+  const orchestraSrc = fromFlag
+    ? path.resolve(fromFlag.slice('--from='.length))
+    : path.join(projectRoot, 'ai-orchestra');
+
+  if (!existsSync(orchestraSrc)) {
+    console.error(`  ERROR: ai-orchestra folder not found at ${orchestraSrc}`);
+    console.error('         Run from a project root that has an ai-orchestra/ folder,');
+    console.error('         or specify the source with --from=<path>.');
+    process.exit(1);
+  }
+
+  // Verify it looks like an orchestra install (must have a VERSION file)
+  const srcVersionFile = path.join(orchestraSrc, 'VERSION');
+  if (!existsSync(srcVersionFile)) {
+    console.error(`  ERROR: ${orchestraSrc} does not look like an ai-orchestra folder (no VERSION file).`);
+    process.exit(1);
+  }
+
+  const srcVersion = (await readFile(srcVersionFile, 'utf8').catch(() => '')).trim() || 'unknown';
+
+  // Resolve destination: --to=<path> or ../ai-orchestra-standalone relative to projectRoot
+  const toFlag = args.find((a) => a.startsWith('--to='));
+  const targetDir = toFlag
+    ? path.resolve(toFlag.slice('--to='.length))
+    : path.resolve(projectRoot, '..', 'ai-orchestra-standalone');
+
+  if (existsSync(targetDir)) {
+    if (!flags.has('--force') && !(await dirIsEmpty(targetDir))) {
+      console.error(`  ERROR: ${targetDir} already exists and is not empty.`);
+      console.error('         Re-run with --force to overwrite, or specify --to=<path>.');
+      process.exit(1);
+    }
+  }
+
+  console.log(`  Source : ${orchestraSrc} (v${srcVersion})`);
+  console.log(`  Target : ${targetDir}`);
+  console.log('');
+  console.log('  Copying ...');
+  await copyDir(orchestraSrc, targetDir, { skipNames: new Set() });
+
+  // Write a minimal package.json if the target doesn't already have one
+  const pkgPath = path.join(targetDir, 'package.json');
+  if (!existsSync(pkgPath)) {
+    const { writeFile } = await import('node:fs/promises');
+    const pkg = {
+      name: 'ai-orchestra',
+      version: srcVersion,
+      description: 'Universal agentic toolkit — standalone extracted copy.',
+      private: true,
+    };
+    await writeFile(pkgPath, JSON.stringify(pkg, null, 2) + '\n', 'utf8');
+    console.log('  Wrote minimal package.json (private: true).');
+  }
+
+  // --git: init a new repo and create an initial commit
+  if (flags.has('--git')) {
+    const { execFile } = await import('node:child_process');
+    const { promisify } = await import('node:util');
+    const exec = promisify(execFile);
+    try {
+      // Try with --initial-branch (git >= 2.28); fall back silently if flag unsupported
+      try {
+        await exec('git', ['init', '--initial-branch=main', targetDir]);
+      } catch {
+        await exec('git', ['init', targetDir]);
+      }
+      await exec('git', ['-C', targetDir, 'add', '.']);
+      await exec('git', ['-C', targetDir, 'commit', '-m', `chore: extracted ai-orchestra v${srcVersion} standalone repo`]);
+      console.log('  Initialized git repo with initial commit.');
+    } catch (gitErr) {
+      console.warn('  WARNING: git init/commit failed:', gitErr && gitErr.message ? gitErr.message : gitErr);
+      console.warn('           Extraction completed; run "git init" manually in the target folder.');
+    }
+  }
+
+  // --clean: remove the source folder from the host project
+  if (flags.has('--clean')) {
+    const { rm } = await import('node:fs/promises');
+    console.log(`  --clean: removing ${orchestraSrc} ...`);
+    await rm(orchestraSrc, { recursive: true, force: true });
+    console.log('  Source folder removed from host project.');
+    console.log('');
+    console.log('  NOTE: If your host project tracks ai-orchestra/ in git, run:');
+    console.log('          git rm -r --cached ai-orchestra/');
+    console.log('        and commit the removal before pushing.');
+  }
+
+  console.log('');
+  console.log(`  Done. Standalone orchestra folder is at:`);
+  console.log(`    ${targetDir}`);
+  console.log('');
+  if (!flags.has('--git')) {
+    console.log('  TIP: Run "git init" inside the target folder to start versioning it standalone.');
+    console.log('');
+  }
+}
+
 async function main() {
   if (flags.has('--help') || flags.has('-h') || (positional.length === 0 && flags.size === 0)) {
     console.log(HELP_TEXT);
@@ -182,6 +309,9 @@ async function main() {
   switch (cmd) {
     case 'init':
       await cmdInit();
+      break;
+    case 'extract':
+      await cmdExtract();
       break;
     case undefined:
       console.log(HELP_TEXT);
