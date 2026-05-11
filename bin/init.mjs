@@ -34,7 +34,8 @@ COMMANDS
 INIT OPTIONS
   [target]            Project root to install into (defaults to current dir).
   --force             Overwrite an existing ai-orchestra/ folder if present.
-  --skip-fixtures     Don't copy _test-fixtures/ (saves ~80 KB; recommended).
+  --include-fixtures  Also copy _test-fixtures/ (orchestra dev/testing only;
+                      not needed for regular use).
   --no-marker         Don't write .ai-orchestra/installed-from.json.
   --version, -v       Print the installer version and exit.
   --help, -h          Print this help and exit.
@@ -49,8 +50,8 @@ EXTRACT OPTIONS
   --git               Run "git init" + initial commit in the destination folder.
 
 WHAT init DOES
-  1. Copies the ai-orchestra/ specification folder (markdown, ~250 KB) into
-     <target>/ai-orchestra/.
+  1. Copies the ai-orchestra/ specification folder (markdown, ~170 KB) into
+     <target>/ai-orchestra/. Test fixtures are excluded by default.
   2. Writes <target>/.ai-orchestra/installed-from.json with the version + ISO
      timestamp. The orchestra audit can later detect upgrades.
   3. Prints next-steps: open the project in your IDE and ask the agent to
@@ -159,9 +160,10 @@ async function cmdInit() {
     'bin',
     '.npmignore',
     '.gitignore',
+    '_test-fixtures', // excluded by default; opt in with --include-fixtures
   ]);
-  if (flags.has('--skip-fixtures')) {
-    skipNames.add('_test-fixtures');
+  if (flags.has('--include-fixtures')) {
+    skipNames.delete('_test-fixtures');
   }
 
   console.log(`  Copying ai-orchestra/ specification into ${orchestraDst} ...`);

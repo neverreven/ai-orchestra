@@ -38,10 +38,12 @@ Run this from your project's root. It copies the `ai-orchestra/` specification f
 | Option | What it does |
 |---|---|
 | `--force` | Overwrite an existing `ai-orchestra/` folder. |
-| `--skip-fixtures` | Don't copy `_test-fixtures/` (~80 KB; recommended for production projects). |
+| `--include-fixtures` | Also copy `_test-fixtures/` (orchestra development and testing only; not needed for regular use). |
 | `--no-marker` | Don't write `.ai-orchestra/installed-from.json`. |
 | `--version` / `-v` | Print the installed CLI/orchestra version. |
 | `--help` / `-h` | Print full usage. |
+
+> **What gets copied:** the core spec (~170 KB of markdown). Test fixtures are excluded by default — they are sample projects used to validate the orchestra itself and have no value in a regular install.
 
 To upgrade an existing install in-place: `npx @neverreven/ai-orchestra@latest init --force`. The IDE agent's audit skill will detect the version drift on the next "run the orchestra" and walk you through any migration needed (see [MIGRATION.md](MIGRATION.md)).
 

@@ -66,6 +66,10 @@ This release ships seven coordinated improvements spanning the scheduler runtime
 - `core/stack-packs/rust/roles.md` — Rust addenda for universal roles.
 - `core/discovery/signals/rust.md` updated with live cross-link to the new pack.
 
+### Changed — `init` default: fixtures excluded
+
+- `_test-fixtures/` is now **excluded by default** when running `npx @neverreven/ai-orchestra init`. Users who want fixtures (orchestra contributors / harness runners) can opt in with `--include-fixtures`. The old `--skip-fixtures` flag is removed. This makes a default install ~170 KB instead of ~250 KB and avoids shipping test scaffolding into production projects.
+
 ### Added — V6: `extract` CLI subcommand
 
 - `bin/init.mjs`: new `extract` subcommand. Copies `ai-orchestra/` from a host project to a standalone directory. Writes a minimal `package.json` (private: true). Optionally initialises a git repo (`--git`). Optionally removes the source (`--clean`).
