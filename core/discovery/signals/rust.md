@@ -1,9 +1,9 @@
 # Signal: rust (Rust)
 
-> Generic detection in v1. Stack pack content arrives in v1.1+.
+> Full detection with stack pack content.
 
 **Stack id:** `rust`
-**Stack pack:** _none in v1; `core/stack-packs/rust/` reserved for v1.1+_
+**Stack pack:** [`core/stack-packs/rust/`](../../stack-packs/rust/_overview.md) — ownership, error handling, async/Tokio, Tauri v2 patterns, skill addenda, role addenda.
 
 ## Strong signals (weight 3 each)
 
@@ -47,7 +47,7 @@ Rust's standard library provides `#[test]`. Detect it by presence of `#[test]` a
 
 ## Notes
 
-In v1, a Rust project receives the universal core. Tauri-flavoured Rust often coexists with a JS/TS frontend; in that case the `js-ts` stack pack is also installed.
+A Rust project receives the `rust` stack pack (ownership, errors, async, Tauri). Tauri-flavoured Rust often coexists with a JS/TS frontend; in that case the `js-ts` stack pack is also installed. Rules are scoped by glob — no overlap between `*.rs` and `*.{js,ts,jsx,tsx}`.
 
 ## References
 
