@@ -3,7 +3,7 @@
 ## Identity
 
 - **Pack id:** `salesforce`
-- **Pack version:** `1.0.0-alpha`
+- **Pack version:** `1.1.0`
 - **Compatible orchestra versions:** `1.0.x`
 - **Primary detection signal:** [`../../discovery/signals/salesforce.md`](../../discovery/signals/salesforce.md)
 - **Frameworks covered:** Apex, Lightning Web Components (LWC), SFRA / Storefront Reference Architecture (Commerce Cloud B2C), sfdx project layout
@@ -23,6 +23,9 @@ The B2B Commerce track (CC for B2B) shares Apex / LWC patterns with B2C-Commerce
 - [`rules/lwc.md`](rules/lwc.md) — Lightning Web Component patterns (wire service, events, lifecycle).
 - [`rules/sfra.md`](rules/sfra.md) — SFRA / Commerce Cloud cartridge patterns (controllers, models, hooks).
 - [`rules/sfdx.md`](rules/sfdx.md) — sfdx project layout, scratch orgs, deployment patterns.
+- [`rules/omnistudio.md`](rules/omnistudio.md) — OmniStudio patterns (OmniScripts, FlexCards, DataRaptors, Integration Procedures).
+- [`rules/flow.md`](rules/flow.md) — Flow patterns (Record-Triggered, Screen, Scheduled, Platform Event Flows).
+- [`rules/security.md`](rules/security.md) — Security patterns (sharing, FLS, SOQL injection, Named Credentials, encryption).
 - [`skills.md`](skills.md) — Salesforce-specific addenda for universal skills.
 - [`roles.md`](roles.md) — Salesforce-specific addenda for universal roles.
 
@@ -43,7 +46,7 @@ This pack follows the universal layering rules in [`../_overview.md`](../_overvi
 ## What this pack does NOT include
 
 - B2B Commerce-specific guidance (separate data model, different cartridge layout). Tracked for v1.x.
-- Salesforce administration (declarative configuration, flows, validation rules). The pack covers code-level engineering only.
+- Salesforce administration (declarative configuration, validation rules, page layouts). Flows are covered in [`rules/flow.md`](rules/flow.md) because they are code-equivalent automation.
 - Marketing Cloud (entirely different product, not under sfdx).
 - Specific managed-package opinions (FFLib Apex Common, NPSP, Industry Cloud). The pack mentions them as reference but does not require them.
 - Tableau / CRM Analytics dashboards.
