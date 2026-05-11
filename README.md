@@ -137,7 +137,7 @@ See [RUN.md](RUN.md) for the full bootstrap procedure.
 | Scheduler runner (RUNNER.md + periodic-audit job), JS/TS + Python + Salesforce stack pack depth rules (3 rules each), multi-project orchestration (global registry + multi-project-audit + upgrade-all skills) | v1.4.0-dev — shipped in repo |
 | Adapter parity (render-rules.md for Claude Code, Codex, VS Code + enriched §9 idempotency checks), adversarial test fixtures (broken-markers, name-collision, upgrade-from-v1), Rust/Tauri stack pack (4 rules, skills + roles addenda), `extract` CLI subcommand | v1.4.0-dev — shipped in repo |
 
-The current `VERSION` is recorded in the [VERSION](VERSION) file (currently `1.3.1`).
+The current `VERSION` is recorded in the [VERSION](VERSION) file (currently `1.4.0`).
 
 ## Supported IDEs (v1)
 

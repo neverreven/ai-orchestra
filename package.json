@@ -1,6 +1,6 @@
 {
   "name": "@neverreven/ai-orchestra",
-  "version": "1.3.1",
+  "version": "1.4.0",
   "description": "Universal, project-agnostic agentic toolkit for any IDE-driven AI agent. Drop it into a project and ask your agent to 'run the ai-orchestra'.",
   "keywords": [
     "ai",

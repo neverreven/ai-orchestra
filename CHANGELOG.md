@@ -8,6 +8,69 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [1.4.0] — Scheduler, stack pack depth rules, adapter parity, adversarial fixtures, Rust pack, extract CLI
+
+This release ships seven coordinated improvements spanning the scheduler runtime, all four adapters, four stack packs, the test fixture set, and the CLI. The theme: **production-ready depth** — every previously baseline adapter now has a full `render-rules.md` specification; the scheduler has an executable runner; stack packs have expert-level depth rules; error-handling edge cases have adversarial fixture contracts; and the CLI can extract the orchestra out of a host repo.
+
+### Added — V2: Scheduler runner
+
+- `core/scheduler/RUNNER.md` — agent-executable procedure for the scheduler. Covers prerequisites, job evaluation (skip conditions, due determination, missed-run policy, concurrency), execution by run kind (`skill`, `hook`, `script`), lifecycle events, marker updates, and summary reporting.
+- `core/scheduler/jobs/periodic-audit.job.json` — default shipped job descriptor for the weekly `ai-infra-audit` run. Ships in `manual` mode (v1 safe); upgrade path to `cron` documented inline.
+- `core/director/RULE.md` updated with `## Scheduler` section referencing `RUNNER.md`.
+- Adapter stop-hook prompts updated (Cursor `render-rules.md` §6, Claude Code `target-schema.md`, Codex/VS Code fallback messages in `mappings.md` §5) to run overdue jobs before the learnings review.
+
+### Added — V3: Stack pack depth rules
+
+- `core/stack-packs/js-ts/rules/next-rsc.md` — Next.js App Router / React Server Components patterns.
+- `core/stack-packs/js-ts/rules/node-api.md` — Node.js API service patterns (structure, async, security, observability).
+- `core/stack-packs/js-ts/rules/testing.md` — JavaScript/TypeScript testing patterns (Vitest/Jest, mocks, coverage, E2E).
+- `core/stack-packs/python-web/rules/async-patterns.md` — Python async/concurrency patterns (asyncio, thread/process offloading, error handling).
+- `core/stack-packs/python-web/rules/testing.md` — Python testing patterns (pytest, fixtures, parametrize, coverage, DB).
+- `core/stack-packs/python-web/rules/database.md` — Python database patterns (SQLAlchemy/Django ORM, migrations, pooling).
+- `core/stack-packs/salesforce/rules/omnistudio.md` — OmniStudio patterns (OmniScripts, FlexCards, DataRaptors, Integration Procedures).
+- `core/stack-packs/salesforce/rules/flow.md` — Salesforce Flow patterns (Screen, Record-Triggered, Autolaunched, Scheduled, Platform Event).
+- `core/stack-packs/salesforce/rules/security.md` — Salesforce security patterns (Apex FLS/sharing, SOQL injection, LWC CSP, Named Credentials).
+- All three pack `_overview.md` files bumped to version `1.1.0`.
+
+### Added — V1: Multi-project orchestration
+
+- `core/registry/global-registry.md` — v2 schema, mutation rules, reading semantics, and cross-project operations for `~/.ai-orchestra/projects.json`.
+- `core/skills/orchestration/multi-project-audit/SKILL.md` — cross-project health check skill.
+- `core/skills/orchestration/upgrade-all/SKILL.md` — batch upgrade skill for all orchestra-managed projects.
+- Adapter `INSTALL.md` activation messages updated to mention the global registry.
+
+### Added — V4: Adapter parity — render-rules.md for Claude Code, Codex, VS Code
+
+- `adapters/claude-code/render-rules.md` — exact rendering rules for `CLAUDE.md` managed sections, `.claude/commands/<skill>.md` frontmatter + body, stop-hook prompt body, and idempotency contract.
+- `adapters/codex/render-rules.md` — exact rendering rules for `AGENTS.md` managed section, skill catalog format, and idempotency contract.
+- `adapters/vscode/render-rules.md` — exact rendering rules for `.github/copilot-instructions.md` managed sections, `.github/prompts/<skill>.prompt.md` frontmatter, and idempotency contract.
+- All three adapters' `INSTALL.md` §7 tables updated with `render-rules.md` row.
+- All three adapters' `post-install-checks.md` §9 enriched with `idempotency.history-stable` check and explanatory note.
+- All three adapters' `mappings.md` §11 updated with `render-rules.md` cross-reference.
+
+### Added — V5: Adversarial test fixtures
+
+- `_test-fixtures/broken-markers/` — FastAPI project with malformed markers in `CLAUDE.md` (unclosed start), `AGENTS.md` (nested starts), and `.github/copilot-instructions.md` (transposed). EXPECTED.md requires critical-conflict blocks, no auto-repair, and partial-install for unblocked artifacts.
+- `_test-fixtures/name-collision/` — React/Vite/TS project with project-owned `cleanup` skill in all three adapter locations. EXPECTED.md requires suffix-rename, `[Orchestra]` prefix, originals untouched, and overlap report.
+- `_test-fixtures/upgrade-from-v1/` — React/TS project with v1.0.0 install marker. EXPECTED.md requires upgrade mode, `propose` for stale orchestra files, `create` for new skills, `extend-section` for AGENTS.md, `skip` for learnings doc, v1→v2 schema migration, and history append.
+- `_test-fixtures/_overview.md` updated with §1.1 adversarial fixture table.
+
+### Added — V7: Rust/Tauri stack pack
+
+- `core/stack-packs/rust/_overview.md` — pack identity, detection (`.rs` files + `Cargo.toml`), layering rules, Tauri sub-flavour.
+- `core/stack-packs/rust/rules/ownership-and-borrowing.md` — ownership, borrowing, and lifetime patterns.
+- `core/stack-packs/rust/rules/error-handling.md` — `?` operator, `thiserror`, `anyhow`, context, panics, `Option`.
+- `core/stack-packs/rust/rules/async-tokio.md` — async Rust with Tokio (spawning, channels, cancellation, blocking, testing).
+- `core/stack-packs/rust/rules/tauri.md` — Tauri v2 patterns (commands, state, plugins, security, build/distribution).
+- `core/stack-packs/rust/skills.md` — Rust addenda for universal skills.
+- `core/stack-packs/rust/roles.md` — Rust addenda for universal roles.
+- `core/discovery/signals/rust.md` updated with live cross-link to the new pack.
+
+### Added — V6: `extract` CLI subcommand
+
+- `bin/init.mjs`: new `extract` subcommand. Copies `ai-orchestra/` from a host project to a standalone directory. Writes a minimal `package.json` (private: true). Optionally initialises a git repo (`--git`). Optionally removes the source (`--clean`).
+- `README.md`: documents the `extract` command with options table and example; updates status table; updates repository layout to reflect new files; adds Rust to supported stacks.
+
 ## [1.3.1] — npm postinstall guidance + README version fix
 
 Added a `postinstall` npm script to `package.json` that prints a one-line redirect message when users run `npm i @neverreven/ai-orchestra`. The message explains the package is a spec folder (not a code library) and directs to `npx @neverreven/ai-orchestra init`. Updated the README `currently 1.2.0` line to `1.3.0` (caught late), README now reflects correct version.
