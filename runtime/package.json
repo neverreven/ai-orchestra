@@ -9,9 +9,12 @@
   ],
   "scripts": {
     "dev": "bun run scripts/dev.ts",
+    "dev:lead": "bun run scripts/dev.ts lead",
+    "dev:all": "bun run scripts/dev.ts all",
     "setup": "bun run scripts/setup.ts",
-    "new": "bun run scripts/new.ts",
+    "setup:bots": "bun run scripts/setup.ts --bots-only",
     "list": "bun run scripts/list.ts",
+    "new": "bun run scripts/new.ts",
     "typecheck": "bun run scripts/typecheck.ts"
   },
   "devDependencies": {

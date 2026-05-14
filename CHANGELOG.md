@@ -8,6 +8,45 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [2.0.0] — Multi-Agent Runtime (v2)
+
+This is the major release that transforms AI Orchestra from a **pure spec toolkit** into a **live, executing multi-agent orchestration system**. The existing `ai-orchestra/` spec layer is preserved unchanged — it now powers the agent prompts of the new runtime.
+
+### Added — Runtime: `runtime/` Bun monorepo
+
+- **`runtime/agents-framework/`** — shared TypeScript library:
+  - `types.ts` — all shared types mirroring OpenSpec JSON Schemas (`AgentRole`, `Task`, `BusMessage`, `ScopeDefinition`, `AgentManifest`, `GLOBAL_FORBIDDEN_PATTERNS`, etc.)
+  - `config.ts` — environment loading, preflight validation, interactive API key prompting, `AgentConfig` builder, `DEFAULT_MANIFESTS` + `DEFAULT_SCOPES` for all six roles
+  - `scope.ts` — three-tier filesystem scope enforcement (`readWrite` / `readOnly` / `forbidden`), glob matching, path traversal guard, Bash guard, `createToolInterceptor` for Claude SDK tool wrapping
+  - `auth.ts` — Telegram auth middleware (owner + allowlist), rate limiting (20 msg/60s), silent drop for unauthorized messages, group chat protection, `/allow` `/revoke` `/listusers` commands
+  - `bus.ts` — file-system inter-agent message bus (`BusHandle`): typed message builders (`delegate`, `report`, `escalate`, `statusUpdate`), task lifecycle management, `CURRENT_TASKS.md` renderer, interrupted task recovery
+  - `agent.ts` — dynamic system prompt builder for Lead and Role agents, embedding critical rules, delegation logic, scope description, Bus Inbox rules, Task State rules, Telegram interaction rules
+  - `bot.ts` — Grammy bot factory with two-message streaming UI (control + stream message), `[■ Stop]` inline button, typing indicator loop, orphaned process cleanup, overflow chunking for long responses
+  - `state.ts` — `JsonStore<T>` (atomic read/write), `SessionStore`, `writeCurrentTasksMd`, `writeShutdownMarker` / `readShutdownMarker`
+  - `keepawake.ts` — OS-level sleep prevention: `caffeinate` (macOS), `systemd-inhibit` (Linux), `PowerShell SetThreadExecutionState` (Windows)
+  - `logger.ts` — structured JSON logger with daily log files, scope-violation hashing (no PII), task/bus event helpers
+
+- **`runtime/openspec/`** — 7 JSON Schema 2020-12 contracts:
+  - `task.schema.json`, `bus-message.schema.json`, `delegation.schema.json`, `report.schema.json`, `escalation.schema.json`, `scope.schema.json`, `agent-manifest.schema.json`
+  - `_overview.md` — OpenSpec design principles and guide for adding new message types
+
+- **`runtime/projects/`** — six agent entry points (Lead, Frontend, Backend, QA, DevOps, Security) each with `src/index.ts`, `.env.example`, and role-specific `README.md`
+
+- **`runtime/scripts/`** — workspace utilities:
+  - `setup.ts` — interactive first-run wizard (API key validation, owner ID, CWD, per-agent bot token setup with optional skip)
+  - `dev.ts` — start one or all configured agents as child processes; forwards SIGINT/SIGTERM
+  - `list.ts` — tabular project status report
+  - `_shared.ts` — shared env loading and project discovery utilities
+
+- **`runtime/RUN.md`** — full operational guide (setup, start/stop, keep-awake, production deployment)
+- **`runtime/README.md`** — architecture overview, security model, OpenSpec reference
+
+### Breaking — none
+
+The existing spec layer (`ai-orchestra/`, `bin/`, `core/`, `roles/`, `skills/`) is unchanged.
+All v1.x `npm install @neverreven/ai-orchestra` workflows continue to work as before.
+The v2 runtime is opt-in via `cd runtime && bun install && bun run setup`.
+
 ## [1.4.1] — README UX improvements
 
 Replaced the confrontational `[!IMPORTANT]` "don't use npm install" banner with a concise, welcoming Quick Start callout. The postinstall script (v1.3.1) already handles the accidental `npm install` case gracefully, so the hard warning was redundant and set a poor first impression.

@@ -1,0 +1,8 @@
+{
+  "$description": "Path traversal attempt — expect deny with traversal reason",
+  "agentRole": "frontend",
+  "operation": "read",
+  "path": "../../secrets/prod.env",
+  "expectedDecision": "deny",
+  "expectedReason": "traversal"
+}

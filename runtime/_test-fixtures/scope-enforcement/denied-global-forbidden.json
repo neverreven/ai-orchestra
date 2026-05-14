@@ -1,0 +1,8 @@
+{
+  "$description": "Read on .env — expect deny from GLOBAL_FORBIDDEN_PATTERNS regardless of role",
+  "agentRole": "lead",
+  "operation": "read",
+  "path": ".env",
+  "expectedDecision": "deny",
+  "expectedReason": "globalForbidden"
+}

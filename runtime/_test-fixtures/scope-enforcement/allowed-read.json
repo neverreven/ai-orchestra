@@ -1,0 +1,8 @@
+{
+  "$description": "Read on a readOnly path — expect allow",
+  "agentRole": "frontend",
+  "operation": "read",
+  "path": "src/components/Button.tsx",
+  "expectedDecision": "allow",
+  "expectedTier": "readOnly"
+}
