@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-orchestra.dev/openspec/delegation.schema.json",
+  "title": "DelegationMessage",
+  "description": "Lead agent → role agent task assignment. Sent when the Lead decides a task (or a sub-task split from a larger request) should be handled by a specific role agent. The Lead adapts the user's original prompt to fit the target agent's competency and scope before delegating.",
+  "type": "object",
+  "required": ["id", "from", "to", "taskId", "type", "payload", "timestamp"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "$ref": "bus-message.schema.json#/properties/id" },
+    "from": { "$ref": "task.schema.json#/$defs/agentRole" },
+    "to": { "$ref": "task.schema.json#/$defs/agentRole" },
+    "taskId": { "$ref": "bus-message.schema.json#/properties/taskId" },
+    "type": {
+      "const": "delegate"
+    },
+    "payload": {
+      "type": "object",
+      "required": ["task"],
+      "additionalProperties": false,
+      "properties": {
+        "task": {
+          "$ref": "task.schema.json",
+          "description": "The full task object. Status should be PLANNING when first delegated."
+        },
+        "contextExcerpts": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Relevant code snippets, file contents, or architecture notes the Lead pre-read from the project to give the role agent context it might need but cannot access directly (outside its scope). Each string is a labelled excerpt: 'file:path — content'."
+        },
+        "adaptedPrompt": {
+          "type": "string",
+          "description": "The user's original request, rewritten by the Lead to match the target agent's role vocabulary and scope. This is what the role agent should act on."
+        },
+        "constraints": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Explicit constraints the role agent must respect. E.g. 'Do not modify any file outside src/components/', 'Must pass existing test suite', 'Keep backward compatibility with API v2'."
+        }
+      }
+    },
+    "timestamp": { "$ref": "bus-message.schema.json#/properties/timestamp" },
+    "replyTo": { "$ref": "bus-message.schema.json#/properties/replyTo" }
+  }
+}

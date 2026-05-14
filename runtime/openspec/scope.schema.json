@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-orchestra.dev/openspec/scope.schema.json",
+  "title": "ScopeDefinition",
+  "description": "Filesystem access boundaries for an agent. Enforced at two layers: the scope middleware intercepts tool calls (Read, Glob, Grep, Bash) targeting paths outside the declared scope, and the CWD env var provides an OS-level hard floor. All paths are relative to the target project root (CWD).",
+  "type": "object",
+  "required": ["readWrite", "readOnly", "forbidden"],
+  "additionalProperties": false,
+  "properties": {
+    "readWrite": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Glob patterns the agent can both read and modify. E.g. ['src/components/**', 'src/styles/**', 'src/pages/**']. The agent's primary working territory."
+    },
+    "readOnly": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Glob patterns the agent can read but not modify. Provides context without write risk. E.g. ['src/api/**', 'package.json', 'tsconfig.json']. Tool calls that attempt to write to readOnly paths are rejected with an explanation."
+    },
+    "forbidden": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Glob patterns the agent cannot access at all — not even read. E.g. ['.env', '**/*.pem', '**/*.key', 'server/src/**']. These paths are invisible to the agent. Tool calls targeting them return 'path not found' (not 'access denied') to avoid leaking the existence of sensitive files."
+    },
+    "globalForbidden": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": [
+        "**/.env",
+        "**/.env.*",
+        "**/*.pem",
+        "**/*.key",
+        "**/*credentials*",
+        "**/*secret*",
+        "~/.ssh/**",
+        "~/.gnupg/**",
+        "~/.aws/**"
+      ],
+      "description": "Paths forbidden for ALL agents regardless of role. Merged with the per-agent forbidden list. Protects credentials, keys, and sensitive system directories. Can be extended in runtime-config.json but never reduced."
+    },
+    "escalationPath": {
+      "type": "string",
+      "enum": ["bus", "reject"],
+      "default": "bus",
+      "description": "'bus': when the agent needs a file outside its scope, the middleware posts a request to the Lead via the bus and the Lead returns the relevant excerpt. 'reject': access is denied with no fallback. Default 'bus' for readOnly/forbidden files; 'reject' for globalForbidden."
+    }
+  }
+}

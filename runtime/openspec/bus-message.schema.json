@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-orchestra.dev/openspec/bus-message.schema.json",
+  "title": "BusMessage",
+  "description": "Base message envelope for all inter-agent communication. Every message on the bus conforms to this shape. Specialised message types (delegation, report, escalation, status-update) extend the payload field with their own structure.",
+  "type": "object",
+  "required": ["id", "from", "to", "taskId", "type", "payload", "timestamp"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^msg_[a-z0-9]{12}$",
+      "description": "Unique message identifier. Format: msg_ + 12 lowercase alphanumeric chars."
+    },
+    "from": {
+      "$ref": "task.schema.json#/$defs/agentRole",
+      "description": "The sending agent's role."
+    },
+    "to": {
+      "$ref": "task.schema.json#/$defs/agentRole",
+      "description": "The receiving agent's role."
+    },
+    "taskId": {
+      "type": "string",
+      "pattern": "^task_[a-z0-9]{12}$",
+      "description": "The task this message relates to. Every bus message is anchored to a task."
+    },
+    "type": {
+      "type": "string",
+      "enum": ["delegate", "report", "escalate", "status-update"],
+      "description": "Message type. Determines which payload schema applies."
+    },
+    "payload": {
+      "type": "object",
+      "description": "Type-specific payload. Validated against the corresponding specialised schema (delegation, report, escalation, or status-update)."
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of when the message was created."
+    },
+    "replyTo": {
+      "type": "string",
+      "pattern": "^msg_[a-z0-9]{12}$",
+      "description": "If this message is a response to a prior message, the original message ID. Creates a conversation thread on the bus."
+    }
+  }
+}
