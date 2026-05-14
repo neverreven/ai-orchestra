@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "lib": ["ESNext"],
+    "types": ["bun-types"],
+    "paths": {
+      "agents-framework": ["./agents-framework/src/index.ts"],
+      "agents-framework/*": ["./agents-framework/src/*"]
+    }
+  },
+  "include": ["agents-framework/src", "projects", "scripts"]
+}

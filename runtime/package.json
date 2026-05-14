@@ -1,0 +1,21 @@
+{
+  "name": "ai-orchestra-runtime",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "agents-framework",
+    "projects/*"
+  ],
+  "scripts": {
+    "dev": "bun run scripts/dev.ts",
+    "setup": "bun run scripts/setup.ts",
+    "new": "bun run scripts/new.ts",
+    "list": "bun run scripts/list.ts",
+    "typecheck": "bun run scripts/typecheck.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.4.0"
+  }
+}
