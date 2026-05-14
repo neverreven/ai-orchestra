@@ -463,13 +463,13 @@ export function createTask(fields: {
   return {
     id: generateTaskId(),
     type: fields.type,
-    title: fields.title,
+    ...(fields.title !== undefined ? { title: fields.title } : {}),
     payload: fields.payload ?? {},
     requestedBy: fields.requestedBy,
     assignedTo: fields.assignedTo,
     status: "PLANNING",
     priority: fields.priority ?? "normal",
-    parentTaskId: fields.parentTaskId,
+    ...(fields.parentTaskId !== undefined ? { parentTaskId: fields.parentTaskId } : {}),
     createdAt: now,
     updatedAt: now,
   };

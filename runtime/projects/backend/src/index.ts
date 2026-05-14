@@ -51,10 +51,11 @@ setInterval(() => {
 }, 5_000);
 
 logger.info(`Starting backend agent (cwd: ${config.cwd})`);
-app.start().catch((err) => {
+app.start().catch((err: unknown) => {
   logger.error("Bot crashed", { error: String(err) });
   writeShutdownMarker(stateDir, "crash");
   stopKeepAwake();
   process.exit(1);
 });
+
 

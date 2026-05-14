@@ -23,7 +23,9 @@ The ai-orchestra is the practical realisation of an "AI Metaframework" pattern:
 - A service that calls home, collects telemetry, or requires an account.
 - A replacement for any specific IDE's native features.
 
-It is a **set of markdown specifications** that any sufficiently capable IDE agent can read and act on. v1 ships zero runtime code.
+It is a **set of markdown specifications** that any sufficiently capable IDE agent can read and act on.
+
+> **v2 note:** v2 introduces a `runtime/` layer — a live Bun/TypeScript multi-agent system (Lead + Role agents, Telegram bots, inter-agent message bus). The runtime is available on GitHub and is **not included in the npm package**. Install it separately: `cd runtime && bun install && bun run setup`. See [runtime/README.md](./runtime/README.md) for details.
 
 ## Install
 

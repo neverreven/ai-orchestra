@@ -1,3 +1,4 @@
+import { join } from "path";
 import { Bot, InlineKeyboard, type Context } from "grammy";
 import Anthropic from "@anthropic-ai/sdk";
 import { execSync } from "child_process";
@@ -5,7 +6,6 @@ import type { AgentConfig } from "./types.js";
 import { AuthManager, createAuthMiddleware, registerUserManagementCommands } from "./auth.js";
 import { buildSystemPrompt } from "./agent.js";
 import { openBus } from "./bus.js";
-import { createToolInterceptor } from "./scope.js";
 
 // ── Streaming constants ───────────────────────────────────────────────────────
 
@@ -310,7 +310,6 @@ export function createBotApp(
   const auth = new AuthManager(config);
   const anthropic = new Anthropic({ apiKey: process.env["ANTHROPIC_API_KEY"] });
   const bus = openBus({ stateRoot: join(stateDir, ".."), actor: manifest.role });
-  const interceptor = createToolInterceptor(config);
 
   // ── Auth middleware (must be first) ──────────────────────────────────────
   bot.use(createAuthMiddleware(auth));
@@ -438,5 +437,3 @@ export function createBotApp(
   };
 }
 
-// Utility re-export for projects that only need to import from bot.ts
-export { join } from "path";

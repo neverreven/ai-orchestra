@@ -67,7 +67,7 @@ export class AuthManager {
     if (users.some((u) => u.telegramId === telegramId)) return false; // already exists
     users.push({
       telegramId,
-      username,
+      ...(username !== undefined ? { username } : {}),
       addedAt: new Date().toISOString(),
       addedBy,
     });
@@ -106,7 +106,7 @@ export class AuthManager {
     const log = readJson<AccessLogEntry[]>(this.accessLogFile, []);
     log.push({
       telegramId,
-      username,
+      ...(username !== undefined ? { username } : {}),
       timestamp: new Date().toISOString(),
       action: "denied",
     });

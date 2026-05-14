@@ -1,6 +1,6 @@
 {
   "name": "@neverreven/ai-orchestra",
-  "version": "1.4.1",
+  "version": "2.0.0",
   "description": "Universal, project-agnostic agentic toolkit for any IDE-driven AI agent. Drop it into a project and ask your agent to 'run the ai-orchestra'.",
   "keywords": [
     "ai",
@@ -44,7 +44,8 @@
     "MIGRATION.md",
     "CHANGELOG.md",
     "VERSION",
-    "_v1.x-backlog.md"
+    "_v1.x-backlog.md",
+    "_v2.x-backlog.md"
   ],
   "publishConfig": {
     "access": "public"

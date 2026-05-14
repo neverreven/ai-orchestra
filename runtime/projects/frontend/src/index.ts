@@ -1,4 +1,4 @@
-import { join } from "path";
+﻿import { join } from "path";
 import { loadProjectEnv, runPreflight, buildAgentConfig, DEFAULT_MANIFESTS, DEFAULT_SCOPES } from "agents-framework/config.js";
 import { createBotApp } from "agents-framework/bot.js";
 import { openBus } from "agents-framework/bus.js";
@@ -16,7 +16,7 @@ const preflight = runPreflight(PROJECT_ID, env);
 console.log(preflight.report);
 
 if (!preflight.ok) {
-  console.error("\n❌ Preflight failed. Run `bun run setup` to configure missing values.\n");
+  console.error("\nâŒ Preflight failed. Run `bun run setup` to configure missing values.\n");
   process.exit(1);
 }
 
@@ -51,9 +51,10 @@ setInterval(() => {
 }, 5_000);
 
 logger.info(`Starting Frontend Engineer agent (cwd: ${config.cwd})`);
-app.start().catch((err) => {
+app.start().catch((err: unknown) => {
   logger.error("Bot crashed", { error: String(err) });
   writeShutdownMarker(stateDir, "crash");
   stopKeepAwake();
   process.exit(1);
 });
+

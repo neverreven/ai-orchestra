@@ -48,7 +48,7 @@ function globToRegex(pattern: string): RegExp {
   let i = 0;
 
   while (i < normalized.length) {
-    const char = normalized[i];
+    const char = normalized[i]!;
 
     if (char === "*" && normalized[i + 1] === "*") {
       // ** — match any depth
@@ -315,7 +315,7 @@ function extractPathsFromCommand(command: string): string[] {
   const paths: string[] = [];
   let match: RegExpExecArray | null;
   while ((match = PATH_LIKE.exec(command)) !== null) {
-    const token = match[1].trim();
+    const token = match[1]?.trim() ?? "";
     if (token && token.length > 1) paths.push(token);
   }
   return paths;
