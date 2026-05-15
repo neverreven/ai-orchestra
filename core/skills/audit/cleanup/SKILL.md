@@ -44,3 +44,8 @@ A change set scoped strictly to the recently changed files, accompanied by a num
 - [../../../roles/frontend-engineer.md](../../../roles/frontend-engineer.md)
 - [../../../roles/backend-engineer.md](../../../roles/backend-engineer.md)
 - [../../../roles/qa-engineer.md](../../../roles/qa-engineer.md)
+
+## Model hint
+
+- **Preferred:** `haiku`
+- **Reason:** Cleanup is mechanical — identify and remove dead code, unused imports, debug residue in recently changed files. Haiku is fast and accurate for this pattern-matching work. Upgrade to `sonnet` only when the cleanup scope is unusually large (>20 files) or when the naming consistency step requires understanding broader project conventions.

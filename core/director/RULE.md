@@ -15,6 +15,7 @@ The rule must be installed as **always-on** (every session reads it) wherever th
 | `{{PROJECT_CONTEXT_PATH}}` | Detected during Phase 3 (existing-infra inventory). | `AGENTS.md` |
 | `{{ARCHITECTURE_DOC_PATH}}` | Detected or asked for during Phase 5 (optional). | (empty — section omitted if not provided) |
 | `{{INSTALL_MARKER_PATH}}` | Always `.ai-orchestra/install.json`. | `.ai-orchestra/install.json` |
+| `{{SESSION_STATE_PATH}}` | Install plan (Phase 5). | `.ai-orchestra/SESSION_STATE.md` |
 | `{{LEARNINGS_LINE_BUDGET}}` | Static for v1. | `300` |
 
 The adapter must produce the rendered file with **no remaining placeholders**. If a placeholder cannot be resolved, the adapter fails the install with a clear message rather than emitting a half-substituted rule.
@@ -31,6 +32,18 @@ The adapter must produce the rendered file with **no remaining placeholders**. I
 ## Session Startup Protocol
 
 At the start of every new conversation, before doing any real work:
+
+### §0 — Anchor to the project root (always first)
+
+This rule is installed in a specific project. Before reading any other file, confirm you are working in the correct project root.
+
+1. Locate `.ai-orchestra/install.json` by searching from the directory that contains this rule file, then upward until the file is found. The directory that contains `.ai-orchestra/install.json` is the **project root** for this session.
+2. All paths in this rule (`{{LEARNINGS_PATH}}`, `{{PROJECT_CONTEXT_PATH}}`, `{{ARCHITECTURE_DOC_PATH}}`) are relative to that project root — **not** the IDE workspace root, and not any parent monorepo root.
+3. If you are operating in a multi-root workspace (multiple projects open in one IDE window) or inside a monorepo sub-package, this anchoring step is critical. Working in the wrong root is the single most common cause of context bleed between projects.
+
+If `.ai-orchestra/install.json` cannot be found: surface a warning to the user and continue using the directory that contains this rule file as a best-effort project root.
+
+### §1–4 — Load context
 
 1. Read `{{LEARNINGS_PATH}}` to load accumulated knowledge from previous sessions.
 2. Read `{{PROJECT_CONTEXT_PATH}}` for the project summary, critical rules, key file map, and active priorities.
@@ -86,7 +99,7 @@ If `{{LEARNINGS_PATH}}` exceeds `{{LEARNINGS_LINE_BUDGET}}` lines:
 
 ## Scheduler
 
-After completing steps 1–3 of the Session Startup Protocol, evaluate the scheduler:
+After completing §1–3 of the Session Startup Protocol, evaluate the scheduler:
 
 4. Read `ai-orchestra/core/scheduler/RUNNER.md` and follow it from §0.
 
@@ -101,9 +114,10 @@ If the IDE supports a stop-hook, an end-of-session prompt fires automatically. W
 1. Evaluate the scheduler (run `core/scheduler/RUNNER.md` §0–§3) — overdue jobs run first, while context is warm.
 2. Review the conversation for any learning that was not captured mid-session.
 3. Apply it using the **Update Mechanics** above.
-4. Make no edit if nothing new was learned. Empty is the common case and is fine.
+4. Update the session state file at `{{SESSION_STATE_PATH}}` (see `core/director/session-state-template.md`). Write the current phase, last commit SHA, active model, and any blocked items. This file is the machine-readable handoff for the next session.
+5. Make no edit to learnings if nothing new was learned. Empty is the common case and is fine.
 
-If no stop-hook is wired, perform steps 2–4 manually before closing the session.
+If no stop-hook is wired, perform steps 2–5 manually before closing the session.
 
 ## Orchestra context (do not modify)
 
@@ -139,6 +153,7 @@ When rendering this template:
 
 - [`_overview.md`](_overview.md) — what the Director system is and how it fits together.
 - [`learnings-template.md`](learnings-template.md) — the doc this rule maintains.
+- [`session-state-template.md`](session-state-template.md) — the session handoff file this rule writes at session end.
 - [`../../adapters/_stop-hook.md`](../../adapters/_stop-hook.md) — stop-hook contract that delivers the session-end behaviour.
 - [`../../adapters/_contract.md`](../../adapters/_contract.md) — adapter contract; describes how this template is rendered.
 - [`../registry/install.schema.md`](../registry/install.schema.md) — install marker schema.

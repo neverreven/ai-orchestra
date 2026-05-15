@@ -66,6 +66,20 @@ For every install, the adapter must produce:
 
 If a deliverable cannot be produced in this IDE (e.g., no hook system in v1), the adapter's `mappings.md` must mark it as `gap: true` with an explanation; the install plan surfaces the gap to the user.
 
+### 4.1 Cross-IDE path portability for skill references
+
+When an adapter writes references to installed skills into any file that may be read by a **different IDE** (e.g., `AGENTS.md`, `CLAUDE.md`, `AGENTS.md` stubs seen by Claude Code), it must use **project-root-relative paths**, not IDE-specific paths.
+
+| Situation | Correct | Incorrect |
+|-----------|---------|-----------|
+| Skill referenced in `AGENTS.md` | `ai-orchestra/core/skills/audit/cleanup/SKILL.md` | `.cursor/skills/cleanup/SKILL.md` |
+| Skill referenced in `CLAUDE.md` | `ai-orchestra/core/skills/audit/pre-release/SKILL.md` | `.cursor/skills/pre-release/SKILL.md` |
+| IDE-native skill (rendered copy) | May use IDE path; must note it is a rendered copy | — |
+
+**Rationale:** `AGENTS.md` is read by all agents in all IDEs. A reference to `.cursor/skills/` embedded in it silently breaks every non-Cursor session. The canonical skill spec lives in `ai-orchestra/core/skills/` and is always present regardless of IDE. Adapters may also install a rendered IDE copy alongside it, but the cross-IDE reference must always point to the core.
+
+**In practice:** when an adapter generates an `AGENTS.md` section that lists available skills (e.g., in a "Skills" table or bullet list), each entry must link to `ai-orchestra/core/skills/<cat>/<slug>/SKILL.md`. The IDE-native rendered copy path is supplementary, not the primary reference.
+
 ---
 
 ## 5. Conflict-handling framework
@@ -210,6 +224,7 @@ Beyond v1, adapters move toward full parity with `cursor/`.
 - [../core/director/_overview.md](../core/director/_overview.md) — Director system; rule + learnings the adapter renders into the project.
 - [../core/director/RULE.md](../core/director/RULE.md) — Director rule template.
 - [../core/director/learnings-template.md](../core/director/learnings-template.md) — learnings document seed.
+- [../core/director/session-state-template.md](../core/director/session-state-template.md) — session state handoff template.
 - [../core/scheduler/CONTRACT.md](../core/scheduler/CONTRACT.md) — scheduler contract; v2 runner.
 - [../core/notifications/CONTRACT.md](../core/notifications/CONTRACT.md) — notifications contract; v2 router.
 - [../core/registry/install.schema.md](../core/registry/install.schema.md) — registry marker schema produced by the adapter.

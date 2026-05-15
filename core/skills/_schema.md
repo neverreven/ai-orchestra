@@ -28,6 +28,29 @@ Skills do not need YAML front-matter in v1. Some IDEs (e.g., Cursor) may require
 
 ---
 
+## 2a. Model hint (optional section)
+
+A skill may declare a recommended model tier by including a `## Model hint` section after `## References`. This is advisory — the user or runtime may override it — but it prevents the most common mismatch (running a heavyweight skill on a budget model or vice versa).
+
+```markdown
+## Model hint
+
+- **Preferred:** `sonnet`  <!-- or: haiku | sonnet | opus -->
+- **Reason:** This skill performs a structured, multi-file sweep with clear pass/fail criteria. Sonnet balances thoroughness and cost. Use `opus` only when the project is large (>100 changed files) or when the infra sync step involves complex architectural drift. Use `haiku` for trivial runs on single-file changes.
+```
+
+**Tier guidance:**
+
+| Tier | When to use |
+|------|-------------|
+| `haiku` | Mechanical, low-judgment work: formatting, simple grep, single-file check |
+| `sonnet` | Standard skill execution: multi-file review, structural checks, doc sync |
+| `opus` | Complex reasoning required: architecture decisions, large-scope audits, multi-repo analysis |
+
+The adapter may surface the `## Model hint` value in the IDE's skill picker UI (e.g., as a subtitle or tooltip). It must not block installation if the section is absent.
+
+---
+
 ## 3. Naming conventions
 
 - **Folder name**: kebab-case (e.g., `code-review/`). The slug is the skill's id.

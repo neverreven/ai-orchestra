@@ -77,3 +77,8 @@ In v1 the kind is `manual` — the user invokes on demand. In v2, change `kind` 
 - [../../../roles/security-engineer.md](../../../roles/security-engineer.md)
 - [../../../roles/devops-sre.md](../../../roles/devops-sre.md)
 - [../../../roles/ai-ml-engineer.md](../../../roles/ai-ml-engineer.md)
+
+## Model hint
+
+- **Preferred:** `sonnet`
+- **Reason:** Audit requires reading multiple installed files, comparing them against the install marker, and reasoning about drift. Sonnet handles the cross-file structural comparison reliably. `haiku` misses subtle drift (e.g., a rule body that has drifted from the template but still has the right headings). `opus` adds no value for a well-defined checklist-style audit.

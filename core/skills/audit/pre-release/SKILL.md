@@ -52,3 +52,8 @@ A structured release-readiness report:
 - [../../../roles/qa-engineer.md](../../../roles/qa-engineer.md)
 - [../../../roles/devops-sre.md](../../../roles/devops-sre.md)
 - [../../../roles/product-manager.md](../../../roles/product-manager.md)
+
+## Model hint
+
+- **Preferred:** `sonnet`
+- **Reason:** Multi-phase sweep covering cleanup, lint, tests, build, docs sync, and infra sync. Sonnet handles the reasoning and pattern-checking well. Upgrade to `opus` only for large pre-release audits involving >50 changed files or complex infra drift. `haiku` is too shallow for doc and infra sync steps.
