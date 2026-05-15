@@ -1,25 +1,25 @@
-# AI Orchestra — Runtime (v2)
+# AI Orchestra — Ensemble (Tier 2 + 3)
 
-> A multi-agent orchestration system: a Lead Agent + specialised Role Agents, coordinated via a file-system message bus and exposed as a private Telegram bot team.
+> A multi-agent orchestration system: a Lead Agent + specialised Role Agents, coordinated via a file-system message bus and optionally exposed as a private Telegram bot team for remote orchestration.
 
 ## What is this?
 
-The `runtime/` directory is the **active, executing** part of AI Orchestra v2.
-The `ai-orchestra/` directory alongside it remains the **spec** (Cursor rules,
-skill templates, role definitions). They complement each other:
+The `ensemble/` layer is the **active, executing** tier of AI Orchestra — the agents who actually perform. The `score/` layer alongside it is the **spec** (rules, skill templates, role definitions). They complement each other:
 
-| Layer | Location | Purpose |
-|-------|----------|---------|
-| **Spec** | `../` | Cursor rules, role prompts, skill definitions, stack packs |
-| **Runtime** | `runtime/` | Live agents that actually run, communicate, and make code changes |
+| Layer | Location | Tier | Purpose |
+|-------|----------|------|---------|
+| **Score** | `score/` | 1 — Solo Agent | IDE rules, skill templates, role definitions, Director system |
+| **Ensemble** | `ensemble/` | 2 — Agentic Team | Lead + Role agents running as background processes |
+| **Remote** | Telegram config | 3 — Remote Orchestration | Telegram bots exposing the ensemble to your phone |
 
 ## Architecture
 
 ```
-User (Telegram)
-    │
-    ▼
-Lead Orchestrator bot
+User (IDE session)                 ←— Tier 1: Score
+User (Telegram, remote)            ←— Tier 3: Remote
+
+    ↓
+Lead Orchestrator agent
     │  delegates via .state/ message bus
     ├──▶ Frontend Agent
     ├──▶ Backend Agent
@@ -27,9 +27,10 @@ Lead Orchestrator bot
     ├──▶ DevOps Agent
     └──▶ Security Agent
 ```
+                                       ←— Tier 2: Ensemble
 
 **Key properties:**
-- Each agent is a separate Telegram bot with its own token
+- Each agent runs as an independent Bun process on your machine
 - Agents communicate via a file-system bus (`.state/` directory)
 - Three-tier filesystem scope enforcement prevents agents from touching out-of-scope files
 - All agent responses stream to Telegram with a live cursor — never a frozen screen
@@ -37,21 +38,24 @@ Lead Orchestrator bot
 - OS keep-awake prevents the host machine from sleeping during AFK operation
 - Graceful shutdown saves interrupted tasks; resume/discard on next start
 
-## Quick start
+## Activation
+
+The ensemble is activated from the score layer. In your project, ask your agent:
+
+```
+"set up agentic team"
+```
+
+Or use the CLI directly:
 
 ```bash
-# Install dependencies
-cd runtime
-bun install
+npx @neverreven/ai-orchestra setup-ensemble
+```
 
-# Run the interactive setup wizard
-bun run setup
+For Telegram (Tier 3), after ensemble is running:
 
-# Start the Lead Orchestrator
-bun run dev lead
-
-# Or start all configured agents
-bun run dev
+```bash
+npx @neverreven/ai-orchestra setup-telegram
 ```
 
 See [RUN.md](./RUN.md) for the full operational guide.
@@ -70,7 +74,7 @@ See [RUN.md](./RUN.md) for the full operational guide.
 ## Project structure
 
 ```
-runtime/
+ensemble/
 ├── agents-framework/    # Shared TypeScript library
 │   └── src/
 │       ├── types.ts     # Shared types (mirrors OpenSpec schemas)
@@ -102,7 +106,7 @@ runtime/
 │   └── security/src/index.ts
 │
 └── scripts/             # Workspace utilities
-    ├── setup.ts         # Interactive first-run wizard
+    ├── setup.ts         # Interactive first-run wizard (API keys + project scope)
     ├── dev.ts           # Start one or all agents
     └── list.ts          # Show project status
 ```

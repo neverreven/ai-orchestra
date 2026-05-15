@@ -12,7 +12,7 @@ The orchestra has no built-in migration runner in v1. Migration is **agent-drive
 
 The flow:
 
-1. **Update the orchestra core** in the project (replace `ai-orchestra/` with the new version, or pull updates if the core is vendored from upstream).
+1. **Update the orchestra core** in the project (replace `score/` with the new version, or run `npx @neverreven/ai-orchestra@latest init --force` to update from npm).
 2. **Re-run the orchestra** (per [`RUN.md`](RUN.md)). The first three phases stay the same. In Phase 3 (existing-infra inventory), the agent finds an existing `.ai-orchestra/install.json` and detects a version mismatch with the new core's `VERSION` file.
 3. The orchestra switches to **upgrade-and-audit mode** (per [`RUN.md`](RUN.md) §10 — "The target project already has an `.ai-orchestra/install.json`").
 4. The audit skill produces a focused diff describing only the drift between the installed orchestration and the new core.
@@ -69,17 +69,41 @@ To be populated when v1.1 ships. Expected categories of changes:
 - Adapter parity improvements (e.g., Codex stop-hook polyfill if the runtime adds support).
 - New optional install-marker fields.
 
-### From `1.x` to `2.0` (placeholder)
+### From `2.x` to `3.0` — Three-tier architecture + score/ rename
 
-To be populated when v2 ships. Expected categories of changes:
+**v3 is the three-tier release.** Key changes:
 
-- Multi-project orchestration runtime (single agent acting across multiple installed projects).
-- Scheduler runner (currently contracts only).
-- Notifications router (currently contracts only).
-- Distribution mechanism (`npx ai-orchestra init`, `curl | bash`).
-- Possible major-version-warranted reshaping of the install-marker schema.
+| Change | Migration action | Breaking? |
+|--------|----------------|-----------|
+| Spec folder renamed `ai-orchestra/` → `score/` | Ask agent `"upgrade orchestra"`. The upgrade skill detects the old folder and offers a one-time `git mv ai-orchestra score`. Only applies on explicit user consent; the upgrade proceeds without the rename if you decline (you keep `ai-orchestra/` until you're ready). | **Yes — folder rename** (but lazy: the upgrade is non-blocking without it) |
+| Install marker gains `tier`, `installedFolder`, `ensemble` fields | Upgrade skill migrates the marker in place. New fields added with defaults (`tier: 1`, `installedFolder: "ai-orchestra"` for legacy, `ensemble: { installed: false, ... }`). Fully backward-compatible read. | No |
+| `runtime/` renamed to `ensemble/` in the package | Existing projects that have not set up the runtime are unaffected. Projects using the `runtime/` folder should rename it to `ensemble/` if they copied it manually. | Only if runtime was copied manually |
+| New Tier 2 (`setup-ensemble`) and Tier 3 (`setup-telegram`) activation skills | These are purely additive. No migration needed to use them — they are available once the `score/` folder is updated. | No |
+| `ai-orchestra/VERSION` path references in Director rule → `score/VERSION` | Upgrade skill re-renders the Director rule from the updated template, replacing path references. | No (handled by upgrade) |
 
-The 1 → 2 migration plan will be detailed in this file when v2's design firms up. Current expectation: a guided, multi-step audit run with explicit user confirmation on every breaking change.
+**Minimal migration path (v2 → v3):**
+
+```
+1. npx @neverreven/ai-orchestra@latest init --force
+2. Ask agent: "upgrade orchestra"
+3. When prompted about the folder rename, reply "yes" to apply git mv
+4. Confirm the upgrade plan and apply
+```
+
+**If you want Tier 2 or Tier 3 after upgrading:**
+
+```bash
+npx @neverreven/ai-orchestra setup-ensemble   # Tier 2
+npx @neverreven/ai-orchestra setup-telegram   # Tier 3 (requires Tier 2)
+```
+
+Or ask the agent: `"set up agentic team"` / `"set up Telegram"`.
+
+### From `1.x` to `2.0`
+
+v2 introduced the multi-agent runtime layer (Lead + Role agents, Telegram bots, inter-agent message bus). The spec layer (`ai-orchestra/`) was unchanged in v2 — only new capabilities were added on top. Migration from 1.x to 2.x is additive: run `"upgrade orchestra"` to pick up the new spec artifacts; optionally activate the ensemble.
+
+For projects jumping from 1.x to 3.0 directly, follow the 2.x → 3.0 migration above — the 1.x → 2.x step can be skipped.
 
 ---
 
@@ -132,5 +156,8 @@ If you want clean uninstall tooling, that's v2 backlog. The current state is "de
 - [`RUN.md`](RUN.md) — bootstrap procedure (also drives upgrades via §10).
 - [`core/registry/install.schema.md`](core/registry/install.schema.md) — install marker schema (compatibility policy enforced here).
 - [`core/skills/audit/ai-infra-audit/SKILL.md`](core/skills/audit/ai-infra-audit/SKILL.md) — audit skill (the primary upgrade-time mechanism).
+- [`core/skills/audit/upgrade/SKILL.md`](core/skills/audit/upgrade/SKILL.md) — non-destructive upgrade skill (manages folder rename, diff-and-consent for adapted skills, marker migration).
+- [`core/skills/setup/setup-ensemble/SKILL.md`](core/skills/setup/setup-ensemble/SKILL.md) — Tier 2 activation skill.
+- [`core/skills/setup/setup-telegram/SKILL.md`](core/skills/setup/setup-telegram/SKILL.md) — Tier 3 activation skill.
 - [`core/stack-packs/_overview.md`](core/stack-packs/_overview.md) — stack-pack versioning (independent of core).
 - [`_test-fixtures/ongoing-python-web/`](_test-fixtures/ongoing-python-web/) — fixture demonstrating partial-existing-infra migration.

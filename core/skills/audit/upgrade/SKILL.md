@@ -43,7 +43,18 @@ The words **never touch** mean: do not read, do not diff, do not propose changes
 
 ## Process
 
-1. **Verify preconditions** — locate `.ai-orchestra/install.json`. If absent, abort and tell the user to run the full installer from `ai-orchestra/RUN.md`. Read the marker and note the current `orchestra.version` (call it `INSTALLED_VERSION`). Read `ai-orchestra/VERSION` (call it `LATEST_VERSION`). If `INSTALLED_VERSION == LATEST_VERSION`, report "already up to date" and stop — unless the user explicitly requested a forced re-render, in which case continue.
+1. **Verify preconditions** — locate `.ai-orchestra/install.json`. If absent, abort and tell the user to run the full installer from `score/RUN.md` (or `ai-orchestra/RUN.md` for legacy installs). Read the marker and note the current `orchestra.version` (call it `INSTALLED_VERSION`). Read `score/VERSION` (or `ai-orchestra/VERSION` for legacy) as `LATEST_VERSION`. If `INSTALLED_VERSION == LATEST_VERSION`, report "already up to date" and stop — unless the user explicitly requested a forced re-render, in which case continue.
+
+1b. **Folder rename migration (v2 → v3)** — before any other upgrade work, check whether the project has `ai-orchestra/` but no `score/` folder. If so, this is a pre-v3 install that requires a one-time folder rename as part of the upgrade. Inform the user:
+
+   > "This upgrade renames the spec folder from `ai-orchestra/` to `score/` — the new name for the Tier 1 spec layer. This is the only breaking change in v3. The rename is safe: no content changes, only the folder name. Your `AI_LEARNINGS.md`, `SESSION_STATE.md`, and all project files are untouched."
+
+   Apply the rename **only on explicit user consent** (`yes` / `y`). Procedure:
+   - Rename `ai-orchestra/` → `score/` at the OS level
+   - If the project is a git repo, stage the rename: `git mv ai-orchestra score`
+   - Update the `installedFolder` field in `.ai-orchestra/install.json` if present
+   - Update any IDE-installed rules that reference the old path (e.g. the Director rule's `score/RUN.md` reference if it still says `ai-orchestra/RUN.md`)
+   - If the user declines the rename, log it as a deferred item and continue upgrading the managed file content — the upgrade applies regardless, just under the old folder name
 
 2. **Build the upgrade plan** — for each entry in `rules[]`, `skills[]`, and the director rule in `install.json`, determine the upgrade action:
    - Locate the source template for each installed artifact (field: `source` in `rules[]` / `skills[]`).
@@ -77,9 +88,11 @@ The words **never touch** mean: do not read, do not diff, do not propose changes
 
 A structured upgrade report:
 - Version transition: `INSTALLED_VERSION → LATEST_VERSION`.
+- Folder rename status: `completed` / `deferred by user` / `not applicable (already score/)`.
 - Per-artifact status: `updated` / `skipped (no change)` / `deferred (user consent pending)` / `protected (project-owned)`.
 - List of artifacts where the user deferred consent — they remain at the old version until the user decides.
 - Any new templates available that the project hasn't opted into yet (e.g., `SESSION_STATE.md`).
+- New capabilities now available: if the upgrade introduced tier-activation skills (`setup-ensemble`, `setup-telegram`), surface them: "You can now activate Tier 2 by asking 'set up agentic team'."
 - Audit result from step 9.
 
 ## References
@@ -91,6 +104,8 @@ A structured upgrade report:
 - [../../../../../core/registry/install.schema.md](../../../../../core/registry/install.schema.md) — install marker schema updated in step 8.
 - [../../../../../adapters/_contract.md](../../../../../adapters/_contract.md) — conflict-handling actions used in this skill.
 - [../../../../../RUN.md](../../../../../RUN.md) — full install procedure (fallback when no marker exists).
+- [../setup/setup-ensemble/SKILL.md](../setup/setup-ensemble/SKILL.md) — Tier 2 activation skill surfaced post-upgrade when newly available.
+- [../setup/setup-telegram/SKILL.md](../setup/setup-telegram/SKILL.md) — Tier 3 activation skill surfaced post-upgrade when newly available.
 
 ## Model hint
 

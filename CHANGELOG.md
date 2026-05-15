@@ -8,6 +8,37 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [3.0.0] — Three-Tier Architecture: Score + Ensemble + Remote
+
+This release unifies the spec and runtime layers into a single npm package under a progressive three-tier model, and applies the v2.1 spec improvements accumulated since the v2.0 runtime release.
+
+### Added — Three-tier architecture
+
+- **Tier model** — progressive activation: Tier 1 (Score: IDE agent + spec), Tier 2 (Ensemble: Lead + Role agents as background processes), Tier 3 (Remote: Telegram bot orchestration). Each tier builds on the previous and is opt-in.
+- **`score/` folder** — spec layer (Tier 1) renamed from `ai-orchestra/` in the installed project. All internal path references updated to `score/core/`, `score/adapters/`, etc. Legacy `ai-orchestra/` installs continue to work; the `upgrade` skill offers a one-time `git mv ai-orchestra score` migration on explicit user consent.
+- **`ensemble/` folder** — runtime layer (Tier 2+3) renamed from `runtime/`. Included in the npm package under `ensemble/`. Activated via `npx @neverreven/ai-orchestra setup-ensemble` or agent trigger `"set up agentic team"`.
+- **`bin/init.mjs` — `setup-ensemble` subcommand** — copies `ensemble/` into `.ai-orchestra/ensemble/`, verifies Bun, runs `bun install`, launches the interactive setup wizard, updates install marker to `tier: 2`.
+- **`bin/init.mjs` — `setup-telegram` subcommand** — guides through BotFather bot creation, runs `bun run setup:bots`, updates install marker to `tier: 3`.
+- **`core/skills/setup/setup-ensemble/SKILL.md`** — Tier 2 activation skill: prerequisite checks, wizard walkthrough, install-marker update, post-setup verification, model hint `sonnet`.
+- **`core/skills/setup/setup-telegram/SKILL.md`** — Tier 3 activation skill: BotFather instructions inline, connectivity verification, security posture summary, model hint `sonnet`.
+- **Install marker schema** — new fields: `tier` (1/2/3), `installedFolder` ("score" or "ai-orchestra" for legacy), `ensemble` (`installed`, `path`, `version`, `telegramEnabled`). Fully backward-compatible (existing markers read without the fields; upgrade skill adds them).
+
+### Added — v2.1 spec improvements (ported from v2.x branch)
+
+- **`core/skills/audit/upgrade/SKILL.md`** — non-destructive upgrade skill: managed/project-owned boundary, diff-and-consent for adapted skills, SESSION_STATE opt-in, `ai-orchestra/` → `score/` folder rename migration step, post-upgrade audit, model hint `sonnet`.
+- **Director rule §0 project-root anchoring** — agent locates `.ai-orchestra/install.json` first and resolves all paths relative to the owning project root (not the IDE workspace root). Fixes multi-root workspace and monorepo sub-project context bleed.
+- **`core/director/session-state-template.md`** — machine-readable session handoff template: current phase, last commit, active model, active work items, blocked items, decisions, model routing used, next session starting point. Written at session end, read at session start. Offered (opt-in) by the upgrade skill if not yet present.
+- **`core/skills/_schema.md` — `## Model hint` section** — optional skill field `preferred_model: haiku | sonnet | opus`. Prevents model-tier mismatch. Applied to: cleanup (`haiku`), pre-release (`sonnet`), ai-infra-audit (`sonnet`), upgrade (`sonnet`), setup-ensemble (`sonnet`), setup-telegram (`sonnet`).
+- **`adapters/_contract.md` — cross-IDE path portability** — adapter contract now requires project-root-relative core paths in cross-IDE files (`AGENTS.md`, `CLAUDE.md`) rather than IDE-specific paths. Ensures skills are reachable from any agent.
+
+### Breaking — folder name change (lazy migration)
+
+- **`score/` vs `ai-orchestra/`** — the `init` CLI now copies the spec folder as `score/` instead of `ai-orchestra/`. **Existing installs are not affected** — the upgrade skill handles migration on a per-project basis with explicit user consent. New projects get `score/` automatically.
+
+### Unchanged
+
+The spec layer content (core, adapters, stack packs, roles, skills) is backward-compatible. All v1.x and v2.x workflows continue to work under the new `score/` name.
+
 ## [2.0.0] — Multi-Agent Runtime (v2)
 
 This is the major release that transforms AI Orchestra from a **pure spec toolkit** into a **live, executing multi-agent orchestration system**. The existing `ai-orchestra/` spec layer is preserved unchanged — it now powers the agent prompts of the new runtime.

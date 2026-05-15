@@ -1,6 +1,6 @@
 # RUN.md — How to Run the Orchestra
 
-> **You are an AI agent.** A user asked you to do something with the `ai-orchestra/` folder. This file tells you what to do, step by step. Follow it from top to bottom, exactly. When this file's instructions and your built-in IDE conventions conflict, prefer this file.
+> **You are an AI agent.** A user asked you to do something with the `score/` folder. This file tells you what to do, step by step. Follow it from top to bottom, exactly. When this file's instructions and your built-in IDE conventions conflict, prefer this file.
 
 This file is **identical regardless of IDE**. It works the same in Cursor, Claude Code, Codex, VS Code with Copilot, and any other agentic IDE that can read markdown and execute file operations.
 
@@ -12,15 +12,15 @@ The user may invoke the orchestra with any natural variant of these phrases:
 
 - "run the orchestra"
 - "run ai-orchestra"
-- "run the ai-orchestra folder"
-- "set up ai-orchestra"
+- "run the score folder"
+- "set up the orchestra"
 - "install ai-orchestra"
 - "configure agents in this project"
-- "what is this ai-orchestra folder?"
+- "what is this score folder?"
 - "investigate ai-orchestra"
 - "audit ai-orchestra" / "check the orchestra"
 
-Treat any of the above (or a close paraphrase) as an instruction to follow this file. Vague invocations like *"run ai-orchestra"* or *"what is this folder?"* signal the user may not yet know what the orchestra is — Phase 0.5 handles that case explicitly with a structured **what / steps / options** orientation before any probe runs.
+Treat any of the above (or a close paraphrase) as an instruction to follow this file. Vague invocations like *"run the orchestra"* or *"what is this folder?"* signal the user may not yet know what the orchestra is — Phase 0.5 handles that case explicitly with a structured **what / steps / options** orientation before any probe runs.
 
 ---
 
@@ -30,7 +30,7 @@ Before you do anything else, internalise these rules. They are non-negotiable.
 
 1. **Default to dry-run.** Your first run **must** produce a dry-run diff and stop. Never write any file in the target project until the user explicitly confirms the diff.
 2. **Never overwrite existing files.** If a destination file already exists, the orchestra extends/appends/suffix-renames per the conflict-handling rules in the matching adapter. A blind overwrite is a critical bug.
-3. **Never edit `ai-orchestra/core/`.** The orchestra core is read-only during install. You only mutate the **target project's** files.
+3. **Never edit `score/core/`.** The orchestra core is read-only during install. You only mutate the **target project's** files.
 4. **Idempotent runs.** A second `run the orchestra` invocation on an already-installed project must produce a stable diff (only proposing genuinely new changes, never re-doing already-applied work).
 5. **Be honest about gaps.** If a baseline adapter does not support a feature, say so in the install plan. Do not silently downgrade.
 6. **No telemetry, no network calls** unless absolutely required for discovery (e.g., reading a public package registry to disambiguate a dependency). Default to fully offline operation.
@@ -52,7 +52,7 @@ Send a structured "what / steps / options" overview. The user may have just drop
 
 Use this shape (paraphrase as needed; do not parrot it verbatim):
 
-> "You've asked me to look at the `ai-orchestra/` folder. Here is what it is and how I can help.
+> "You've asked me to look at the `score/` folder. Here is what it is and how I can help.
 >
 > **What it is.** ai-orchestra is a project-agnostic agentic toolkit. It is a set of markdown specifications I read and act on to set up tailored AI infrastructure for this project — rules, skills, hooks, a learnings document — that fits the project's stack and the roles you want covered. v1 ships zero runtime code; everything is markdown the agent (me) executes.
 >
@@ -154,7 +154,7 @@ Capture an inventory:
 
 This inventory is the single most important input to the install plan. **Anything that exists must be preserved or extended, never overwritten.** The §3.9 and §3.10 findings additionally feed Phase 5's recommendation engine ([core/install-scope.md](core/install-scope.md) §4) and the AI INFRASTRUCTURE ASSESSMENT subsection of Part A.
 
-If `.ai-orchestra/install.json` is found and its `version` matches `ai-orchestra/VERSION`, the project is already installed at the current orchestra version. In that case, switch to **upgrade-and-audit mode**: only propose changes that close drift between the current install and the codebase (the audit skill's job, defined in PR 3).
+If `.ai-orchestra/install.json` is found and its `version` matches `score/VERSION` (or `ai-orchestra/VERSION` for legacy installs), the project is already installed at the current orchestra version. In that case, switch to **upgrade-and-audit mode**: only propose changes that close drift between the current install and the codebase (the audit skill's job, defined in PR 3).
 
 ---
 
@@ -318,14 +318,14 @@ Stop. Report the missing file. Do not improvise content — that breaks the proj
 
 ### The user invokes "run the orchestra" without the orchestra folder being present
 
-Tell the user: "I cannot find `ai-orchestra/` in the project root. Make sure the orchestra folder has been copied or cloned to the project root before invoking it."
+Tell the user: "I cannot find `score/` (or legacy `ai-orchestra/`) in the project root. Make sure the orchestra folder has been copied into the project root before invoking it. Run: `npx @neverreven/ai-orchestra init`"
 
 ---
 
 ## 11. Glossary
 
-- **Core** — the contents of `ai-orchestra/core/`. Project-agnostic and tool-agnostic. Read-only at install time.
-- **Adapter** — the IDE-specific install logic in `ai-orchestra/adapters/<ide>/`. Maps core artifacts to IDE-native file locations.
+- **Core** — the contents of `score/core/`. Project-agnostic and tool-agnostic. Read-only at install time.
+- **Adapter** — the IDE-specific install logic in `score/adapters/<ide>/`. Maps core artifacts to IDE-native file locations.
 - **Project profile** — structured summary of the target project produced by the discovery probe.
 - **Existing-infra inventory** — list of agentic infrastructure already present in the target project, gathered before any install.
 - **Install plan** — the dry-run diff describing every file the orchestra would write/extend/skip.

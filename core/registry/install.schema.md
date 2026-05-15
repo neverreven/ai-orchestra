@@ -115,6 +115,17 @@ The `.ai-orchestra/` directory at the target project root is reserved for orches
     }
   ],
 
+  "tier": 1,
+
+  "installedFolder": "score",
+
+  "ensemble": {
+    "installed": false,
+    "path": null,
+    "version": null,
+    "telegramEnabled": false
+  },
+
   "learnings": {
     "path": "_documentation/AI_LEARNINGS.md",
     "seeded": true
@@ -177,6 +188,9 @@ The `.ai-orchestra/` directory at the target project root is reserved for orches
 | `rules[]` | Yes | Rules installed, with target path and source template. Each entry is `{ "id": string, "path": string, "source": string, "action"?: string, "alwaysOn": bool, "sourceAlwaysApply"?: bool }`. `alwaysOn` records whether the rule is active as always-on in the IDE after install (`true` for normally-installed always-on rules; `false` for suffix-renamed copies that were downgraded per the F2 always-on downgrade policy). `sourceAlwaysApply` is `true` when the source template declares `alwaysApply: true` — present only on suffix-renamed entries to let post-install checks verify the downgrade was applied. |
 | `hooks` | Yes | Map of event name → registration metadata. Empty object if no hooks installed. Each entry has `registered: bool`, `path: string`, `contractVersion: string` (per [`../../adapters/_stop-hook.md`](../../adapters/_stop-hook.md) — `"1.0"` in v1), and optional `lastRun: ISO-8601 | null` (updated after each hook fire). |
 | `mcpSlots[]` | Yes | MCP slots the orchestra registered. Empty array if none. |
+| `tier` | Yes | Current activation tier: `1` = Score only (IDE agent + spec infra); `2` = Ensemble active (Lead + Role agents); `3` = Telegram remote orchestration enabled. Set to `1` on fresh install; upgraded by the `setup-ensemble` and `setup-telegram` skills. |
+| `installedFolder` | Yes | Name of the spec folder in the project root. `"score"` for v3+ installs; `"ai-orchestra"` for pre-v3 installs pending migration. Used by the upgrade skill to locate the folder. |
+| `ensemble` | Yes | Ensemble installation state. `installed: bool` — whether `.ai-orchestra/ensemble/` has been set up. `path: string\|null` — path to the ensemble directory. `version: string\|null` — ensemble version at setup time. `telegramEnabled: bool` — whether Telegram bots have been configured. All `false`/`null` on fresh Tier 1 installs. |
 | `learnings` | Yes | Learnings document location and whether the orchestra seeded it. |
 | `sessionState` | Yes | Session state file location (`path`) and whether it has been seeded (`seeded: bool`). `seeded: false` on fresh installs — the upgrade skill offers to create it; the user opts in. Updated to `true` once the file is written. |
 | `agentsDoc` | Yes | Project-context document location and the section name owned by the orchestra. |
