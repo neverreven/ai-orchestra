@@ -25,7 +25,7 @@ The ai-orchestra is the practical realisation of an "AI Metaframework" pattern:
 
 It is a **set of markdown specifications** that any sufficiently capable IDE agent can read and act on.
 
-> **v2 note:** v2 introduces a `runtime/` layer — a live Bun/TypeScript multi-agent system (Lead + Role agents, Telegram bots, inter-agent message bus). The runtime is available on GitHub and is **not included in the npm package**. Install it separately: `cd runtime && bun install && bun run setup`. See [runtime/README.md](./runtime/README.md) for details.
+> **v2 note:** v2 introduces a `runtime/` layer — a live Bun/TypeScript multi-agent system with a Lead agent, role-specific agents, and an optional Telegram bot interface for remote orchestration. The runtime is **not part of this npm package** — it is a separate, opt-in layer for teams that want 24/7 bot-driven orchestration beyond IDE sessions. This package remains spec-only and dependency-free by design.
 
 ## Install
 
