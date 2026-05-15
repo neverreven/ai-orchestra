@@ -45,7 +45,17 @@ Run this from your project's root. It copies the `ai-orchestra/` specification f
 
 > **What gets copied:** the core spec (~170 KB of markdown). Test fixtures are excluded by default — they are sample projects used to validate the orchestra itself and have no value in a regular install.
 
-To upgrade an existing install in-place: `npx @neverreven/ai-orchestra@latest init --force`. The IDE agent's audit skill will detect the version drift on the next "run the orchestra" and walk you through any migration needed (see [MIGRATION.md](MIGRATION.md)).
+To upgrade an existing install in-place:
+
+```bash
+# 1. Pull the latest spec files into the project
+npx @neverreven/ai-orchestra@latest init --force
+
+# 2. Ask your agent to apply the upgrade
+#    "upgrade orchestra"
+```
+
+The `upgrade` skill applies changes **non-destructively**. Orchestra-managed artifacts (the Director rule, unmodified core skills, stack-pack rules) are updated automatically. Project-owned content — your `AI_LEARNINGS.md`, `SESSION_STATE.md`, and any skills you have adapted for your project — is **never touched**. For adapted skills the agent shows you a diff of the upstream changes and asks for explicit consent before applying. See [MIGRATION.md](MIGRATION.md) for full version-upgrade guidance.
 
 Alternatively, you can clone the repo and copy the `ai-orchestra/` folder by hand — the package is just a thin convenience over that.
 
@@ -134,6 +144,7 @@ If your project has no agentic infrastructure yet, the orchestra is the fastest 
 | **Stop-hook** | In supported IDEs (Cursor, Claude Code), a session-end hook automatically reviews the conversation and updates the learnings doc — no manual step needed. |
 | **MCP slots** | Pre-wired placeholder slots for the roles you installed. Fill them in when you add MCP servers. |
 | **Install marker** | `.ai-orchestra/install.json` — tracks the installed version and scope, enabling future upgrades and drift detection. |
+| **Non-destructive upgrades** | When a new version ships, run `npx @neverreven/ai-orchestra@latest init --force` then ask the agent `"upgrade orchestra"`. The `upgrade` skill refreshes managed artifacts, shows diffs for any skills you adapted, and never touches your learnings, session state, or project customisations. |
 
 Nothing is written until you review the dry-run plan and say `apply`. The first 4 of the 5 steps are completely read-only.
 
@@ -167,6 +178,11 @@ For a new project the recommended scope is **Full kit** — you can always remov
 | npm postinstall redirect message, README accuracy fixes | v1.3.1 — shipped |
 | Scheduler runner (RUNNER.md + periodic-audit job), JS/TS + Python + Salesforce stack pack depth rules (3 rules each), multi-project orchestration (global registry + multi-project-audit + upgrade-all skills) | v1.4.0-dev — shipped in repo |
 | Adapter parity (render-rules.md for Claude Code, Codex, VS Code + enriched §9 idempotency checks), adversarial test fixtures (broken-markers, name-collision, upgrade-from-v1), Rust/Tauri stack pack (4 rules, skills + roles addenda), `extract` CLI subcommand | v1.4.0-dev — shipped in repo |
+| **`upgrade` skill** — non-destructive upgrade procedure with managed/project-owned boundary, diff-and-consent for adapted skills, SESSION_STATE opt-in | v2.1.0 — next release |
+| **Director rule §0 project-root anchoring** — agent locates `.ai-orchestra/install.json` first and resolves all paths relative to the owning project, not the IDE workspace root (fixes multi-root workspace and monorepo sub-project context bleed) | v2.1.0 — next release |
+| **SESSION_STATE.md handoff template** — machine-readable session snapshot (current phase, last commit, active model, blocked items, next session starting point) written at session end, read at session start | v2.1.0 — next release |
+| **Model hint in skill schema** — optional `## Model hint` section (`preferred_model: haiku \| sonnet \| opus`) in every skill; applied to cleanup, pre-release, ai-infra-audit, upgrade | v2.1.0 — next release |
+| **Cross-IDE skill path portability** — adapter contract now requires project-root-relative paths in cross-IDE files (`AGENTS.md`, `CLAUDE.md`) instead of IDE-specific paths | v2.1.0 — next release |
 
 The current `VERSION` is recorded in the [VERSION](VERSION) file (currently `1.4.1`).
 
@@ -270,4 +286,7 @@ See repository root.
 - [_test-fixtures/_overview.md](_test-fixtures/_overview.md) — test fixtures and what they verify.
 - [_test-fixtures/VALIDATION.md](_test-fixtures/VALIDATION.md) — agent-driven validation procedure.
 - [MIGRATION.md](MIGRATION.md) — version-upgrade guidance and compatibility policy.
+- [core/skills/audit/upgrade/SKILL.md](core/skills/audit/upgrade/SKILL.md) — non-destructive upgrade skill: managed/project-owned boundary, diff-and-consent for adapted skills, SESSION_STATE opt-in.
+- [core/director/session-state-template.md](core/director/session-state-template.md) — SESSION_STATE.md seed template (machine-readable session handoff).
+- [core/director/RULE.md](core/director/RULE.md) — Director rule template (includes §0 project-root anchoring for multi-root workspace safety).
 - [_v1.x-backlog.md](_v1.x-backlog.md) — eight planned v1.x findings with priority, proposals, and touched files.
