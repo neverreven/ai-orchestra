@@ -120,6 +120,11 @@ The `.ai-orchestra/` directory at the target project root is reserved for orches
     "seeded": true
   },
 
+  "sessionState": {
+    "path": ".ai-orchestra/SESSION_STATE.md",
+    "seeded": false
+  },
+
   "agentsDoc": {
     "path": "AGENTS.md",
     "managedSection": "ai-orchestra"
@@ -173,6 +178,7 @@ The `.ai-orchestra/` directory at the target project root is reserved for orches
 | `hooks` | Yes | Map of event name → registration metadata. Empty object if no hooks installed. Each entry has `registered: bool`, `path: string`, `contractVersion: string` (per [`../../adapters/_stop-hook.md`](../../adapters/_stop-hook.md) — `"1.0"` in v1), and optional `lastRun: ISO-8601 | null` (updated after each hook fire). |
 | `mcpSlots[]` | Yes | MCP slots the orchestra registered. Empty array if none. |
 | `learnings` | Yes | Learnings document location and whether the orchestra seeded it. |
+| `sessionState` | Yes | Session state file location (`path`) and whether it has been seeded (`seeded: bool`). `seeded: false` on fresh installs — the upgrade skill offers to create it; the user opts in. Updated to `true` once the file is written. |
 | `agentsDoc` | Yes | Project-context document location and the section name owned by the orchestra. |
 | `scheduler.contractVersion` | Yes | Version of the scheduler contract this install is compatible with. |
 | `scheduler.jobs[]` | Yes | List of registered jobs. Empty in v1 (no runner). |
@@ -183,7 +189,7 @@ The `.ai-orchestra/` directory at the target project root is reserved for orches
 ### 1.4 Mutation rules
 
 - **`install`** appends the first entry to `history[]` and writes all other top-level fields fresh.
-- **`upgrade`** appends a new history entry, updates `orchestra.version` and dependent version fields, and may update `roles[]`, `skills[]`, `rules[]`, `mcpSlots[]` based on the upgrade plan. **Never** mutates `orchestra.installedAt`.
+- **`upgrade`** appends a new history entry, updates `orchestra.version` and dependent version fields, and may update `roles[]`, `skills[]`, `rules[]`, `mcpSlots[]` based on the upgrade plan. **Never** mutates `orchestra.installedAt`. The full upgrade procedure (managed vs. project-owned boundary, diff-and-consent for adapted skills, SESSION_STATE opt-in) is described in [`../skills/audit/upgrade/SKILL.md`](../skills/audit/upgrade/SKILL.md).
 - **`audit`** appends a history entry with `action: "audit"` and updates `orchestra.lastAuditedAt`. May append fix entries when the audit auto-fixes drift; critical-change proposals do not mutate the file until applied.
 
 ### 1.5 Validation
