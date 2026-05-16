@@ -10,6 +10,8 @@ npx @neverreven/ai-orchestra@latest init
 
 > This is a spec folder your AI agent reads and acts on, not a code library. The `init` command copies the `score/` specification folder into your project. Your agent does the rest.
 
+[GitHub](https://github.com/neverreven/ai-orchestra) · [npm](https://www.npmjs.com/package/@neverreven/ai-orchestra) · [Changelog](https://github.com/neverreven/ai-orchestra/blob/master/CHANGELOG.md) · [Issues](https://github.com/neverreven/ai-orchestra/issues)
+
 ---
 
 ## What it is
@@ -19,8 +21,8 @@ AI Orchestra is a three-tier metaframework. You activate as many tiers as you ne
 | Tier | Name | What you get | How to activate |
 |------|------|-------------|----------------|
 | **1** | **Score** | IDE agent + full spec infrastructure (rules, skills, learnings doc, session protocol). The agent reads the score and performs. | `npx @neverreven/ai-orchestra init` then ask agent _"run the orchestra"_ |
-| **2** | **Ensemble** | Lead agent + Role agents running as background processes. Lead decomposes tasks, delegates to role agents (Frontend, Backend, QA, DevOps, Security), QA-reviews results, and returns the aggregated output. | `npx @neverreven/ai-orchestra setup-ensemble` or ask agent _"set up agentic team"_ |
-| **3** | **Remote** | Private Telegram bot per agent. Delegate tasks from your phone, receive streaming responses, stop agents mid-run — all while AFK. | `npx @neverreven/ai-orchestra setup-telegram` or ask agent _"set up Telegram"_ |
+| **2** | **Ensemble** | Lead agent + Role agents running as background processes. Lead decomposes tasks, delegates to role agents (Frontend, Backend, QA, DevOps, Security), QA-reviews results, returns aggregated output. Accessible via Telegram, Slack, or the local web dashboard. | `npx @neverreven/ai-orchestra setup-ensemble` or ask agent _"set up agentic team"_ |
+| **3** | **Remote** | Private Telegram or Slack bot per agent. Delegate tasks from your phone or workspace; receive streaming responses; voice messages transcribed automatically; stop agents mid-run — all while AFK. | `npx @neverreven/ai-orchestra setup-telegram` or ask agent _"set up Slack"_ |
 
 Each tier builds on the previous. You start with Tier 1 — the solid spec foundation — and opt into higher tiers when you want them.
 
@@ -75,6 +77,8 @@ The `upgrade` skill applies changes **non-destructively**:
 - **Folder rename (v2 → v3)** — if your project has the old `ai-orchestra/` folder name, the upgrade skill detects it and offers a one-time `git mv ai-orchestra score` migration. You can accept or skip; the upgrade proceeds either way.
 
 The upgrade skill reads `.ai-orchestra/install.json` to determine what version is installed and what scope was chosen. It then compares that against the current package and presents only the changes that apply to your install.
+
+See [MIGRATION.md](https://github.com/neverreven/ai-orchestra/blob/master/MIGRATION.md) for per-version migration notes.
 
 ### Extracting to a standalone folder
 
@@ -162,8 +166,8 @@ If your project has no agentic infrastructure yet, one guided session installs a
 | **MCP slots** | Pre-wired placeholder slots for the roles you installed. Fill them in when you add MCP servers. |
 | **Install marker** | `.ai-orchestra/install.json` — tracks the installed version and scope, enabling future upgrades and drift detection. |
 | **Non-destructive upgrades** | `npx @neverreven/ai-orchestra@latest init --force` then ask the agent `"upgrade orchestra"`. The upgrade skill refreshes managed artifacts, shows diffs for any skills you adapted, and never touches your learnings, session state, or customisations. |
-| **Tier 2 - Agentic Team** | Ask the agent `\"set up agentic team\"` or run `npx @neverreven/ai-orchestra setup-ensemble`. Lead + Role ensemble as background processes. Open web dashboard: `npx @neverreven/ai-orchestra chat`. |
-| **Tier 3 - Remote Orchestration** | Ask the agent `\"set up Telegram\"` or run `npx @neverreven/ai-orchestra setup-telegram`. Private Telegram / Slack bots - delegate from phone or workspace, voice messages auto-transcribed. Requires Tier 2. |
+| **Tier 2 — Agentic Team** | Ask the agent `"set up agentic team"` or run `npx @neverreven/ai-orchestra setup-ensemble`. Installs a Lead + Role agent ensemble that runs as background processes. See [ensemble/README.md](https://github.com/neverreven/ai-orchestra/blob/master/ensemble/README.md). |
+| **Tier 3 — Remote Orchestration** | Ask the agent `"set up Telegram"` or `"set up Slack"`. Private bots — delegate from your phone or Slack workspace, voice messages auto-transcribed. Requires Tier 2. |
 
 Nothing is written until you review the dry-run plan and say `apply`.
 
@@ -205,24 +209,25 @@ For a new project the recommended scope is **Full kit** — you can always remov
 | **Telegram remote orchestration (Tier 3)** — private bots, streaming responses, `[■ Stop]` cancellation, owner + allowlist auth, OS keep-awake | v3.0 |
 | **`setup-ensemble` + `setup-telegram` skills** — agent-driven Tier 2 and Tier 3 activation guides with prerequisite checks and wizard walkthrough | v3.0 |
 | **Adapter path consistency** — `{{INSTALLED_FOLDER}}` placeholder across all adapter spec files | v3.0.1 |
-| **README cleanup** — self-contained npm page, no dead links, deduplicated feature table, MIT license stated inline | v3.0.2 |
-| **System-global ensemble install** - single ensemble at `~/.ai-orchestra/ensemble/` serves all projects on the machine | v3.1 |
-| **Multi-project bootstrap** - Lead agent bootstraps Tier 1 into any registered project without opening an IDE | v3.1 |
-| **`migrate-ensemble` skill** - non-destructive migration from project-local to system-global | v3.1 |
-| **Local web chat UI** - Bun HTTP + WebSocket server; `npx @neverreven/ai-orchestra chat` opens it | v3.1 |
-| **`~/.ai-orchestra/projects.json` global registry** - tracks all orchestra-managed projects | v3.1 |
-| **`ChannelAdapter` abstraction** - all channels share a common interface; agent logic written once in `runner.ts` | v3.2 |
-| **Slack channel (Tier 3)** - `@slack/bolt` Socket Mode bot with streaming, Stop button, user allowlist | v3.2 |
-| **Voice messages** - Telegram voice notes auto-transcribed via OpenAI Whisper; routed as text to agent | v3.2 |
-| **Full web operations dashboard** - 5-tab UI: Chat, Status, Tasks, Projects, Logs; WebSocket push | v3.2 |
-| **GitHub webhook + PR review** - `POST /github` validates signature; routes events to role agents; posts PR review | v3.2 |
-| **Docker deployment** - `Dockerfile` + `docker-compose.yml` with named volumes, bind-mounts, health check | v3.2 |
-| **Programmatic project detection** - TypeScript impl of DETECTION.md: 7 stacks, frameworks, CI, sub-projects | v3.2 |
-| **Autonomous IDE orchestration** - Lead detects stack, generates Tier 1 files via Claude, shows diff, writes on confirm | v3.2 |
-| **Process daemon + service installer** - exponential-backoff restart; generates launchd / systemd / Task Scheduler service files | v3.2 |
-| **5 new setup skills** - `setup-slack`, `setup-github`, `deploy-docker`, `orchestrate-project`, `setup-daemon` | v3.2 |
+| **README cleanup** — self-contained npm page, no dead links, deduplicated feature table | v3.0.2 |
+| **System-global ensemble install** — single ensemble at `~/.ai-orchestra/ensemble/` serves all projects on the machine | v3.1 |
+| **Multi-project bootstrap** — Lead agent bootstraps Tier 1 into any registered project without opening an IDE | v3.1 |
+| **`migrate-ensemble` skill** — non-destructive migration from project-local to system-global installation | v3.1 |
+| **Local web chat UI** — Bun HTTP + WebSocket server; `npx @neverreven/ai-orchestra chat` opens it | v3.1 |
+| **`~/.ai-orchestra/projects.json` global registry** — tracks all orchestra-managed projects on the machine | v3.1 |
+| **`ChannelAdapter` abstraction** — all channels share a common interface; agent logic written once | v3.2 |
+| **Slack channel (Tier 3)** — `@slack/bolt` Socket Mode bot with streaming, Stop button, user allowlist | v3.2 |
+| **Voice messages** — Telegram voice notes auto-transcribed via OpenAI Whisper; routed as text to agent | v3.2 |
+| **Full web operations dashboard** — 5-tab UI: Chat, Status, Tasks, Projects, Logs; WebSocket push for live updates | v3.2 |
+| **GitHub webhook + PR review** — `POST /github` validates signature; routes events to role agents; posts aggregated PR review | v3.2 |
+| **Docker deployment** — `Dockerfile` + `docker-compose.yml` with named volumes, bind-mounts, health check | v3.2 |
+| **Programmatic project detection** — TypeScript impl of DETECTION.md: 7 stacks, frameworks, CI, sub-projects | v3.2 |
+| **Autonomous IDE orchestration** — Lead detects stack, generates Tier 1 files via Claude, shows diff, writes on confirm | v3.2 |
+| **Process daemon + service installer** — exponential-backoff restart; generates launchd / systemd / Task Scheduler service files | v3.2 |
+| **5 new setup skills** — `setup-slack`, `setup-github`, `deploy-docker`, `orchestrate-project`, `setup-daemon` | v3.2 |
+| **License changed to AGPL-3.0** — open-source use remains free; [GRANTS.md](https://github.com/neverreven/ai-orchestra/blob/master/GRANTS.md) lists free commercial exceptions | v3.2.1 |
 
-Current version: **3.2.0**
+Current version: **3.2.1** — full [CHANGELOG](https://github.com/neverreven/ai-orchestra/blob/master/CHANGELOG.md)
 
 ---
 
@@ -254,13 +259,11 @@ Other stacks are detected by generic signals and receive the universal role/skil
 After `npx @neverreven/ai-orchestra init`, your project gains:
 
 ```
-score/                 # ← the spec folder (installed at project root)
-├── README.md          # this file
+score/                 # the spec folder (installed at project root)
 ├── RUN.md             # canonical entry point — ask your agent to "run the orchestra"
 ├── MIGRATION.md       # version-upgrade guidance and compatibility policy
 ├── CHANGELOG.md       # full version history
 ├── VERSION            # SemVer (currently 3.2.1)
-├── _v3.x-backlog.md   # v3.x improvement backlog
 ├── core/              # project-agnostic, tool-agnostic content
 │   ├── _lint.md       # schema linter contract
 │   ├── install-scope.md          # four install scope modes + resolver
@@ -298,7 +301,7 @@ score/                 # ← the spec folder (installed at project root)
 └── install.json       # install marker: version, scope, adapter, tier, installedFolder
 ```
 
-Additionally, the npm package includes an `ensemble/` folder for Tier 2 agent runtime (activated separately via `setup-ensemble`).
+Additionally, the npm package includes an [`ensemble/`](https://github.com/neverreven/ai-orchestra/tree/master/ensemble) folder for Tier 2 agent runtime (activated separately via `setup-ensemble`).
 
 ---
 
@@ -315,13 +318,21 @@ Additionally, the npm package includes an `ensemble/` folder for Tier 2 agent ru
 | v3.0.1 | Adapter path consistency — `{{INSTALLED_FOLDER}}` placeholder across all adapter spec files |
 | v3.0.2 | README self-contained for npm page; no dead links; deduplicated feature table |
 | v3.1 | System-global ensemble install; multi-project bootstrap from Lead agent; `migrate-ensemble` skill; local web chat UI (Bun WebSocket server); global `~/.ai-orchestra/projects.json` registry |
-| v3.2 | ChannelAdapter abstraction (Telegram + Slack channels); voice message transcription (Whisper); full 5-tab web operations dashboard; GitHub webhook + automated PR review; Docker deployment (Dockerfile + docker-compose); programmatic project detection (7 stacks); autonomous Tier 1 IDE orchestration from Lead; process daemon + platform service installer; 5 new setup skills |
+| v3.2 | ChannelAdapter abstraction (Telegram + Slack); voice transcription (Whisper); full 5-tab web dashboard; GitHub webhook + automated PR review; Docker deployment; programmatic project detection; autonomous Tier 1 orchestration from Lead; process daemon + service installer; 5 new setup skills |
+| v3.2.1 | License changed to AGPL-3.0; GRANTS.md added; LICENSE file added to package |
+
+Full details: [CHANGELOG.md](https://github.com/neverreven/ai-orchestra/blob/master/CHANGELOG.md)
+
+---
+
+## Contributing
+
+Issues and pull requests are welcome on [GitHub](https://github.com/neverreven/ai-orchestra). Please open an issue before submitting a large change.
 
 ---
 
 ## License
 
-[AGPL-3.0](LICENSE) for open-source use.
+[AGPL-3.0](https://github.com/neverreven/ai-orchestra/blob/master/LICENSE) for open-source use.
 Commercial use in proprietary products requires a separate commercial license.
-See [GRANTS.md](GRANTS.md) for entities with granted exceptions, or contact the author.
-
+See [GRANTS.md](https://github.com/neverreven/ai-orchestra/blob/master/GRANTS.md) for entities with granted exceptions, or open an issue to request a license.
