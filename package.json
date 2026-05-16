@@ -1,6 +1,6 @@
 {
   "name": "@neverreven/ai-orchestra",
-  "version": "3.2.1",
+  "version": "3.2.2",
   "description": "Universal, project-agnostic agentic toolkit. Drop it into any project and ask your agent to 'run the orchestra'. Installs structured AI infrastructure (rules, skills, learnings, session protocol). Optionally activate a multi-agent ensemble (Tier 2) or Telegram remote orchestration (Tier 3).",
   "keywords": [
     "ai",
