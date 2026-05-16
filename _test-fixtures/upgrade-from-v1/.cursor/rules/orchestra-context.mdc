@@ -1,0 +1,12 @@
+﻿---
+description: Sample project context (installed by ai-orchestra v1.0.0)
+alwaysApply: true
+---
+
+# Upgrade fixture — AI project context
+
+> **This file was installed by ai-orchestra v1.0.0.** It is stale and should be replaced by the upgrade run.
+
+- **Project:** upgrade-from-v1
+- **Orchestra version:** 1.0.0
+- **Installed:** 2025-01-15T10:00:00.000Z

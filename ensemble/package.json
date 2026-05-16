@@ -1,0 +1,29 @@
+{
+  "name": "ai-orchestra-ensemble",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "agents-framework",
+    "projects/*"
+  ],
+  "scripts": {
+    "dev": "bun run scripts/dev.ts",
+    "dev:lead": "bun run scripts/dev.ts lead",
+    "dev:all": "bun run scripts/dev.ts all",
+    "setup": "bun run scripts/setup.ts",
+    "setup:bots": "bun run scripts/setup.ts --bots-only",
+    "list": "bun run scripts/list.ts",
+    "new": "bun run scripts/new.ts",
+    "typecheck": "bun run scripts/typecheck.ts",
+    "daemon": "bun run scripts/daemon.ts",
+    "install-service": "bun run scripts/install-service.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.24.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.4.0"
+  }
+}

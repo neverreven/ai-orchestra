@@ -1,0 +1,6 @@
+[install]
+# Resolve workspace packages from the monorepo root
+workspaces = true
+
+[run]
+bun = true

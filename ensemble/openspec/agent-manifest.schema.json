@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-orchestra.dev/openspec/agent-manifest.schema.json",
+  "title": "AgentManifest",
+  "description": "Per-agent capability declaration. Lives in each project's config.ts as the runtime representation, and in the Lead's routing table as the decision surface. The Lead consults manifests to decide which agent handles a given task.",
+  "type": "object",
+  "required": ["id", "role", "displayName", "mission", "scope", "taskTypes", "modelPreferences"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique agent identifier matching the project folder name under runtime/projects/."
+    },
+    "role": {
+      "$ref": "task.schema.json#/$defs/agentRole"
+    },
+    "displayName": {
+      "type": "string",
+      "description": "Human-readable name shown in Telegram status messages. E.g. 'Frontend Engineer', 'Lead Orchestrator', 'QA Engineer'."
+    },
+    "mission": {
+      "type": "string",
+      "maxLength": 500,
+      "description": "One-paragraph description of this agent's purpose. Injected into the agent's system prompt and used by the Lead for routing decisions."
+    },
+    "scope": {
+      "$ref": "scope.schema.json",
+      "description": "Filesystem access boundaries for this agent."
+    },
+    "taskTypes": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1,
+      "description": "Task types this agent is competent to handle. Must match the 'type' field in task.schema.json. E.g. ['implement-feature', 'fix-bug', 'code-review'] for a frontend agent. The Lead uses this for routing — a task is only delegated to an agent whose taskTypes include the task's type."
+    },
+    "collaborators": {
+      "type": "array",
+      "items": { "$ref": "task.schema.json#/$defs/agentRole" },
+      "description": "Roles this agent typically hands off to or receives work from. Informational — used by the Lead for smarter task splitting."
+    },
+    "modelPreferences": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "reasoning": {
+          "$ref": "#/$defs/modelTier",
+          "description": "Model used for complex reasoning (architecture decisions, multi-step planning)."
+        },
+        "execution": {
+          "$ref": "#/$defs/modelTier",
+          "description": "Model used for routine task execution (code generation, file edits)."
+        },
+        "stateWrites": {
+          "$ref": "#/$defs/modelTier",
+          "description": "Model used for state updates, learnings writes, and bus message construction."
+        }
+      },
+      "description": "Per-agent model tier preferences. Can be overridden by the global modelRouting in root config."
+    },
+    "skills": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "trigger"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Skill identifier from core/skills/. E.g. 'code-review', 'security-baseline', 'cleanup'."
+          },
+          "trigger": {
+            "type": "string",
+            "description": "Natural language trigger phrase. E.g. 'run a code review', 'check security baseline'."
+          }
+        }
+      },
+      "description": "Skills this agent can invoke. Mapped from the orchestra's core/skills/ spec. The Lead knows which agent can run which skill."
+    },
+    "healthCheck": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "heartbeatIntervalMs": {
+          "type": "integer",
+          "minimum": 5000,
+          "default": 30000,
+          "description": "How often this agent sends a heartbeat to the Lead (milliseconds)."
+        },
+        "timeoutMs": {
+          "type": "integer",
+          "minimum": 10000,
+          "default": 120000,
+          "description": "If no heartbeat is received within this window, the Lead considers the agent frozen and may restart it."
+        }
+      },
+      "description": "Health monitoring parameters. The Lead's heartbeat monitor uses these to detect frozen agents."
+    }
+  },
+  "$defs": {
+    "modelTier": {
+      "type": "string",
+      "enum": ["opus", "sonnet", "haiku"]
+    }
+  }
+}

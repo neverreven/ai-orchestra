@@ -1,0 +1,41 @@
+{
+  "_comment": "Default shipped job descriptor for the periodic ai-infra-audit. The adapter copies this into marker.scheduler.jobs[] at install time. Users can edit the schedule, disable the job, or remove it from the marker without affecting the orchestra's install state.",
+
+  "id": "periodic-audit",
+  "description": "Run the ai-infra-audit skill weekly to catch rule drift, stale learnings, and version mismatches before they accumulate.",
+
+  "schedule": {
+    "_note": "In v1 the kind is 'manual' — the runner records the descriptor but does not auto-fire. In v2, change kind to 'cron' and set expr + tz to activate automatic weekly runs.",
+    "kind": "manual",
+    "v2_upgrade": {
+      "kind": "cron",
+      "expr": "0 9 * * 1",
+      "tz": "auto",
+      "_tz_note": "'auto' resolves to the timezone recorded in the install marker. Falls back to UTC if unrecorded."
+    }
+  },
+
+  "runs": {
+    "kind": "skill",
+    "skill_id": "audit/ai-infra-audit"
+  },
+
+  "concurrency": "single-run",
+  "missed_run_policy": "catchup-once",
+  "enabled": true,
+
+  "notifications": {
+    "on_findings": {
+      "channel": "in-session",
+      "severity": "warning"
+    },
+    "on_success": {
+      "suppress": true
+    }
+  },
+
+  "metadata": {
+    "orchestraVersion": "2.0",
+    "installedFrom": "core/scheduler/jobs/periodic-audit.job.json"
+  }
+}

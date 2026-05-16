@@ -1,0 +1,38 @@
+# AI Orchestra — Docker ignore
+
+# Installed modules (reinstalled during build)
+node_modules/
+**/node_modules/
+
+# Lock files (frozen-lockfile install uses bun.lockb in the image)
+# Keep bun.lockb if present — uncomment below to include it:
+# !bun.lockb
+
+# Runtime state (mounted as volumes)
+.state/
+logs/
+
+# Local environment (never include secrets in the image)
+.env
+.env.local
+.env.*.local
+
+# Compiled output
+dist/
+*.js.map
+
+# Editor / OS artifacts
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.vscode/
+.idea/
+
+# Development-only files
+*.test.ts
+*.spec.ts
+__tests__/
+
+# Bun lock file — keep for reproducible builds
+# bun.lockb

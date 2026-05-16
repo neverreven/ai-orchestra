@@ -1,0 +1,18 @@
+{
+  "$description": "After Lead delegates a task to frontend, expect task in frontend inbox",
+  "setup": {
+    "actor": "lead",
+    "action": "delegate",
+    "task": {
+      "id": "task_test_001",
+      "type": "implement-feature",
+      "title": "Add dark mode toggle",
+      "assignedTo": "frontend",
+      "payload": { "component": "ThemeToggle", "target": "src/components/" }
+    }
+  },
+  "assertions": [
+    { "path": ".state/frontend/inbox.json", "check": "containsMessageOfType", "value": "delegate" },
+    { "path": ".state/lead/tasks.json", "check": "taskStatus", "taskId": "task_test_001", "value": "IN_PROGRESS" }
+  ]
+}

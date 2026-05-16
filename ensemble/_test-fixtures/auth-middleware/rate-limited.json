@@ -1,0 +1,13 @@
+{
+  "$description": "Same user sends 21 messages in 60s — 21st must be rate-limited",
+  "setup": {
+    "userId": 987654321,
+    "authorized": true,
+    "messageCount": 21,
+    "windowMs": 60000
+  },
+  "assertions": [
+    { "messageIndex": 20, "expectedDecision": "rateLimit" },
+    { "messageIndex": 19, "expectedDecision": "allow" }
+  ]
+}

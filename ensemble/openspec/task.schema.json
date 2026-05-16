@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-orchestra.dev/openspec/task.schema.json",
+  "title": "Task",
+  "description": "Canonical task shape. Every unit of work in the orchestra — whether user-initiated, delegated by the Lead, or auto-scheduled — is represented as a Task.",
+  "type": "object",
+  "required": ["id", "type", "payload", "requestedBy", "assignedTo", "status", "createdAt", "updatedAt"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^task_[a-z0-9]{12}$",
+      "description": "Unique task identifier. Format: task_ + 12 lowercase alphanumeric chars."
+    },
+    "type": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Task category. Free-form string scoped by convention: 'code-review', 'implement-feature', 'fix-bug', 'security-audit', 'write-tests', 'deploy', etc."
+    },
+    "title": {
+      "type": "string",
+      "maxLength": 200,
+      "description": "Human-readable one-line summary. Shown in Telegram status messages and CURRENT_TASKS.md."
+    },
+    "payload": {
+      "type": "object",
+      "description": "Task-type-specific data. Shape varies by task type — not validated beyond being a valid object. The receiving agent interprets it based on the type field."
+    },
+    "requestedBy": {
+      "type": "string",
+      "description": "Who created this task. Values: 'user' (direct request), a role string like 'lead' or 'frontend' (delegated/escalated), or 'scheduler' (cron-triggered)."
+    },
+    "assignedTo": {
+      "$ref": "#/$defs/agentRole",
+      "description": "The role agent responsible for executing this task."
+    },
+    "status": {
+      "$ref": "#/$defs/taskStatus"
+    },
+    "priority": {
+      "type": "string",
+      "enum": ["low", "normal", "high", "critical"],
+      "default": "normal",
+      "description": "Execution priority. 'critical' tasks pre-empt the agent's current work queue."
+    },
+    "parentTaskId": {
+      "type": "string",
+      "pattern": "^task_[a-z0-9]{12}$",
+      "description": "If this task was split from a larger task by the Lead, the parent task ID. Enables result aggregation."
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Set when status transitions to COMPLETED or CANCELLED."
+    },
+    "result": {
+      "type": "string",
+      "description": "The deliverable output of the task. Set on completion. Can be a summary, a file path, a diff, or structured content depending on task type."
+    },
+    "why": {
+      "type": "string",
+      "description": "Rationale for the approach taken. Required on completion — explains the 'why', not just the 'what'. Surfaced in Telegram reports and archived for learnings."
+    },
+    "filesChanged": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Paths of files created, modified, or deleted during execution. Relative to the agent's CWD."
+    },
+    "error": {
+      "type": "string",
+      "description": "Error message if the task failed or was blocked. Set when status is BLOCKED or when an unexpected failure occurs."
+    }
+  },
+  "$defs": {
+    "agentRole": {
+      "type": "string",
+      "enum": [
+        "lead",
+        "frontend",
+        "backend",
+        "qa",
+        "devops",
+        "security",
+        "mobile",
+        "ai-ml",
+        "analytics",
+        "tech-writer",
+        "product-manager"
+      ]
+    },
+    "taskStatus": {
+      "type": "string",
+      "enum": ["PLANNING", "IN_PROGRESS", "BLOCKED", "COMPLETED", "CANCELLED", "INTERRUPTED"],
+      "description": "PLANNING: task received, agent reasoning about approach. IN_PROGRESS: actively executing. BLOCKED: waiting on external input or another agent. COMPLETED: done with result + rationale. CANCELLED: stopped by user or Lead. INTERRUPTED: process died mid-execution (auto-set on ungraceful shutdown)."
+    }
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-orchestra.dev/openspec/escalation.schema.json",
+  "title": "EscalationMessage",
+  "description": "Role agent → Lead out-of-scope referral. Sent when a role agent determines that a task (or parts of it) falls outside its competency. The agent does NOT bother the user — it silently refers to the Lead, which splits the task and delegates the out-of-scope parts to the appropriate agents.",
+  "type": "object",
+  "required": ["id", "from", "to", "taskId", "type", "payload", "timestamp"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "$ref": "bus-message.schema.json#/properties/id" },
+    "from": { "$ref": "task.schema.json#/$defs/agentRole" },
+    "to": {
+      "const": "lead",
+      "description": "Escalations always go to the Lead agent."
+    },
+    "taskId": { "$ref": "bus-message.schema.json#/properties/taskId" },
+    "type": {
+      "const": "escalate"
+    },
+    "payload": {
+      "type": "object",
+      "required": ["task", "reason", "outOfScopeParts"],
+      "additionalProperties": false,
+      "properties": {
+        "task": {
+          "$ref": "task.schema.json",
+          "description": "The task object with status set to BLOCKED."
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Why this task is out of scope. Must be specific: 'Requires modification of backend API endpoints which are outside my readWrite scope', not 'I can't do this'."
+        },
+        "outOfScopeParts": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1,
+          "description": "Specific parts of the task that are out of scope. Each entry should be actionable enough for the Lead to create a sub-task from it. E.g. 'Add a new REST endpoint at /api/v2/users', 'Update the CI pipeline to include the new test suite'."
+        },
+        "completedParts": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Parts of the task the agent was able to complete within its scope before escalating. These are already done and should not be re-delegated."
+        },
+        "suggestedRoles": {
+          "type": "array",
+          "items": { "$ref": "task.schema.json#/$defs/agentRole" },
+          "description": "The escalating agent's suggestion for which role(s) should handle the out-of-scope parts. The Lead may override this."
+        }
+      }
+    },
+    "timestamp": { "$ref": "bus-message.schema.json#/properties/timestamp" },
+    "replyTo": { "$ref": "bus-message.schema.json#/properties/replyTo" }
+  }
+}

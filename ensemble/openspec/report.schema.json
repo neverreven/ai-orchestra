@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-orchestra.dev/openspec/report.schema.json",
+  "title": "ReportMessage",
+  "description": "Role agent → Lead task completion report. Sent when a role agent finishes a task (successfully or with failure). The Lead uses this to decide whether to route to QA, aggregate with other sub-task results, update learnings, and return the final result to the user.",
+  "type": "object",
+  "required": ["id", "from", "to", "taskId", "type", "payload", "timestamp"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "$ref": "bus-message.schema.json#/properties/id" },
+    "from": { "$ref": "task.schema.json#/$defs/agentRole" },
+    "to": {
+      "const": "lead",
+      "description": "Reports always go to the Lead agent."
+    },
+    "taskId": { "$ref": "bus-message.schema.json#/properties/taskId" },
+    "type": {
+      "const": "report"
+    },
+    "payload": {
+      "type": "object",
+      "required": ["task", "result", "why"],
+      "additionalProperties": false,
+      "properties": {
+        "task": {
+          "$ref": "task.schema.json",
+          "description": "The task object with updated status (COMPLETED, BLOCKED, or CANCELLED) and filled result/error fields."
+        },
+        "result": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The deliverable output. What the user asked for: a code change summary, a review finding, a deployment status, etc."
+        },
+        "why": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Rationale for the approach taken. Must explain the reasoning, not just restate the result. This is archived in learnings and shown to the user."
+        },
+        "filesChanged": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Paths of files created, modified, or deleted. Relative to the agent's CWD. Used by the Lead for conflict detection (two agents editing the same file) and by QA for targeted review."
+        },
+        "testsRun": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "passed": { "type": "integer", "minimum": 0 },
+            "failed": { "type": "integer", "minimum": 0 },
+            "skipped": { "type": "integer", "minimum": 0 },
+            "command": {
+              "type": "string",
+              "description": "The test command that was run, e.g. 'bun test', 'npm run test'."
+            }
+          },
+          "description": "Test execution summary. Agents must run relevant tests and report results — 'never mark done without proof'."
+        },
+        "commitSha": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{7,40}$",
+          "description": "Git commit SHA if the agent committed changes. Short (7) or full (40) hash."
+        },
+        "promptSuggestion": {
+          "type": "string",
+          "description": "Optional suggestion for how the user could phrase similar requests more effectively in the future. The Lead surfaces this non-intrusively after delivering the result."
+        }
+      }
+    },
+    "timestamp": { "$ref": "bus-message.schema.json#/properties/timestamp" },
+    "replyTo": { "$ref": "bus-message.schema.json#/properties/replyTo" }
+  }
+}

@@ -1,0 +1,64 @@
+name: ai-orchestra
+
+services:
+  ensemble:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ai-orchestra-ensemble:latest
+    container_name: ai-orchestra-ensemble
+    restart: unless-stopped
+
+    # ── Environment ──────────────────────────────────────────────────────────
+    env_file:
+      - .env
+
+    # ── Ports ────────────────────────────────────────────────────────────────
+    # Web dashboard / chat UI + GitHub webhook endpoint
+    ports:
+      - "${WEB_UI_PORT:-3847}:3847"
+
+    # ── Volumes ──────────────────────────────────────────────────────────────
+    volumes:
+      # Persistent bus state — survives container restarts
+      - ensemble-state:/app/.state
+
+      # Persistent logs
+      - ensemble-logs:/app/logs
+
+      # Global project registry (read-only from container's perspective)
+      # Agents write via the Lead; external tools (CLI, init script) write it on the host
+      - type: bind
+        source: ${AI_ORCHESTRA_HOME:-~/.ai-orchestra}
+        target: /root/.ai-orchestra
+        read_only: false   # Lead writes project registry on setup-project
+
+      # Project directories — bind-mount each registered project so agents can read/write
+      # Add entries here for each project path on the host, e.g.:
+      #   - type: bind
+      #     source: /absolute/host/path/to/project
+      #     target: /projects/my-project
+      #     read_only: false
+      #
+      # Then set CWD=/projects/my-project in your .env (or per-project manifest)
+
+    # ── Health check ─────────────────────────────────────────────────────────
+    healthcheck:
+      test: ["CMD", "bun", "-e", "await fetch('http://localhost:3847/').then(r=>{if(!r.ok)process.exit(1)})"]
+      interval: 30s
+      timeout: 10s
+      start_period: 20s
+      retries: 3
+
+    # ── Logging ──────────────────────────────────────────────────────────────
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
+
+volumes:
+  ensemble-state:
+    driver: local
+  ensemble-logs:
+    driver: local

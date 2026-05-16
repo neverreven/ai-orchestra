@@ -1,0 +1,10 @@
+<!-- ai-orchestra fixture: minimal LWC template. -->
+<template>
+  <template if:true={accounts.data}>
+    <ul>
+      <template for:each={accounts.data} for:item="account">
+        <li key={account.Id}>{account.Name}</li>
+      </template>
+    </ul>
+  </template>
+</template>
